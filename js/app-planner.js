@@ -119,10 +119,10 @@ document.addEventListener("DOMContentLoaded", () => {
     // Populate Origin dropdown grouped by region
     originSelect.innerHTML = "";
     const regions = {
-      "South": { label: "🏛️ South Kerala (TVM, Kollam, Alappuzha, Pathanamthitta)", group: document.createElement("optgroup") },
+      "South": { label: "️ South Kerala (TVM, Kollam, Alappuzha, Pathanamthitta)", group: document.createElement("optgroup") },
       "Central": { label: "📍 Central Kerala (Kochi, Thrissur, Kottayam)", group: document.createElement("optgroup") },
-      "Highland": { label: "⛰️ Western Ghats & High Ranges (Idukki, Munnar, Wayanad)", group: document.createElement("optgroup") },
-      "North": { label: "🏖️ North Malabar (Palakkad, Malappuram, Kozhikode, Kannur, Kasaragod)", group: document.createElement("optgroup") }
+      "Highland": { label: "️ Western Ghats & High Ranges (Idukki, Munnar, Wayanad)", group: document.createElement("optgroup") },
+      "North": { label: "️ North Malabar (Palakkad, Malappuram, Kozhikode, Kannur, Kasaragod)", group: document.createElement("optgroup") }
     };
     Object.values(regions).forEach(r => r.group.label = r.label);
 
@@ -148,14 +148,14 @@ document.addEventListener("DOMContentLoaded", () => {
     shelterSelect.innerHTML = "";
     const autoOption = document.createElement("option");
     autoOption.value = "auto";
-    autoOption.textContent = "⚡ Auto-Select Safest & Closest Safe Hub";
+    autoOption.textContent = " Auto-Select Safest & Closest Safe Hub";
     shelterSelect.appendChild(autoOption);
 
     const shelterRegions = {
-      "South": { label: "🏛️ South Kerala Safe Havens", group: document.createElement("optgroup") },
+      "South": { label: "️ South Kerala Safe Havens", group: document.createElement("optgroup") },
       "Central": { label: "📍 Central Kerala Safe Hubs", group: document.createElement("optgroup") },
-      "Highland": { label: "⛰️ High-Range Mountain Citadels", group: document.createElement("optgroup") },
-      "North": { label: "🏖️ North Malabar Mega Shelters", group: document.createElement("optgroup") }
+      "Highland": { label: "️ High-Range Mountain Citadels", group: document.createElement("optgroup") },
+      "North": { label: "️ North Malabar Mega Shelters", group: document.createElement("optgroup") }
     };
     Object.values(shelterRegions).forEach(r => r.group.label = r.label);
 
@@ -164,7 +164,7 @@ document.addEventListener("DOMContentLoaded", () => {
       .forEach(shelter => {
         const option = document.createElement("option");
         option.value = shelter.id;
-        option.textContent = `🛡️ ${shelter.name} (+${shelter.elevation}m • Cap: ${shelter.capacity?.toLocaleString() || 3000})`;
+        option.textContent = `️ ${shelter.name} (+${shelter.elevation}m • Cap: ${shelter.capacity?.toLocaleString() || 3000})`;
         if (shelter.id === state.selectedShelter) option.selected = true;
 
         const regKey = shelter.region || "Central";
@@ -285,7 +285,7 @@ document.addEventListener("DOMContentLoaded", () => {
       // Interactive road popup allowing user to click and toggle road status
       const popupContent = `
         <div class="map-popup-inner">
-          <div class="map-popup-title">🛣️ ${edge.name}</div>
+          <div class="map-popup-title">️ ${edge.name}</div>
           <div class="map-popup-meta">
             <div><strong>Base Distance:</strong> ${edge.distance_km} km</div>
             <div><strong>Avg Elevation:</strong> ${edge.elevation} m</div>
@@ -321,10 +321,43 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  /**
+   * Fetch real road geometry from OSRM for a point-to-node connector.
+   * Returns an array of [lat, lng] points following actual roads.
+   */
+  async function fetchOsrmPath(fromLat, fromLng, toLat, toLng) {
+    const url = `http://router.project-osrm.org/route/v1/driving/${fromLng},${fromLat};${toLng},${toLat}?overview=full&geometries=geojson`;
+    try {
+      const resp = await fetch(url, {
+        headers: { "User-Agent": "KeralaSafeRoute/2.0" },
+        signal: AbortSignal.timeout(10000)
+      });
+      const data = await resp.json();
+      if (data.code === "Ok" && data.routes && data.routes.length > 0) {
+        const raw = data.routes[0].geometry.coordinates;
+        const distKm = Math.round(data.routes[0].distance / 100) / 10;
+        // Convert [lng,lat] → [lat,lng], downsample to ≤60 pts
+        const latLngs = raw.map(pt => [Math.round(pt[1] * 100000) / 100000, Math.round(pt[0] * 100000) / 100000]);
+        const step = Math.max(1, Math.floor(latLngs.length / 50));
+        const sampled = latLngs.filter((_, i) => i % step === 0);
+        if (sampled[sampled.length - 1] !== latLngs[latLngs.length - 1]) {
+          sampled.push(latLngs[latLngs.length - 1]);
+        }
+        return { path: sampled, distKm };
+      }
+    } catch (_) { /* fall through to straight-line */ }
+    // Fallback: straight line with haversine distance × 1.3 road factor
+    const dLat = (toLat - fromLat) * Math.PI / 180;
+    const dLng = (toLng - fromLng) * Math.PI / 180;
+    const a = Math.sin(dLat/2)**2 + Math.cos(fromLat*Math.PI/180)*Math.cos(toLat*Math.PI/180)*Math.sin(dLng/2)**2;
+    const distKm = Math.round(6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)) * 1.3 * 10) / 10;
+    return { path: [[fromLat, fromLng], [toLat, toLng]], distKm: Math.max(0.5, distKm) };
+  }
+
   let customOriginMarker = null;
 
   // Set evacuation starting point to any arbitrary latitude & longitude on the map
-  function setCustomOrigin(lat, lng, flyTo = false) {
+  async function setCustomOrigin(lat, lng, flyTo = false) {
     state.hasUserInteracted = true;
 
     // Find nearest 3 nodes in Kerala graph
@@ -362,9 +395,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // Remove any previous custom connector edges
     KERALA_GRAPH_DATA.edges = KERALA_GRAPH_DATA.edges.filter(e => !e.id.startsWith("e_custom_"));
 
-    // Add connector edges to closest 2 network nodes
+    // Add temporary straight-line connectors immediately so routing can start
     [closest, secondClosest].forEach((target, idx) => {
-      const roadDist = Math.max(0.5, Math.round(target.distKm * 1.25 * 10) / 10);
+      const roadDist = Math.max(0.5, Math.round(target.distKm * 1.3 * 10) / 10);
       KERALA_GRAPH_DATA.edges.push({
         id: `e_custom_${idx}_${target.node.id}`,
         name: `Access Road to ${target.node.name}`,
@@ -376,10 +409,7 @@ document.addEventListener("DOMContentLoaded", () => {
         flood_susceptibility: 0.25,
         hazard_proximity: null,
         isToggleable: false,
-        path: [
-          [lat, lng],
-          [target.node.lat, target.node.lng]
-        ]
+        path: [[lat, lng], [target.node.lat, target.node.lng]]
       });
     });
 
@@ -427,8 +457,42 @@ document.addEventListener("DOMContentLoaded", () => {
       map.flyTo([lat, lng], Math.max(map.getZoom(), 11), { duration: 1.0 });
     }
 
+    // First render with straight-line connector (instant feedback)
     recalculateAndRender();
+
+    // Now fetch real OSRM road geometry for connector edges in background
+    try {
+      const [r0, r1] = await Promise.all([
+        fetchOsrmPath(lat, lng, closest.node.lat, closest.node.lng),
+        fetchOsrmPath(lat, lng, secondClosest.node.lat, secondClosest.node.lng)
+      ]);
+
+      // Update connector edges with real road paths
+      KERALA_GRAPH_DATA.edges = KERALA_GRAPH_DATA.edges.filter(e => !e.id.startsWith("e_custom_"));
+      [r0, r1].forEach((result, idx) => {
+        const target = idx === 0 ? closest : secondClosest;
+        KERALA_GRAPH_DATA.edges.push({
+          id: `e_custom_${idx}_${target.node.id}`,
+          name: `Access Road to ${target.node.name}`,
+          u: "custom_origin",
+          v: target.node.id,
+          distance_km: result.distKm,
+          capacity_veh_hr: 1500,
+          elevation: estimatedElevation,
+          flood_susceptibility: 0.25,
+          hazard_proximity: null,
+          isToggleable: false,
+          path: result.path  // ← Real OSRM road geometry
+        });
+      });
+
+      // Re-render with accurate road-following path
+      recalculateAndRender();
+    } catch (_) {
+      // Straight-line fallback already rendered above — no action needed
+    }
   }
+
 
   function renderNodes() {
     nodeLayerGroup.clearLayers();
@@ -448,7 +512,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (isOrigin) {
         iconHtml = `<div class="origin-pin" title="Evacuation Origin: ${node.name}"></div>`;
       } else if (isShelter) {
-        iconHtml = `<div class="shelter-pin" title="Safe Shelter: ${node.name}">🛡️</div>`;
+        iconHtml = `<div class="shelter-pin" title="Safe Shelter: ${node.name}">🏥</div>`;
       } else {
         iconHtml = `<div class="junction-pin" title="${node.name}"></div>`;
       }
@@ -464,7 +528,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const popupContent = `
         <div class="map-popup-inner">
-          <div class="map-popup-title">${isShelter ? '🛡️ ' : '📍 '}${node.name}</div>
+          <div class="map-popup-title">${isShelter ? '️ ' : '📍 '}${node.name}</div>
           <div class="map-popup-meta">
             <div><strong>Type:</strong> ${isShelter ? 'Designated Emergency Shelter' : 'Road Intersection'}</div>
             <div><strong>Elevation:</strong> +${node.elevation}m above sea level</div>
@@ -504,10 +568,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (chip) {
       if (isOnline) {
         chip.className = "backend-chip python";
-        chip.innerHTML = `🐍 <span>${engineText || "Python 3.13 Backend"}</span>`;
+        chip.innerHTML = ` <span>${engineText || "Python 3.13 Backend"}</span>`;
       } else {
         chip.className = "backend-chip fallback";
-        chip.innerHTML = `⚡ <span>${engineText || "Browser Client Engine"}</span>`;
+        chip.innerHTML = ` <span>${engineText || "Browser Client Engine"}</span>`;
       }
     }
   }
@@ -644,7 +708,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (bypassed) {
         bestRefugeBox.style.display = "block";
         comparisonReasonText.innerHTML = `
-          <strong>🏆 Chosen Best Haven:</strong> ${route.destinationNode?.name} (+${route.destinationNode?.elevation}m)<br>
+          <strong> Chosen Best Haven:</strong> ${route.destinationNode?.name} (+${route.destinationNode?.elevation}m)<br>
           <span style="color:#e11d48; font-weight:700;">⚠️ Closest Refuge Bypassed:</span> ${bypassed.closestShelterName} (${bypassed.closestKm} km, +${bypassed.closestElevation}m) — low ground &amp; flood choke hazard.
         `;
       } else {
@@ -652,10 +716,18 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    // Speed estimate based on disaster conditions: 40km/h down to 20km/h
-    const avgSpeed = state.severity === 'severe' ? 22 : (state.severity === 'moderate' ? 32 : 45);
-    const estMinutes = Math.round((route.totalKm / avgSpeed) * 60) + (route.stepCount * 2);
-    metricTime.innerHTML = `${estMinutes} <span class="metric-unit">min</span>`;
+    // Distance: prefer OSRM real-road distance, fall back to graph estimate
+    const displayKm = route.totalKm;
+    metricDistance.innerHTML = `${displayKm} <span class="metric-unit">km</span>`;
+
+    // Travel time: use OSRM duration if available, else estimate from speed
+    if (route.osrmDurationMin) {
+      metricTime.innerHTML = `${route.osrmDurationMin} <span class="metric-unit">min</span>`;
+    } else {
+      const avgSpeed = state.severity === 'severe' ? 22 : (state.severity === 'moderate' ? 32 : 45);
+      const estMinutes = Math.round((displayKm / avgSpeed) * 60) + (route.stepCount * 2);
+      metricTime.innerHTML = `${estMinutes} <span class="metric-unit">min</span>`;
+    }
 
     metricRisk.innerHTML = `${route.averageRiskScore}<span class="metric-unit">/100</span>`;
 
@@ -722,6 +794,33 @@ document.addEventListener("DOMContentLoaded", () => {
     `;
   }
 
+  /**
+   * Fetch full OSRM route geometry from origin to shelter.
+   * OSRM's driving profile prefers main roads (motorway > trunk > primary > secondary > residential).
+   * Returns { path: [[lat,lng],...], distKm } or null on failure.
+   */
+  async function fetchOsrmFullRoute(originLat, originLng, destLat, destLng) {
+    const url = `http://router.project-osrm.org/route/v1/driving/${originLng},${originLat};${destLng},${destLat}?overview=full&geometries=geojson`;
+    try {
+      const resp = await fetch(url, { signal: AbortSignal.timeout(12000) });
+      const data = await resp.json();
+      if (data.code === "Ok" && data.routes && data.routes.length > 0) {
+        const raw = data.routes[0].geometry.coordinates;
+        const distKm = Math.round(data.routes[0].distance / 100) / 10;
+        const durationMin = Math.round(data.routes[0].duration / 60);
+        // Convert [lng,lat] → [lat,lng], downsample to ~80 pts for smooth display
+        const latLngs = raw.map(pt => [Math.round(pt[1] * 100000) / 100000, Math.round(pt[0] * 100000) / 100000]);
+        const step = Math.max(1, Math.floor(latLngs.length / 80));
+        const sampled = latLngs.filter((_, i) => i % step === 0);
+        if (sampled.length === 0 || sampled[sampled.length - 1].toString() !== latLngs[latLngs.length - 1].toString()) {
+          sampled.push(latLngs[latLngs.length - 1]);
+        }
+        return { path: sampled, distKm, durationMin };
+      }
+    } catch (_) { /* fallback to graph path below */ }
+    return null;
+  }
+
   async function recalculateAndRender() {
     renderHazardZones();
     renderRoadNetwork();
@@ -730,12 +829,83 @@ document.addEventListener("DOMContentLoaded", () => {
     const dijkstraResult = await calculateRouteAsync();
     state.activeRouteResult = dijkstraResult;
 
-    if (state.selectedShelter === "auto") {
-      renderRoute(dijkstraResult.optimalShelterRoute || dijkstraResult.route);
-    } else {
-      renderRoute(dijkstraResult.route || dijkstraResult.optimalShelterRoute);
+    // Pick the route object from Dijkstra result
+    const routeData = state.selectedShelter === "auto"
+      ? (dijkstraResult.optimalShelterRoute || dijkstraResult.route)
+      : (dijkstraResult.route || dijkstraResult.optimalShelterRoute);
+
+    if (!routeData || !routeData.reachable) {
+      renderRoute(routeData);
+      return;
+    }
+
+    // Render immediately using graph-path (fast, instant feedback)
+    renderRoute(routeData);
+
+    // Get origin coordinates
+    const originNode = KERALA_GRAPH_DATA.nodes[state.selectedOrigin];
+    const destNode = routeData.destinationNode;
+    if (!originNode || !destNode) return;
+
+    // Fetch real OSRM full route in background (origin → shelter via main roads)
+    const osrmResult = await fetchOsrmFullRoute(
+      originNode.lat, originNode.lng,
+      destNode.lat, destNode.lng
+    );
+
+    if (osrmResult && osrmResult.path.length > 2) {
+      // Override the displayed route with real road geometry
+      // Keep Dijkstra's risk/shelter metadata but use OSRM's road path
+      const enhancedRoute = {
+        ...routeData,
+        totalKm: osrmResult.distKm,
+        osrmDurationMin: osrmResult.durationMin,
+        osrmPath: osrmResult.path   // Real road geometry
+      };
+      state.activeRouteResult = { ...dijkstraResult, _osrmEnhanced: true };
+      renderRouteWithPath(enhancedRoute, osrmResult.path);
     }
   }
+
+  /**
+   * Render route using a pre-computed coordinate path (from OSRM).
+   * Used when we have the real road geometry instead of the graph edge paths.
+   */
+  function renderRouteWithPath(routeData, coordPath) {
+    routeLayerGroup.clearLayers();
+    if (!routeData || !routeData.reachable || !coordPath || coordPath.length < 2) {
+      renderRoute(routeData);
+      return;
+    }
+
+    // Outer glow background polyline
+    const bgLine = L.polyline(coordPath, {
+      className: "evacuation-route-bg",
+      lineCap: "round",
+      lineJoin: "round"
+    });
+
+    // Inner glowing animated flow polyline
+    const glowLine = L.polyline(coordPath, {
+      className: "evacuation-route-glow",
+      lineCap: "round",
+      lineJoin: "round"
+    });
+
+    routeLayerGroup.addLayer(bgLine);
+    routeLayerGroup.addLayer(glowLine);
+
+    if (state.hasUserInteracted && coordPath.length > 1) {
+      map.fitBounds(L.latLngBounds(coordPath), {
+        padding: [60, 60],
+        maxZoom: 13
+      });
+    }
+
+    // Update Result Card with OSRM-corrected distance
+    updateResultCard(routeData);
+  }
+
 
   // 5. Event Listeners
   // Map Click Listener: Set evacuation starting point anywhere on the map
@@ -913,7 +1083,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const midCoord = edge.path[midIdx];
         const icon = L.divIcon({
           className: "leaflet-capacity-label",
-          html: `<div class="map-capacity-tag">🚗 ${edge.capacity_veh_hr || 1200} <span style="font-size:9px;">v/h</span></div>`,
+          html: `<div class="map-capacity-tag"> ${edge.capacity_veh_hr || 1200} <span style="font-size:9px;">v/h</span></div>`,
           iconSize: [80, 24],
           iconAnchor: [40, 12]
         });

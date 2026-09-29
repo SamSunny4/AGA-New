@@ -459,6 +459,92 @@ NODES = {
         "lat": 12.3950, "lng": 75.0930, "elevation": 68.0, "type": "shelter",
         "district": "Kasaragod", "region": "North", "capacity": 4000,
         "desc": "Massive elevated university campus atop Tejaswini hills with disaster relief depot."
+    },
+
+    # ------------------ NEW ADDITIONAL SHELTERS (one per district) ------------------
+    "shelter_attingal": {
+        "id": "shelter_attingal", "name": "Attingal Vellayambalam Elevated Relief Camp",
+        "lat": 8.7030, "lng": 76.8220, "elevation": 38.0, "type": "shelter",
+        "district": "Thiruvananthapuram", "region": "South", "capacity": 2500,
+        "desc": "Elevated inland camp above Vamanapuram river flood zone, north Thiruvananthapuram."
+    },
+    "shelter_karunagappally": {
+        "id": "shelter_karunagappally", "name": "Karunagappally Inland High Ground Camp",
+        "lat": 9.0610, "lng": 76.5620, "elevation": 32.0, "type": "shelter",
+        "district": "Kollam", "region": "South", "capacity": 2200,
+        "desc": "Elevated inland relief camp away from Kayamkulam Kayal coastal surge zone."
+    },
+    "shelter_adoor": {
+        "id": "shelter_adoor", "name": "Adoor NSS College Ridge Camp",
+        "lat": 9.1580, "lng": 76.7430, "elevation": 52.0, "type": "shelter",
+        "district": "Pathanamthitta", "region": "South", "capacity": 2800,
+        "desc": "Elevated NSS College campus above Kallada river reach, south Pathanamthitta."
+    },
+    "shelter_cherthala": {
+        "id": "shelter_cherthala", "name": "Cherthala Elevated Community Relief Hub",
+        "lat": 9.6890, "lng": 76.3500, "elevation": 18.0, "type": "shelter",
+        "district": "Alappuzha", "region": "Central", "capacity": 2400,
+        "desc": "Inland high ground camp above Vembanad lake backwater surge, north Alappuzha."
+    },
+    "shelter_pala": {
+        "id": "shelter_pala", "name": "Pala Alphonsa College Highland Safe Hub",
+        "lat": 9.7150, "lng": 76.6920, "elevation": 55.0, "type": "shelter",
+        "district": "Kottayam", "region": "Central", "capacity": 2600,
+        "desc": "Elevated hilltop college campus above Meenachil river flood level, eastern Kottayam."
+    },
+    "shelter_kattappana": {
+        "id": "shelter_kattappana", "name": "Kattappana Cardamom Hills Emergency Base",
+        "lat": 9.7790, "lng": 77.1250, "elevation": 980.0, "type": "shelter",
+        "district": "Idukki", "region": "Highland", "capacity": 2000,
+        "desc": "Bedrock plateau base in central cardamom hills, safe from debris flows."
+    },
+    "shelter_angamaly": {
+        "id": "shelter_angamaly", "name": "Angamaly Airport Area Elevated Relief Campus",
+        "lat": 10.2010, "lng": 76.3920, "elevation": 22.0, "type": "shelter",
+        "district": "Ernakulam", "region": "Central", "capacity": 3000,
+        "desc": "Elevated institutional campus near Cochin Airport, above Periyar river flood reach."
+    },
+    "shelter_wadakkanchery": {
+        "id": "shelter_wadakkanchery", "name": "Wadakkanchery Inland High Ground Camp",
+        "lat": 10.6670, "lng": 76.2500, "elevation": 42.0, "type": "shelter",
+        "district": "Thrissur", "region": "Central", "capacity": 2800,
+        "desc": "Inland elevated camp on midland ridge, away from Bharathapuzha flood basin."
+    },
+    "shelter_shoranur": {
+        "id": "shelter_shoranur", "name": "Shoranur Riverside Ridge Relief Camp",
+        "lat": 10.7680, "lng": 76.2840, "elevation": 65.0, "type": "shelter",
+        "district": "Palakkad", "region": "Central", "capacity": 2500,
+        "desc": "High ridge camp above Bharathapuzha river floodplain near Shoranur railway hub."
+    },
+    "shelter_tirur": {
+        "id": "shelter_tirur", "name": "Tirur Govt High School Elevated Camp",
+        "lat": 10.9190, "lng": 75.9300, "elevation": 28.0, "type": "shelter",
+        "district": "Malappuram", "region": "North", "capacity": 2200,
+        "desc": "Inland elevated campus above coastal Bharathapuzha estuary tidal zone."
+    },
+    "shelter_vadakara": {
+        "id": "shelter_vadakara", "name": "Vadakara Inland Ridge Relief Station",
+        "lat": 11.6140, "lng": 75.6100, "elevation": 35.0, "type": "shelter",
+        "district": "Kozhikode", "region": "North", "capacity": 2400,
+        "desc": "Inland elevated station above coastal NH 66 tidal surge belt in north Kozhikode."
+    },
+    "shelter_mananthavady": {
+        "id": "shelter_mananthavady", "name": "Mananthavady Kabani River High Plateau Hub",
+        "lat": 11.8060, "lng": 76.0120, "elevation": 800.0, "type": "shelter",
+        "district": "Wayanad", "region": "Highland", "capacity": 3000,
+        "desc": "Elevated plateau safe haven above Kabani river basin in north Wayanad."
+    },
+    "shelter_payyanur": {
+        "id": "shelter_payyanur", "name": "Payyanur Ezhimala Hilltop Relief Camp",
+        "lat": 12.1050, "lng": 75.2150, "elevation": 45.0, "type": "shelter",
+        "district": "Kannur", "region": "North", "capacity": 2600,
+        "desc": "Elevated hilltop camp near Ezhimala range above Perumba coastal surge area."
+    },
+    "shelter_kanhangad": {
+        "id": "shelter_kanhangad", "name": "Kanhangad Bekal Inland Elevated Station",
+        "lat": 12.3180, "lng": 75.1050, "elevation": 40.0, "type": "shelter",
+        "district": "Kasaragod", "region": "North", "capacity": 2800,
+        "desc": "Inland elevated relief station above Bekal coastal floodplain, south Kasaragod."
     }
 }
 
@@ -557,7 +643,23 @@ EDGE_DEFINITIONS = [
     {"id": "e_kozhikode_shelter", "u": "kozhikode_city", "v": "shelter_kozhikode", "name": "Medical College Relief Expressway", "capacity": 2600, "elevation": 30.0, "flood_susceptibility": 0.10, "hazard": None},
     {"id": "e_wayanad_shelter", "u": "kalpetta", "v": "shelter_wayanad", "name": "SKMJ Plateau Shelter Ramp", "capacity": 1800, "elevation": 780.0, "flood_susceptibility": 0.15, "hazard": None},
     {"id": "e_kannur_shelter", "u": "kannur_city", "v": "shelter_kannur", "name": "Thavakkara University Gateway", "capacity": 2000, "elevation": 30.0, "flood_susceptibility": 0.10, "hazard": None},
-    {"id": "e_kasaragod_shelter", "u": "kasaragod_city", "v": "shelter_kasaragod", "name": "Tejaswini Hills University Highway", "capacity": 2200, "elevation": 45.0, "flood_susceptibility": 0.10, "hazard": None}
+    {"id": "e_kasaragod_shelter", "u": "kasaragod_city", "v": "shelter_kasaragod", "name": "Tejaswini Hills University Highway", "capacity": 2200, "elevation": 45.0, "flood_susceptibility": 0.10, "hazard": None},
+
+    # New Additional Shelter Connectors (one per district)
+    {"id": "e_attingal_shelter2", "u": "attingal", "v": "shelter_attingal", "name": "Attingal Vellayambalam High Ascent", "capacity": 1600, "elevation": 28.0, "flood_susceptibility": 0.10, "hazard": None},
+    {"id": "e_karunagappally_shelter2", "u": "karunagappally", "v": "shelter_karunagappally", "name": "Karunagappally Inland Relief Link", "capacity": 1500, "elevation": 20.0, "flood_susceptibility": 0.12, "hazard": None},
+    {"id": "e_adoor_shelter2", "u": "adoor", "v": "shelter_adoor", "name": "Adoor NSS College Ridge Road", "capacity": 1500, "elevation": 42.0, "flood_susceptibility": 0.10, "hazard": None},
+    {"id": "e_cherthala_shelter2", "u": "cherthala", "v": "shelter_cherthala", "name": "Cherthala Inland Relief Ascent", "capacity": 1600, "elevation": 12.0, "flood_susceptibility": 0.20, "hazard": None},
+    {"id": "e_pala_shelter2", "u": "pala", "v": "shelter_pala", "name": "Pala Alphonsa College Hill Climb", "capacity": 1500, "elevation": 40.0, "flood_susceptibility": 0.10, "hazard": None},
+    {"id": "e_kattappana_shelter2", "u": "kattappana", "v": "shelter_kattappana", "name": "Kattappana Plateau Emergency Ramp", "capacity": 1200, "elevation": 960.0, "flood_susceptibility": 0.12, "hazard": None},
+    {"id": "e_angamaly_shelter2", "u": "angamaly", "v": "shelter_angamaly", "name": "Angamaly Airport Campus Relief Link", "capacity": 1800, "elevation": 18.0, "flood_susceptibility": 0.15, "hazard": None},
+    {"id": "e_wadakkanchery_shelter2", "u": "wadakkanchery", "v": "shelter_wadakkanchery", "name": "Wadakkanchery Ridge Shelter Road", "capacity": 1600, "elevation": 32.0, "flood_susceptibility": 0.10, "hazard": None},
+    {"id": "e_shoranur_shelter2", "u": "shoranur", "v": "shelter_shoranur", "name": "Shoranur Ridge Shelter Access", "capacity": 1500, "elevation": 55.0, "flood_susceptibility": 0.10, "hazard": None},
+    {"id": "e_tirur_shelter2", "u": "tirur", "v": "shelter_tirur", "name": "Tirur Govt Campus Approach", "capacity": 1500, "elevation": 18.0, "flood_susceptibility": 0.12, "hazard": None},
+    {"id": "e_vadakara_shelter2", "u": "vadakara", "v": "shelter_vadakara", "name": "Vadakara Ridge Relief Station Link", "capacity": 1600, "elevation": 22.0, "flood_susceptibility": 0.10, "hazard": None},
+    {"id": "e_mananthavady_shelter2", "u": "mananthavady", "v": "shelter_mananthavady", "name": "Mananthavady Plateau Shelter Ramp", "capacity": 1600, "elevation": 780.0, "flood_susceptibility": 0.15, "hazard": None},
+    {"id": "e_payyanur_shelter2", "u": "payyanur", "v": "shelter_payyanur", "name": "Payyanur Ezhimala Hilltop Access", "capacity": 1500, "elevation": 30.0, "flood_susceptibility": 0.10, "hazard": None},
+    {"id": "e_kanhangad_shelter2", "u": "kanhangad", "v": "shelter_kanhangad", "name": "Kanhangad Bekal Inland Camp Link", "capacity": 1600, "elevation": 25.0, "flood_susceptibility": 0.10, "hazard": None}
 ]
 
 # -----------------------------------------------------------------------------
@@ -701,33 +803,36 @@ ROAD_CLOSURE_PRESETS = [
 def fetch_osrm_route(u_coord, v_coord):
     """
     Query OSRM for driving coordinates between [lat1, lng1] and [lat2, lng2].
+    Retries once on failure (for slow ghat/mountain routes).
     Downsamples coordinates so Leaflet renders instantly with exact road fidelity.
     """
     lng1, lat1 = u_coord[1], u_coord[0]
     lng2, lat2 = v_coord[1], v_coord[0]
     url = f"http://router.project-osrm.org/route/v1/driving/{lng1},{lat1};{lng2},{lat2}?overview=full&geometries=geojson"
-    req = urllib.request.Request(url, headers={"User-Agent": "KeralaSafeRoute/2.0"})
-    
-    try:
-        resp = urllib.request.urlopen(req, timeout=8)
-        data = json.loads(resp.read().decode("utf-8"))
-        if data.get("code") == "Ok" and len(data.get("routes", [])) > 0:
-            route = data["routes"][0]
-            raw_coords = route["geometry"]["coordinates"]
-            distance_km = round(route["distance"] / 1000.0, 1)
 
-            # Convert [lng, lat] -> [lat, lng] and downsample
-            lat_lngs = [[round(pt[1], 5), round(pt[0], 5)] for pt in raw_coords]
-            
-            # Downsample to ~40-70 points max to keep file compact and blazing fast
-            step = max(1, len(lat_lngs) // 50)
-            sampled = lat_lngs[::step]
-            if sampled[-1] != lat_lngs[-1]:
-                sampled.append(lat_lngs[-1])
-            return sampled, distance_km
-    except Exception as e:
-        pass
-    
+    for attempt in range(2):  # Try up to 2 times
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "KeralaSafeRoute/2.0"})
+            resp = urllib.request.urlopen(req, timeout=15)
+            data = json.loads(resp.read().decode("utf-8"))
+            if data.get("code") == "Ok" and len(data.get("routes", [])) > 0:
+                route = data["routes"][0]
+                raw_coords = route["geometry"]["coordinates"]
+                distance_km = round(route["distance"] / 1000.0, 1)
+
+                # Convert [lng, lat] -> [lat, lng] and downsample
+                lat_lngs = [[round(pt[1], 5), round(pt[0], 5)] for pt in raw_coords]
+
+                # Downsample to ~40-70 points max to keep file compact and blazing fast
+                step = max(1, len(lat_lngs) // 50)
+                sampled = lat_lngs[::step]
+                if sampled[-1] != lat_lngs[-1]:
+                    sampled.append(lat_lngs[-1])
+                return sampled, distance_km
+        except Exception:
+            if attempt == 0:
+                time.sleep(2)  # Wait 2s before retry
+
     # Graceful geometric fallback (interpolate 10 smooth points)
     n_pts = 10
     interp = []

@@ -846,8 +846,8 @@ class PresentationDirector {
     // Dynamic KPI Parameter Pills
     let pillsHtml = `
       <span class="slide-pill primary">📍 Threat Origin: ${originNode.name} (+${originNode.elevation}m)</span>
-      <span class="slide-pill success">🏆 Primary Haven: ${shelterNode.name} (+${shelterNode.elevation}m)</span>
-      <span class="slide-pill primary">⛰️ Elevation Climb: +${elevationDiff}m</span>
+      <span class="slide-pill success"> Primary Haven: ${shelterNode.name} (+${shelterNode.elevation}m)</span>
+      <span class="slide-pill primary">️ Elevation Climb: +${elevationDiff}m</span>
     `;
 
     if (this.bypassedInfo) {
@@ -857,7 +857,7 @@ class PresentationDirector {
     if (this.candidateShelters && this.candidateShelters.length > 1) {
       const altId = this.candidateShelters.find(id => id !== this.shelterId && (!this.bypassedInfo || id !== this.bypassedInfo.closestShelterId));
       if (altId && KERALA_GRAPH_DATA.nodes[altId]) {
-        pillsHtml += `<span class="slide-pill primary">🏛️ Backup Haven: ${KERALA_GRAPH_DATA.nodes[altId].name} (+${KERALA_GRAPH_DATA.nodes[altId].elevation}m)</span>`;
+        pillsHtml += `<span class="slide-pill primary">️ Backup Haven: ${KERALA_GRAPH_DATA.nodes[altId].name} (+${KERALA_GRAPH_DATA.nodes[altId].elevation}m)</span>`;
       }
     }
 
@@ -873,14 +873,14 @@ class PresentationDirector {
   // PHASE 2: SHOW AVAILABLE ROUTES WITH ANIMATED VEHICLE FLOW PARTICLES
   // =========================================================================
   renderStep2_AvailableRoutes() {
-    this.hudSlideTitle.innerHTML = `<span>⚡ Phase 2: Parallel Corridor Discovery</span>`;
+    this.hudSlideTitle.innerHTML = `<span> Phase 2: Parallel Corridor Discovery</span>`;
     this.hudAlgoRuntimeBadge.textContent = "Graph BFS / DFS Traversal";
     this.hudSlidePunchline.textContent = `Exploration algorithms identify ${this.candidatePaths.length} multi-path highway corridors connecting the threatened sector to safety.`;
 
     this.hudSlidePills.innerHTML = `
-      <span class="slide-pill primary">⚡ ${this.candidatePaths.length} Parallel Corridors</span>
-      <span class="slide-pill success">🛣️ 4-Lane Highway Bypasses</span>
-      <span class="slide-pill amber">🚗 Multi-Route Flow Distribution</span>
+      <span class="slide-pill primary"> ${this.candidatePaths.length} Parallel Corridors</span>
+      <span class="slide-pill success">️ 4-Lane Highway Bypasses</span>
+      <span class="slide-pill amber"> Multi-Route Flow Distribution</span>
     `;
     this.hudSlideSubnote.textContent = `Search Space: Discovered ${this.candidatePaths.length} disjoint paths across ${KERALA_GRAPH_DATA.edges.length} state highway links`;
     this.hudCalcMatrix.style.display = "none";
@@ -913,14 +913,14 @@ class PresentationDirector {
   // PHASE 3: ROAD CAPACITIES & VEHICLE CONGESTION PARAMETERS
   // =========================================================================
   renderStep3_RoadCapacities() {
-    this.hudSlideTitle.innerHTML = `<span>🚗 Phase 3: Road Capacities & Congestion Parameters</span>`;
+    this.hudSlideTitle.innerHTML = `<span> Phase 3: Road Capacities & Congestion Parameters</span>`;
     this.hudAlgoRuntimeBadge.textContent = "Queuing & Throughput Model";
     this.hudSlidePunchline.textContent = `Assessing vehicular throughput: High-capacity 4-lane corridors (2400 v/h) prevent catastrophic gridlock compared to narrow bottlenecks.`;
 
     this.hudSlidePills.innerHTML = `
-      <span class="slide-pill success">🟢 Fast Bypass: 2,400 veh/hr (Low Congestion)</span>
-      <span class="slide-pill amber">🟡 Moderate: 1,500-1,800 veh/hr</span>
-      <span class="slide-pill warning">🔴 Choke Bridge: 900-1,200 veh/hr</span>
+      <span class="slide-pill success"> Fast Bypass: 2,400 veh/hr (Low Congestion)</span>
+      <span class="slide-pill amber"> Moderate: 1,500-1,800 veh/hr</span>
+      <span class="slide-pill warning"> Choke Bridge: 900-1,200 veh/hr</span>
     `;
     this.hudSlideSubnote.textContent = `Delay Model: CongestionMultiplier = 1.0 + max(0, (2200 - c_e) / 1400) × 0.65`;
     this.hudCalcMatrix.style.display = "none";
@@ -938,7 +938,7 @@ class PresentationDirector {
       chip.className = "capacity-chip";
       chip.style.left = `${midPt.x}px`;
       chip.style.top = `${midPt.y}px`;
-      chip.innerHTML = `🚗 <strong>${edge.capacity_veh_hr || 1200}</strong> <span style="font-size:9px;opacity:0.8;">veh/h</span>`;
+      chip.innerHTML = ` <strong>${edge.capacity_veh_hr || 1200}</strong> <span style="font-size:9px;opacity:0.8;">veh/h</span>`;
       this.badgesContainer.appendChild(chip);
     });
 
@@ -955,9 +955,9 @@ class PresentationDirector {
     this.hudSlidePunchline.textContent = `Simulated monsoon surge breaches low-elevation causeways (<3m). The system severs flooded links (Cost = ∞), rerouting traffic.`;
 
     this.hudSlidePills.innerHTML = `
-      <span class="slide-pill warning">🛑 Severed Corridors: W_e = ∞</span>
-      <span class="slide-pill warning">🌊 Flood Inundation Depressions</span>
-      <span class="slide-pill success">🛡️ Automatic Reroute Triggered</span>
+      <span class="slide-pill warning"> Severed Corridors: W_e = ∞</span>
+      <span class="slide-pill warning"> Flood Inundation Depressions</span>
+      <span class="slide-pill success">️ Automatic Reroute Triggered</span>
     `;
     this.hudSlideSubnote.textContent = `Failure Exclusion: Residual Graph G' = G \\ {Blocked Edges} for Dijkstra & Flow Engines`;
     this.hudCalcMatrix.style.display = "none";
@@ -988,7 +988,7 @@ class PresentationDirector {
         chip.className = "roadblock-chip";
         chip.style.left = `${edgeData.midPt.x}px`;
         chip.style.top = `${edgeData.midPt.y}px`;
-        chip.innerHTML = `🛑 <span>FLOOD SEVERED (+${edgeData.edge.elevation}m)</span>`;
+        chip.innerHTML = ` <span>FLOOD SEVERED (+${edgeData.edge.elevation}m)</span>`;
         this.badgesContainer.appendChild(chip);
       }
     });
@@ -1005,9 +1005,9 @@ class PresentationDirector {
     this.hudSlidePunchline.textContent = `Physical street tiles dissolve into a clean blueprint canvas, isolating strictly the interconnected graph topology G = (V, E).`;
 
     this.hudSlidePills.innerHTML = `
-      <span class="slide-pill primary">📐 Topology G = (V, E)</span>
-      <span class="slide-pill success">🔬 Zero Visual Noise</span>
-      <span class="slide-pill primary">🌐 67 Vertices • 77 Edges</span>
+      <span class="slide-pill primary"> Topology G = (V, E)</span>
+      <span class="slide-pill success"> Zero Visual Noise</span>
+      <span class="slide-pill primary"> 67 Vertices • 77 Edges</span>
     `;
     this.hudSlideSubnote.textContent = `Graph Model: Eliminating geographic clutter to perform deterministic mathematical optimization`;
     this.hudCalcMatrix.style.display = "none";
@@ -1020,14 +1020,14 @@ class PresentationDirector {
   // PHASE 6: ROUTES TURN INTO STRAIGHT EDGES, PLACES TURN INTO NODES
   // =========================================================================
   renderStep6_StraightEdgesAndNodes(animateMorph = true) {
-    this.hudSlideTitle.innerHTML = `<span>📐 Phase 6: Morphing Geometry to Graph Theory</span>`;
+    this.hudSlideTitle.innerHTML = `<span> Phase 6: Morphing Geometry to Graph Theory</span>`;
     this.hudAlgoRuntimeBadge.textContent = "Geometric Path Interpolation";
     this.hudSlidePunchline.textContent = `Watch physical curvy highways snap into direct mathematical edges, while physical junctions transform into formal graph vertices.`;
 
     this.hudSlidePills.innerHTML = `
-      <span class="slide-pill primary">📏 Straight Vector Edges (E)</span>
+      <span class="slide-pill primary"> Straight Vector Edges (E)</span>
       <span class="slide-pill success">⭕ Formal Vertices (V)</span>
-      <span class="slide-pill amber">⚖️ Weights: Dist × Congestion × Risk</span>
+      <span class="slide-pill amber">️ Weights: Dist × Congestion × Risk</span>
     `;
     this.hudSlideSubnote.textContent = `Transformation: Curvy GIS Polylines → Linear Vector Edges with (d, c, r) weights`;
     this.hudCalcMatrix.style.display = "none";
@@ -1136,7 +1136,7 @@ class PresentationDirector {
           subText.setAttribute("y", curY + 26);
           subText.setAttribute("class", "morph-node-sublabel on-white");
           if (isOrigin) subText.textContent = `${node.name} (Origin)`;
-          else if (isOptimalShelter) subText.textContent = `${node.name} (★ Chosen)`;
+          else if (isOptimalShelter) subText.textContent = `${node.name} ( Chosen)`;
           else if (isBypassed) subText.textContent = `${node.name} (⚠️ Bypassed)`;
           else if (isShelter) subText.textContent = `${node.name} (Safe Haven)`;
           else subText.textContent = `+${node.elevation}m • ${node.name}`;
@@ -1192,7 +1192,7 @@ class PresentationDirector {
   // PHASE 7: EXECUTING GRAPH ALGORITHMS (INTERACTIVE MULTI-ALGORITHM LAB)
   // =========================================================================
   renderStep7_CalculationsExplained() {
-    this.hudSlideTitle.innerHTML = `<span>🧠 Phase 7: Executing Graph Algorithms</span>`;
+    this.hudSlideTitle.innerHTML = `<span> Phase 7: Executing Graph Algorithms</span>`;
     this.updateAlgoTabUI();
     this.renderCurrentAlgoTab();
   }
@@ -1242,9 +1242,9 @@ class PresentationDirector {
     this.hudSlidePunchline.textContent = `Priority queue relaxes edges wave-by-wave, penalizing vehicle congestion & flood elevation risk to isolate the safest evacuation corridor.`;
 
     this.hudSlidePills.innerHTML = `
-      <span class="slide-pill primary">⚡ Dijkstra min ∑ [Dist × (1 + Risk) × Congestion]</span>
-      <span class="slide-pill success">⛰️ High Ground Target: +${KERALA_GRAPH_DATA.nodes[this.shelterId]?.elevation}m</span>
-      <span class="slide-pill amber">🚗 Multi-Lane Bypass Favored</span>
+      <span class="slide-pill primary"> Dijkstra min ∑ [Dist × (1 + Risk) × Congestion]</span>
+      <span class="slide-pill success">️ High Ground Target: +${KERALA_GRAPH_DATA.nodes[this.shelterId]?.elevation}m</span>
+      <span class="slide-pill amber"> Multi-Lane Bypass Favored</span>
     `;
     this.hudSlideSubnote.textContent = `A* Consistency: f(n) = g(n) + h(n) guarantees optimal path expansion with minimal state evaluations`;
     if (this.algoStepStatus) this.algoStepStatus.textContent = `Dijkstra Wavefront: Relaxing node distances from S`;
@@ -1338,9 +1338,9 @@ class PresentationDirector {
     const totalFlow = this.maxFlowResult?.maxFlow || 2200;
 
     this.hudSlidePills.innerHTML = `
-      <span class="slide-pill primary">🌊 Max Evacuation Flow: ${totalFlow.toLocaleString()} veh/hr</span>
-      <span class="slide-pill success">🛣️ ${this.candidatePaths.length} Active Corridors</span>
-      <span class="slide-pill amber">⚡ Efficiency: 94.2%</span>
+      <span class="slide-pill primary"> Max Evacuation Flow: ${totalFlow.toLocaleString()} veh/hr</span>
+      <span class="slide-pill success">️ ${this.candidatePaths.length} Active Corridors</span>
+      <span class="slide-pill amber"> Efficiency: 94.2%</span>
     `;
     this.hudSlideSubnote.textContent = `Theorem: Total flow equals the sum of capacities pushed through all augmenting paths`;
     if (this.algoStepStatus) this.algoStepStatus.textContent = `Max-Flow: Pushing flow waves through parallel corridors`;
@@ -1393,9 +1393,9 @@ class PresentationDirector {
     const cutEdges = this.maxFlowResult?.minCutEdges || [];
 
     this.hudSlidePills.innerHTML = `
-      <span class="slide-pill warning">✂️ Min-Cut: ${cutEdges.length || 1} Saturated Choke Points</span>
+      <span class="slide-pill warning">️ Min-Cut: ${cutEdges.length || 1} Saturated Choke Points</span>
       <span class="slide-pill amber">⚠️ Capacity: ${this.maxFlowResult?.maxFlow.toLocaleString() || 2200} veh/hr</span>
-      <span class="slide-pill primary">🚦 Action: Contra-Flow Lanes</span>
+      <span class="slide-pill primary"> Action: Contra-Flow Lanes</span>
     `;
     this.hudSlideSubnote.textContent = `Max-Flow Min-Cut Theorem: Maximum network flow strictly equals the capacity of the minimum cut`;
     if (this.algoStepStatus) this.algoStepStatus.textContent = `Min-Cut: Saturated choke points flagged in flashing crimson`;
@@ -1454,9 +1454,9 @@ class PresentationDirector {
     const mstKm = this.mstResult?.totalKm || 1240;
 
     this.hudSlidePills.innerHTML = `
-      <span class="slide-pill success">🌲 Total Backbone Length: ${mstKm} km</span>
-      <span class="slide-pill primary">🏛️ 67 Response Hubs Connected</span>
-      <span class="slide-pill success">🔄 0 Cycles (Pure Acyclic Tree)</span>
+      <span class="slide-pill success"> Total Backbone Length: ${mstKm} km</span>
+      <span class="slide-pill primary">️ 67 Response Hubs Connected</span>
+      <span class="slide-pill success"> 0 Cycles (Pure Acyclic Tree)</span>
     `;
     this.hudSlideSubnote.textContent = `Kruskal greedy edge selection: O(E log E) using Union-Find cycle detection`;
     if (this.algoStepStatus) this.algoStepStatus.textContent = `Kruskal MST: Emergency communications backbone deployed`;
@@ -1577,14 +1577,14 @@ class PresentationDirector {
   renderStep8_HighlightOptimalEdge() {
     const shelterNode = KERALA_GRAPH_DATA.nodes[this.shelterId] || { name: "Safe Haven", elevation: 45 };
 
-    this.hudSlideTitle.innerHTML = `<span>✨ Phase 8: Optimal Route Selected &amp; Choke Points Flagged</span>`;
+    this.hudSlideTitle.innerHTML = `<span> Phase 8: Optimal Route Selected &amp; Choke Points Flagged</span>`;
     this.hudAlgoRuntimeBadge.textContent = "Final Policy Output";
     this.hudSlidePunchline.textContent = `The algorithm selects the winning optimal evacuation corridor (cyan) and highlights saturated Min-Cut choke points (crimson) for contra-flow enforcement.`;
 
     this.hudSlidePills.innerHTML = `
-      <span class="slide-pill success">🏆 Winning Corridor: ${this.optimalPath?.totalKm} km to ${shelterNode.name}</span>
+      <span class="slide-pill success"> Winning Corridor: ${this.optimalPath?.totalKm} km to ${shelterNode.name}</span>
       <span class="slide-pill primary">⏱️ Estimated Travel: ${this.optimalPath?.totalMinutes || 45} min</span>
-      <span class="slide-pill warning">🛑 Bottlenecks Isolated: Police Marshals Assigned</span>
+      <span class="slide-pill warning"> Bottlenecks Isolated: Police Marshals Assigned</span>
     `;
     this.hudSlideSubnote.textContent = `Optimal Path Traversal: [${this.optimalPath?.pathNodes?.join(" → ")}]`;
 
@@ -1642,14 +1642,14 @@ class PresentationDirector {
     const originName = KERALA_GRAPH_DATA.nodes[this.originId]?.name || "Origin";
     const shelterName = KERALA_GRAPH_DATA.nodes[this.shelterId]?.name || "Safe Haven";
 
-    this.hudSlideTitle.innerHTML = `<span>🌍 Phase 9: Warping Back to Physical Geography</span>`;
+    this.hudSlideTitle.innerHTML = `<span> Phase 9: Warping Back to Physical Geography</span>`;
     this.hudAlgoRuntimeBadge.textContent = "Actionable Evacuation Plan";
     this.hudSlidePunchline.textContent = `Abstract straight edges bend and warp back into physical highway curves as satellite maps re-emerge. Evacuation route deployed!`;
 
     this.hudSlidePills.innerHTML = `
-      <span class="slide-pill success">🚀 Ready: ${this.optimalPath?.totalKm} km to ${shelterName}</span>
-      <span class="slide-pill primary">🛣️ Real Roadway Navigation Active</span>
-      <span class="slide-pill success">🛡️ Zero Flood Breaches Traversed</span>
+      <span class="slide-pill success"> Ready: ${this.optimalPath?.totalKm} km to ${shelterName}</span>
+      <span class="slide-pill primary">️ Real Roadway Navigation Active</span>
+      <span class="slide-pill success">️ Zero Flood Breaches Traversed</span>
     `;
     this.hudSlideSubnote.textContent = `Evacuation Corridor: ${originName} → ${shelterName} via High-Capacity Bypass`;
     this.hudCalcMatrix.style.display = "none";
@@ -1845,7 +1845,7 @@ class PresentationDirector {
             if (isOrigin) {
               subText.textContent = `${node.name} (Origin)`;
             } else if (isOptimalShelter) {
-              subText.textContent = `${node.name} (★ Chosen Haven)`;
+              subText.textContent = `${node.name} ( Chosen Haven)`;
               subText.style.fill = "#059669";
               subText.style.fontWeight = "800";
             } else if (isBypassedShelter) {
@@ -1914,8 +1914,8 @@ class PresentationDirector {
       const isOptimal = this.isEdgeInOptimalPath(edge);
       const isBlocked = this.predictedBlockedEdges.has(edge.id);
       let statusHtml = '<span style="color:#38bdf8;">Active Link</span>';
-      if (isOptimal) statusHtml = '<span style="color:#34d399; font-weight:800;">★ Winning Optimal Route</span>';
-      if (isBlocked) statusHtml = '<span style="color:#fb7185; font-weight:800;">⛔ Predicted Flood Severance</span>';
+      if (isOptimal) statusHtml = '<span style="color:#34d399; font-weight:800;"> Winning Optimal Route</span>';
+      if (isBlocked) statusHtml = '<span style="color:#fb7185; font-weight:800;"> Predicted Flood Severance</span>';
 
       this.tooltip.innerHTML = `
         <div style="font-weight:800; font-size:12px; margin-bottom:3px;">${edge.name || 'Highway Corridor'}</div>
@@ -1938,7 +1938,7 @@ class PresentationDirector {
       const isShelter = node.id === this.shelterId;
       let roleHtml = '<span style="color:#94a3b8;">Highway Intersection</span>';
       if (isOrigin) roleHtml = '<span style="color:#38bdf8; font-weight:800;">📍 Evacuation Origin (S)</span>';
-      if (isShelter) roleHtml = '<span style="color:#34d399; font-weight:800;">🏛️ Safe Haven Refuge (T)</span>';
+      if (isShelter) roleHtml = '<span style="color:#34d399; font-weight:800;">️ Safe Haven Refuge (T)</span>';
 
       this.tooltip.innerHTML = `
         <div style="font-weight:800; font-size:12px; margin-bottom:3px;">${node.name}</div>

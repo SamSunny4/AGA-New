@@ -384,10 +384,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (badge) {
       if (isPython) {
         badge.className = "backend-chip python";
-        badge.textContent = "🐍 Python 3.13 NetworkX Backend";
+        badge.textContent = " Python 3.13 NetworkX Backend";
       } else {
         badge.className = "backend-chip fallback";
-        badge.textContent = "⚡ Browser Client Engine";
+        badge.textContent = " Browser Client Engine";
       }
     }
   }
