@@ -22,6 +22,7 @@ from backend.graph_data import NODES, EDGES, HAZARD_ZONES, METADATA
 from backend.dijkstra import run_dijkstra, evaluate_edge
 from backend.mst import run_kruskal, run_prim
 from backend.maxflow import compute_max_flow
+from backend.tsp import compute_disaster_region_tsp
 
 # Sample fallback graphs for Algorithm Lab
 SAMPLE_MST_GRAPH = {
@@ -81,8 +82,8 @@ class SafeRouteAPIHandler(SimpleHTTPRequestHandler):
             self.send_json({
                 "status": "online",
                 "backend": "Python 3.13 NetworkX PlanEsc Engine",
-                "algorithms": ["Dijkstra", "A*", "Kruskal MST", "Prim MST", "Edmonds-Karp MaxFlow", "Min-Cut"],
-                "region": "Kochi, Kerala"
+                "algorithms": ["Dijkstra", "A*", "Kruskal MST", "Prim MST", "Edmonds-Karp MaxFlow", "Min-Cut", "Travelling Salesman (TSP)"],
+                "region": "State of Kerala"
             })
             return
 
@@ -159,6 +160,17 @@ class SafeRouteAPIHandler(SimpleHTTPRequestHandler):
             edges = body.get("edges", SAMPLE_FLOW_GRAPH["edges"])
 
             result = compute_max_flow(nodes, edges, source, sink)
+            self.send_json(result)
+            return
+
+        # 4. Travelling Salesman Problem (TSP) Rescue Route Endpoint: /api/tsp
+        if path == "/api/tsp":
+            hazard_zone_id = body.get("hazardZoneId") or body.get("hazardZone") or "hazard_kuttanad"
+            base_node_id = body.get("startNodeId") or body.get("baseNodeId")
+            custom_nodes = body.get("nodes", NODES)
+            custom_edges = body.get("edges", EDGES)
+
+            result = compute_disaster_region_tsp(custom_nodes, custom_edges, hazard_zone_id, base_node_id)
             self.send_json(result)
             return
 

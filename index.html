@@ -61,9 +61,6 @@
           </h2>
           <span class="panel-badge">Statewide Network</span>
         </div>
-        <p class="panel-desc">
-          Statewide 14-district disaster evacuation planner. Simulate safest routes to regional high-ground sanctuaries.
-        </p>
       </div>
 
       <div class="panel-body">
@@ -104,6 +101,69 @@
                 <input type="checkbox" id="storm-quick-toggle">
                 <span class="toggle-slider"></span>
               </label>
+            </div>
+
+            <!-- Option 3: Rescue Vehicle TSP Tour in Disaster Region -->
+            <div class="quick-toggle-row tsp-highlight-row">
+              <div class="quick-toggle-info">
+                <span class="quick-toggle-title">🚑 Rescue Vehicle Path (TSP)</span>
+                <span class="quick-toggle-sub" id="tsp-toggle-sub">Optimal disaster zone tour via Travelling Salesman</span>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="tsp-quick-toggle">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <!-- Collapsible TSP Region Selection & Live Mission Stats Card -->
+            <div class="tsp-mission-box" id="tsp-mission-box" style="display: none;">
+              <div class="tsp-select-group">
+                <label class="tsp-label" for="tsp-hazard-select">Target Disaster Region:</label>
+                <select id="tsp-hazard-select" class="tsp-region-dropdown">
+                  <option value="hazard_kuttanad" selected>🌊 Kuttanad Delta Basin (Flood Inundation)</option>
+                  <option value="hazard_periyar">🌊 Periyar River Floodplain (Dam Spillway Surge)</option>
+                  <option value="hazard_wayanad">⛰️ Wayanad Meppadi &amp; Churam (Landslides)</option>
+                  <option value="hazard_pamba">🌊 Pamba &amp; Achankovil River Basin (Confluence Flood)</option>
+                  <option value="hazard_idukki">⛰️ Idukki &amp; Munnar Corridor (Rockfalls)</option>
+                  <option value="hazard_sea_erosion">🌊 Coastal Marine Surge &amp; Erosion Belt</option>
+                </select>
+              </div>
+
+              <!-- Starting Point (Rescue Base / Hub Depot) -->
+              <div class="tsp-select-group">
+                <label class="tsp-label" for="tsp-start-node-select">Starting Point (Rescue Base / Hub):</label>
+                <select id="tsp-start-node-select" class="tsp-region-dropdown">
+                  <!-- Dynamically populated based on chosen region -->
+                </select>
+              </div>
+
+              <div class="tsp-stats-grid">
+                <div class="tsp-stat-card">
+                  <span class="tsp-stat-val" id="tsp-total-dist">-- km</span>
+                  <span class="tsp-stat-lbl">TSP Tour Dist</span>
+                </div>
+                <div class="tsp-stat-card">
+                  <span class="tsp-stat-val" id="tsp-est-time">-- min</span>
+                  <span class="tsp-stat-lbl">Rescue Time</span>
+                </div>
+                <div class="tsp-stat-card">
+                  <span class="tsp-stat-val" id="tsp-saved-pct">--%</span>
+                  <span class="tsp-stat-lbl">2-Opt Saved</span>
+                </div>
+              </div>
+
+              <div class="tsp-tour-sequence">
+                <div class="tsp-seq-header">
+                  <span>Rescue Circuit Stops</span>
+                  <span class="tsp-badge-algo">2-Opt TSP</span>
+                </div>
+                <div class="tsp-seq-list" id="tsp-seq-list"></div>
+              </div>
+
+              <button type="button" class="btn-dispatch-rescue" id="btn-dispatch-rescue" title="Watch rescue vehicle traverse optimal multi-point route">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                <span>Dispatch &amp; Animate Rescue Vehicle</span>
+              </button>
             </div>
 
           </div>
@@ -470,6 +530,7 @@
             <button type="button" class="algo-tab" data-algo="maxflow"> Edmonds-Karp Flow (Vehicle Volume)</button>
             <button type="button" class="algo-tab" data-algo="mincut">️ Min-Cut Choke Points (Bottlenecks)</button>
             <button type="button" class="algo-tab" data-algo="mst"> Spanning Tree (Emergency Backbone)</button>
+            <button type="button" class="algo-tab" data-algo="tsp">🚑 Travelling Salesman (TSP Rescue)</button>
           </div>
 
           <!-- Dynamic Calculation Highlights Matrix -->
@@ -536,6 +597,7 @@
   <script src="js/graph-data.js"></script>
   <script src="js/dijkstra.js"></script>
   <script src="js/maxflow.js"></script>
+  <script src="js/tsp.js"></script>
   <script src="js/presentation-morph.js"></script>
   <script src="js/app-planner.js"></script>
 </body>

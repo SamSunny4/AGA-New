@@ -95,6 +95,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const capacityLayerGroup = L.layerGroup().addTo(map);
   const nodeLayerGroup = L.layerGroup().addTo(map);
   const routeLayerGroup = L.layerGroup().addTo(map);
+  const tspLayerGroup = L.layerGroup().addTo(map);
 
   function setBasemap(name) {
     if (!BASEMAPS[name] || currentBasemap === name) return;
@@ -108,6 +109,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (map.hasLayer(routeLayerGroup)) routeLayerGroup.bringToFront?.();
     if (map.hasLayer(nodeLayerGroup)) nodeLayerGroup.bringToFront?.();
     if (map.hasLayer(capacityLayerGroup)) capacityLayerGroup.bringToFront?.();
+    if (map.hasLayer(tspLayerGroup)) tspLayerGroup.bringToFront?.();
 
     document.querySelectorAll(".basemap-option-card").forEach(card => {
       card.classList.toggle("active", card.dataset.basemap === name);
@@ -240,8 +242,35 @@ document.addEventListener("DOMContentLoaded", () => {
 
       polygon.bindTooltip(`
         <div style="font-weight:700; color:${zone.color};">⚠️ ${zone.name}</div>
-        <div style="font-size:11px; color:#cbd5e1; max-width:220px;">${zone.desc}</div>
+        <div style="font-size:11px; color:#cbd5e1; max-width:220px; margin-bottom:4px;">${zone.desc}</div>
+        <div style="font-size:10px; color:#f59e0b; font-weight:700;">📍 Click to Deploy Rescue Vehicle Path (TSP)</div>
       `, { sticky: true, className: "custom-tooltip" });
+
+      polygon.bindPopup(`
+        <div class="map-popup-inner" style="min-width: 220px;">
+          <div class="map-popup-title" style="color: ${zone.color}; font-weight: 800;">⚠️ ${zone.name}</div>
+          <div class="map-popup-meta">
+            <div>${zone.desc}</div>
+            <div style="margin-top:4px;"><strong>Hazard Type:</strong> ${zone.type || 'Inundation Surge'}</div>
+          </div>
+          <button type="button" class="btn-popup-tsp" id="btn-popup-tsp-${zone.id}">
+            🚑 Show Rescue Vehicle Path (TSP)
+          </button>
+        </div>
+      `, { className: "custom-popup" });
+
+      polygon.on("click", () => {
+        activateTspForHazardZone(zone.id);
+      });
+
+      polygon.on("popupopen", () => {
+        const btn = document.getElementById(`btn-popup-tsp-${zone.id}`);
+        if (btn) {
+          btn.addEventListener("click", () => {
+            activateTspForHazardZone(zone.id);
+          });
+        }
+      });
 
       hazardLayerGroup.addLayer(polygon);
     });
@@ -1007,6 +1036,265 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // =========================================================================
+  // TRAVELLING SALESMAN PROBLEM (TSP) RESCUE VEHICLE ROUTE CONTROLLER
+  // =========================================================================
+  const tspQuickToggle = document.getElementById("tsp-quick-toggle");
+  const tspMissionBox = document.getElementById("tsp-mission-box");
+  const tspHazardSelect = document.getElementById("tsp-hazard-select");
+  const tspStartNodeSelect = document.getElementById("tsp-start-node-select");
+  const tspTotalDist = document.getElementById("tsp-total-dist");
+  const tspEstTime = document.getElementById("tsp-est-time");
+  const tspSavedPct = document.getElementById("tsp-saved-pct");
+  const tspSeqList = document.getElementById("tsp-seq-list");
+  const btnDispatchRescue = document.getElementById("btn-dispatch-rescue");
+
+  state.showTspRoute = false;
+  state.selectedTspZone = "hazard_kuttanad";
+  state.selectedTspStartNode = null;
+  let activeTspResult = null;
+  let vehicleAnimFrame = null;
+  let vehicleMarker = null;
+
+  function populateTspStartNodeDropdown(hazardZoneId, preferredStartId = null) {
+    if (!tspStartNodeSelect || typeof TravellingSalesmanRouter === "undefined") return;
+    const candidates = TravellingSalesmanRouter.getRegionCandidateNodes(hazardZoneId, KERALA_GRAPH_DATA.nodes);
+    tspStartNodeSelect.innerHTML = "";
+    
+    candidates.forEach(cand => {
+      const opt = document.createElement("option");
+      opt.value = cand.id;
+      opt.textContent = `${cand.isDefaultBase ? '🚨 ' : '📍 '}${cand.name} ${cand.isDefaultBase ? '(Base Camp HQ)' : ''}`;
+      if (preferredStartId && cand.id === preferredStartId) {
+        opt.selected = true;
+      } else if (!preferredStartId && cand.isDefaultBase) {
+        opt.selected = true;
+      }
+      tspStartNodeSelect.appendChild(opt);
+    });
+
+    state.selectedTspStartNode = tspStartNodeSelect.value;
+  }
+
+  function renderTspRescueRoute(hazardZoneId, customStartId = null, autoZoom = true) {
+    tspLayerGroup.clearLayers();
+    if (vehicleAnimFrame) {
+      cancelAnimationFrame(vehicleAnimFrame);
+      vehicleAnimFrame = null;
+    }
+    vehicleMarker = null;
+
+    if (!state.showTspRoute) {
+      if (tspMissionBox) tspMissionBox.style.display = "none";
+      return;
+    }
+
+    if (tspMissionBox) tspMissionBox.style.display = "flex";
+
+    if (typeof TravellingSalesmanRouter === "undefined") {
+      console.warn("TravellingSalesmanRouter not loaded");
+      return;
+    }
+
+    const startId = customStartId || (tspStartNodeSelect ? tspStartNodeSelect.value : null);
+    const result = TravellingSalesmanRouter.computeDisasterRegionTSP(
+      KERALA_GRAPH_DATA.nodes,
+      KERALA_GRAPH_DATA.edges,
+      hazardZoneId,
+      startId
+    );
+    activeTspResult = result;
+
+    if (tspTotalDist) tspTotalDist.textContent = `${result.totalDistanceKm} km`;
+    if (tspEstTime) tspEstTime.textContent = `${result.totalDurationMin} min`;
+    if (tspSavedPct) tspSavedPct.textContent = `${result.optimization.reductionPercent}%`;
+
+    if (tspSeqList) {
+      tspSeqList.innerHTML = "";
+      result.rescueStops.forEach(stop => {
+        const item = document.createElement("div");
+        item.className = `tsp-seq-item ${stop.isBase ? 'is-base' : ''}`;
+        item.innerHTML = `
+          <span class="tsp-seq-num">${stop.isBase ? 'HQ' : '#' + stop.step}</span>
+          <span class="tsp-seq-name" title="${stop.name}">${stop.name}</span>
+          <span class="tsp-seq-survivors">${stop.isBase ? 'Staging Base' : '👥 ' + stop.survivors}</span>
+        `;
+        item.addEventListener("click", () => {
+          map.flyTo([stop.lat, stop.lng], 13, { duration: 0.8 });
+        });
+        tspSeqList.appendChild(item);
+      });
+    }
+
+    // Draw glowing TSP route
+    if (result.legs && result.legs.length > 0) {
+      result.legs.forEach(leg => {
+        if (leg.polyline && leg.polyline.length > 0) {
+          L.polyline(leg.polyline, {
+            color: "#f59e0b",
+            weight: 8,
+            opacity: 0.35,
+            lineCap: "round"
+          }).addTo(tspLayerGroup);
+
+          L.polyline(leg.polyline, {
+            color: "#d97706",
+            weight: 4.5,
+            opacity: 0.95,
+            className: "tsp-glowing-route"
+          }).addTo(tspLayerGroup);
+        }
+      });
+    }
+
+    // Place stop markers
+    const boundsLatLngs = [];
+    result.rescueStops.forEach(stop => {
+      boundsLatLngs.push([stop.lat, stop.lng]);
+      const isBase = stop.isBase;
+      const icon = L.divIcon({
+        className: "",
+        html: isBase
+          ? `<div class="tsp-marker-base">🚨 <span>HQ: ${stop.name}</span></div>`
+          : `<div class="tsp-marker-stop">🟡 <span>#${stop.step}: ${stop.name}</span></div>`,
+        iconSize: [120, 24],
+        iconAnchor: [60, 12]
+      });
+
+      const marker = L.marker([stop.lat, stop.lng], { icon });
+      marker.bindPopup(`
+        <div style="font-family: var(--font-sans); min-width: 200px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <strong style="color:${isBase ? '#059669' : '#d97706'}; font-size:12px;">
+              ${isBase ? '🚨 Staging Rescue Base' : '📍 Rescue Stop #' + stop.step}
+            </strong>
+            <span style="font-size:10px; background:#f1f5f9; padding:1px 6px; border-radius:999px; font-weight:700;">+${stop.elevation}m</span>
+          </div>
+          <div style="font-size:12px; font-weight:700; color:#0f172a; margin-bottom:4px;">${stop.name}</div>
+          <div style="font-size:11px; color:#64748b; line-height:1.4; margin-bottom:6px;">${stop.desc}</div>
+          ${!isBase ? `<div style="font-size:11px; color:#b45309; font-weight:700;">👥 Survivors Awaiting Evac: ${stop.survivors}</div>` : ''}
+        </div>
+      `, { className: "custom-popup" });
+
+      marker.addTo(tspLayerGroup);
+    });
+
+    if (autoZoom && boundsLatLngs.length > 0) {
+      map.fitBounds(L.latLngBounds(boundsLatLngs), {
+        paddingTopLeft: [50, 50],
+        paddingBottomRight: [50, 50],
+        maxZoom: 13,
+        animate: true
+      });
+    }
+
+    if (result.fullPolyline && result.fullPolyline.length > 0) {
+      const startCoord = result.fullPolyline[0];
+      const vehicleIcon = L.divIcon({
+        className: "",
+        html: `<div class="tsp-vehicle-icon">🚑</div>`,
+        iconSize: [32, 32],
+        iconAnchor: [16, 16]
+      });
+      vehicleMarker = L.marker(startCoord, { icon: vehicleIcon, zIndexOffset: 2000 }).addTo(tspLayerGroup);
+    }
+  }
+
+  function animateRescueVehicle() {
+    if (!activeTspResult || !activeTspResult.fullPolyline || activeTspResult.fullPolyline.length < 2) return;
+    if (vehicleAnimFrame) {
+      cancelAnimationFrame(vehicleAnimFrame);
+      vehicleAnimFrame = null;
+    }
+
+    const coords = activeTspResult.fullPolyline;
+    if (!vehicleMarker) {
+      const vehicleIcon = L.divIcon({
+        className: "",
+        html: `<div class="tsp-vehicle-icon">🚑</div>`,
+        iconSize: [32, 32],
+        iconAnchor: [16, 16]
+      });
+      vehicleMarker = L.marker(coords[0], { icon: vehicleIcon, zIndexOffset: 2000 }).addTo(tspLayerGroup);
+    }
+
+    const totalSegments = coords.length - 1;
+    const durationMs = Math.min(14000, Math.max(5000, totalSegments * 60));
+    let startTime = null;
+
+    function stepAnim(timestamp) {
+      if (!startTime) startTime = timestamp;
+      const elapsed = timestamp - startTime;
+      const progress = Math.min(1, elapsed / durationMs);
+
+      const exactIdx = progress * totalSegments;
+      const idx = Math.min(totalSegments - 1, Math.floor(exactIdx));
+      const subT = exactIdx - idx;
+
+      const p1 = coords[idx];
+      const p2 = coords[idx + 1] || p1;
+      const curLat = p1[0] + (p2[0] - p1[0]) * subT;
+      const curLng = p1[1] + (p2[1] - p1[1]) * subT;
+
+      vehicleMarker.setLatLng([curLat, curLng]);
+
+      if (progress < 1) {
+        vehicleAnimFrame = requestAnimationFrame(stepAnim);
+      } else {
+        vehicleAnimFrame = null;
+      }
+    }
+
+    vehicleAnimFrame = requestAnimationFrame(stepAnim);
+  }
+
+  function activateTspForHazardZone(zoneId, startId = null) {
+    state.showTspRoute = true;
+    state.selectedTspZone = zoneId;
+    if (tspQuickToggle) tspQuickToggle.checked = true;
+    if (tspHazardSelect) tspHazardSelect.value = zoneId;
+    populateTspStartNodeDropdown(zoneId, startId);
+    renderTspRescueRoute(zoneId, state.selectedTspStartNode, true);
+    setTimeout(() => {
+      animateRescueVehicle();
+    }, 400);
+  }
+  window.activateTSPForZone = activateTspForHazardZone;
+
+  if (tspQuickToggle) {
+    tspQuickToggle.addEventListener("change", (e) => {
+      state.showTspRoute = e.target.checked;
+      if (state.showTspRoute && (!tspStartNodeSelect || !tspStartNodeSelect.options.length)) {
+        populateTspStartNodeDropdown(state.selectedTspZone);
+      }
+      renderTspRescueRoute(state.selectedTspZone, state.selectedTspStartNode, true);
+    });
+  }
+
+  if (tspHazardSelect) {
+    tspHazardSelect.addEventListener("change", (e) => {
+      state.selectedTspZone = e.target.value;
+      populateTspStartNodeDropdown(state.selectedTspZone);
+      renderTspRescueRoute(state.selectedTspZone, state.selectedTspStartNode, true);
+    });
+  }
+
+  if (tspStartNodeSelect) {
+    tspStartNodeSelect.addEventListener("change", (e) => {
+      state.selectedTspStartNode = e.target.value;
+      renderTspRescueRoute(state.selectedTspZone, state.selectedTspStartNode, false);
+      setTimeout(() => {
+        animateRescueVehicle();
+      }, 200);
+    });
+  }
+
+  if (btnDispatchRescue) {
+    btnDispatchRescue.addEventListener("click", () => {
+      animateRescueVehicle();
+    });
+  }
+
   // Sidebar closure toggles
   const sidebarClosureToggles = document.querySelectorAll(".sidebar-closure-toggle");
   sidebarClosureToggles.forEach(toggle => {
@@ -1112,6 +1400,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
       sidebarClosureToggles.forEach(chk => { chk.checked = false; });
 
+      if (tspQuickToggle) tspQuickToggle.checked = false;
+      state.showTspRoute = false;
+      renderTspRescueRoute(state.selectedTspZone, false);
+
       populateFormControls();
       severityBtns.forEach(b => {
         b.classList.toggle("active", b.dataset.sev === "moderate");
@@ -1142,6 +1434,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Initialize UI
   populateFormControls();
+  populateTspStartNodeDropdown(state.selectedTspZone);
   recalculateAndRender();
 
   // =========================================================================

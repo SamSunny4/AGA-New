@@ -757,4 +757,95 @@
   pointer-events: none;
 }
 
+/* ==========================================================================
+   TSP MAP OVERLAYS & RESCUE VEHICLE STYLING
+   ========================================================================== */
+.tsp-glowing-route {
+  stroke-dasharray: 9 7;
+  animation: tspRouteFlow 1.2s linear infinite;
+}
+
+@keyframes tspRouteFlow {
+  from { stroke-dashoffset: 32; }
+  to { stroke-dashoffset: 0; }
+}
+
+.tsp-marker-base {
+  background: #059669;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 11px;
+  border-radius: 9999px;
+  padding: 3px 8px;
+  border: 2px solid #ffffff;
+  box-shadow: 0 3px 12px rgba(5, 150, 105, 0.45);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  cursor: pointer;
+  transform: translate(-50%, -50%);
+}
+
+.tsp-marker-stop {
+  background: #d97706;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 11px;
+  border-radius: 9999px;
+  padding: 3px 8px;
+  border: 2px solid #ffffff;
+  box-shadow: 0 3px 12px rgba(217, 119, 6, 0.45);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  cursor: pointer;
+  animation: tspPulseStop 2s infinite ease-in-out;
+  transform: translate(-50%, -50%);
+}
+
+@keyframes tspPulseStop {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  50% { transform: translate(-50%, -50%) scale(1.08); }
+}
+
+.tsp-vehicle-icon {
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 3px 12px rgba(225, 29, 72, 0.6));
+  animation: bounceSiren 0.8s infinite alternate;
+  transform: translate(-50%, -50%);
+}
+
+@keyframes bounceSiren {
+  0% { transform: translate(-50%, -50%) scale(1); }
+  100% { transform: translate(-50%, -60%) scale(1.15); }
+}
+
+.btn-popup-tsp {
+  margin-top: 8px;
+  width: 100%;
+  background: #f59e0b;
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: background 0.15s ease;
+}
+
+.btn-popup-tsp:hover {
+  background: #d97706;
+}
+
+
 

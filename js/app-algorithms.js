@@ -658,6 +658,262 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // =========================================================================
+  // 4. TRAVELLING SALESMAN PROBLEM (TSP) RESCUE TOUR (2-OPT LOCAL SEARCH)
+  // =========================================================================
+  const tspHazardSelect = document.getElementById("tsp-lab-hazard-select");
+  const tspLabStartSelect = document.getElementById("tsp-lab-start-select");
+  const tspRunBtn = document.getElementById("btn-run-tsp");
+  const tspSvg = document.getElementById("tsp-svg");
+  const tspResultDist = document.getElementById("tsp-result-dist");
+  const tspResultTime = document.getElementById("tsp-result-time");
+  const tspResultImprovement = document.getElementById("tsp-result-improvement");
+  const tspResultStops = document.getElementById("tsp-result-stops");
+  const tspInterpretation = document.getElementById("tsp-interpretation");
+  const tspStepsContainer = document.getElementById("tsp-steps-container");
+
+  function populateLabTspStartSelect(zoneId, preferredStartId = null) {
+    if (!tspLabStartSelect || !window.TravellingSalesmanRouter) return;
+    const candidates = window.TravellingSalesmanRouter.getRegionCandidateNodes(zoneId, window.KERALA_GRAPH_DATA?.nodes);
+    tspLabStartSelect.innerHTML = "";
+    candidates.forEach(cand => {
+      const opt = document.createElement("option");
+      opt.value = cand.id;
+      opt.textContent = `${cand.isDefaultBase ? '🚨 ' : '📍 '}${cand.name} ${cand.isDefaultBase ? '(Base HQ)' : ''}`;
+      if (preferredStartId && cand.id === preferredStartId) {
+        opt.selected = true;
+      } else if (!preferredStartId && cand.isDefaultBase) {
+        opt.selected = true;
+      }
+      tspLabStartSelect.appendChild(opt);
+    });
+  }
+
+  function renderTspSvg(tspResult) {
+    if (!tspSvg) return;
+    tspSvg.innerHTML = "";
+
+    if (!tspResult || !tspResult.tour || tspResult.tour.length < 2) {
+      const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      text.setAttribute("x", "270");
+      text.setAttribute("y", "180");
+      text.setAttribute("text-anchor", "middle");
+      text.setAttribute("fill", "#94a3b8");
+      text.textContent = "Select a disaster region to compute TSP tour";
+      tspSvg.appendChild(text);
+      return;
+    }
+
+    const tour = tspResult.tour;
+
+    // Arrow markers
+    const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+    defs.innerHTML = `
+      <marker id="arrow-tsp" viewBox="0 0 10 10" refX="24" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+        <path d="M 0 1 L 10 5 L 0 9 z" fill="#f59e0b"/>
+      </marker>
+    `;
+    tspSvg.appendChild(defs);
+
+    // Compute bounding box for projection
+    const uniqueNodesMap = new Map();
+    tour.forEach(n => {
+      if (!uniqueNodesMap.has(n.id)) {
+        uniqueNodesMap.set(n.id, n);
+      }
+    });
+    const uniqueNodes = Array.from(uniqueNodesMap.values());
+
+    const lats = uniqueNodes.map(n => n.lat);
+    const lons = uniqueNodes.map(n => n.lon);
+    let minLat = Math.min(...lats);
+    let maxLat = Math.max(...lats);
+    let minLon = Math.min(...lons);
+    let maxLon = Math.max(...lons);
+
+    // Padding span
+    let spanLat = maxLat - minLat;
+    let spanLon = maxLon - minLon;
+    if (spanLat === 0) spanLat = 0.05;
+    if (spanLon === 0) spanLon = 0.05;
+    const padLat = spanLat * 0.18;
+    const padLon = spanLon * 0.18;
+
+    minLat -= padLat;
+    maxLat += padLat;
+    minLon -= padLon;
+    maxLon += padLon;
+
+    const padX = 60;
+    const padY = 55;
+    const drawW = 540 - 2 * padX;
+    const drawH = 360 - 2 * padY;
+
+    function projectCoords(lat, lon) {
+      const x = padX + ((lon - minLon) / (maxLon - minLon)) * drawW;
+      const y = padY + ((maxLat - lat) / (maxLat - minLat)) * drawH;
+      return { x: Math.round(x), y: Math.round(y) };
+    }
+
+    // Map positions to tour items
+    const tourPoints = tour.map(item => {
+      const pt = projectCoords(item.lat, item.lon);
+      return { ...item, px: pt.x, py: pt.y };
+    });
+
+    // 1. Draw Tour Legs (Edges)
+    for (let i = 0; i < tourPoints.length - 1; i++) {
+      const u = tourPoints[i];
+      const v = tourPoints[i + 1];
+
+      // Connecting line
+      const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      line.setAttribute("x1", u.px);
+      line.setAttribute("y1", u.py);
+      line.setAttribute("x2", v.px);
+      line.setAttribute("y2", v.py);
+      line.setAttribute("stroke", "#f59e0b");
+      line.setAttribute("stroke-width", "2.5");
+      line.setAttribute("stroke-dasharray", "6 3");
+      line.setAttribute("marker-end", "url(#arrow-tsp)");
+      tspSvg.appendChild(line);
+
+      // Distance label
+      const midX = (u.px + v.px) / 2;
+      const midY = (u.py + v.py) / 2;
+
+      const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      rect.setAttribute("x", midX - 25);
+      rect.setAttribute("y", midY - 9);
+      rect.setAttribute("width", 50);
+      rect.setAttribute("height", 18);
+      rect.setAttribute("rx", 3);
+      rect.setAttribute("fill", "#0f172a");
+      rect.setAttribute("stroke", "#f59e0b");
+      rect.setAttribute("stroke-width", "1");
+      tspSvg.appendChild(rect);
+
+      const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      text.setAttribute("x", midX);
+      text.setAttribute("y", midY + 4);
+      text.setAttribute("text-anchor", "middle");
+      text.setAttribute("fill", "#fcd34d");
+      text.setAttribute("font-size", "10px");
+      text.setAttribute("font-family", "var(--font-mono, monospace)");
+      text.setAttribute("font-weight", "600");
+      text.textContent = `${v.legDistance} km`;
+      tspSvg.appendChild(text);
+    }
+
+    // 2. Draw Nodes (Base & Distress Stops)
+    const renderedNodes = new Set();
+    tourPoints.forEach((node, idx) => {
+      if (renderedNodes.has(node.id)) return;
+      renderedNodes.add(node.id);
+
+      const isBase = node.isBase;
+      const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+
+      // Circle
+      const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      circle.setAttribute("cx", node.px);
+      circle.setAttribute("cy", node.py);
+      circle.setAttribute("r", isBase ? 16 : 13);
+      circle.setAttribute("fill", isBase ? "#065f46" : "#78350f");
+      circle.setAttribute("stroke", isBase ? "#10b981" : "#f59e0b");
+      circle.setAttribute("stroke-width", isBase ? "3" : "2");
+      g.appendChild(circle);
+
+      // Label inside circle
+      const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      label.setAttribute("x", node.px);
+      label.setAttribute("y", node.py + 4);
+      label.setAttribute("text-anchor", "middle");
+      label.setAttribute("fill", "#ffffff");
+      label.setAttribute("font-size", isBase ? "9px" : "10px");
+      label.setAttribute("font-weight", "700");
+      label.setAttribute("font-family", "var(--font-sans, sans-serif)");
+      label.textContent = isBase ? "HQ" : `${idx}`;
+      g.appendChild(label);
+
+      // Node Name below circle
+      const nameText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      nameText.setAttribute("x", node.px);
+      nameText.setAttribute("y", node.py + (isBase ? 28 : 24));
+      nameText.setAttribute("text-anchor", "middle");
+      nameText.setAttribute("fill", isBase ? "#34d399" : "#e2e8f0");
+      nameText.setAttribute("font-size", "11px");
+      nameText.setAttribute("font-weight", "600");
+      nameText.setAttribute("font-family", "var(--font-sans, sans-serif)");
+      nameText.textContent = node.name.length > 18 ? node.name.substring(0, 16) + "…" : node.name;
+      g.appendChild(nameText);
+
+      tspSvg.appendChild(g);
+    });
+  }
+
+  function runTspCalculation() {
+    if (!tspHazardSelect || !window.TravellingSalesmanRouter) return;
+    const zoneId = tspHazardSelect.value;
+    const startId = tspLabStartSelect ? tspLabStartSelect.value : null;
+    const result = window.TravellingSalesmanRouter.computeDisasterRegionTSP(
+      window.KERALA_GRAPH_DATA?.nodes,
+      window.KERALA_GRAPH_DATA?.edges,
+      zoneId,
+      startId
+    );
+
+    if (!result) return;
+
+    // Update KPI summary cards
+    if (tspResultDist) tspResultDist.textContent = `${result.totalDistanceKm} km`;
+    if (tspResultTime) tspResultTime.textContent = `${result.estimatedTimeMin} min (~${(result.estimatedTimeMin / 60).toFixed(1)} hrs)`;
+    if (tspResultImprovement) tspResultImprovement.textContent = `+${result.improvementPercent}% (vs Naive ${result.nnDistanceKm} km)`;
+    if (tspResultStops) tspResultStops.textContent = `${result.stopsCount} Distress Targets (+ 1 Base)`;
+
+    if (tspInterpretation) {
+      const isExact = result.optimization?.isExactOptimal;
+      tspInterpretation.innerHTML = `
+        <strong>Operational Logistics Summary:</strong><br>
+        ${isExact ? '<strong>Provably Shortest Hamiltonian Cycle:</strong> Branch & Bound global optimization verified that ' : ''}
+        The emergency circuit spanning <strong>${result.totalDistanceKm} km</strong> serves <strong>${result.stopsCount} distress locations</strong> starting and concluding at <strong>${result.startNodeName || 'Base Depot'}</strong>.
+        Edge inversion untangled crossing paths to yield a <strong>${result.improvementPercent}% distance reduction</strong> compared to greedy Nearest Neighbor (${result.nnDistanceKm} km), saving vital fuel and approximately <strong>${Math.round((result.nnDistanceKm - result.totalDistanceKm) / 35 * 60)} minutes</strong> of critical emergency response time.
+      `;
+    }
+
+    // Populate steps container
+    if (tspStepsContainer) {
+      tspStepsContainer.innerHTML = "";
+      const tour = result.tour;
+      for (let i = 0; i < tour.length - 1; i++) {
+        const u = tour[i];
+        const v = tour[i + 1];
+        const isReturn = (i === tour.length - 2);
+
+        const stepDiv = document.createElement("div");
+        stepDiv.className = `step-row ${isReturn ? 'highlight' : ''}`;
+
+        stepDiv.innerHTML = `
+          <div class="step-header-text">
+            <span>Leg ${i + 1}: ${u.name} ➔ ${v.name} ${isReturn ? '(Return to HQ)' : ''}</span>
+            <span class="step-badge" style="background:#78350f; color:#fef3c7;">+${v.legDistance} km</span>
+          </div>
+          <div class="step-desc-text">
+            ${isReturn 
+              ? `Final transit to ${v.name} for survivor triage, battery recharge, and supply replenishments.` 
+              : `Disaster relief dispatched from ${u.name} to rescue pocket at ${v.name}.`}
+          </div>
+          <div style="font-family: var(--font-mono); font-size: 10px; color:#f59e0b; margin-top:2px;">
+            Cumulative Distance: ${v.cumulativeDistance} km • Est. Trip Time: ~${Math.round(v.cumulativeDistance / 35 * 60)} min
+          </div>
+        `;
+        tspStepsContainer.appendChild(stepDiv);
+      }
+    }
+
+    renderTspSvg(result);
+  }
+
+  // =========================================================================
   // Tab Switchers & Event Handlers
   // =========================================================================
   const tabButtons = document.querySelectorAll(".algo-tab-btn");
@@ -688,7 +944,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
   flowRunBtn.addEventListener("click", runFlowCalculation);
 
-  // Initial runs to populate all 3 views cleanly
+  if (tspRunBtn) tspRunBtn.addEventListener("click", runTspCalculation);
+  if (tspHazardSelect) {
+    tspHazardSelect.addEventListener("change", () => {
+      populateLabTspStartSelect(tspHazardSelect.value);
+      runTspCalculation();
+    });
+  }
+  if (tspLabStartSelect) {
+    tspLabStartSelect.addEventListener("change", runTspCalculation);
+  }
+
+  // Initial runs to populate all views cleanly
   renderDijkstraSvg();
   runDijkstraCalculation();
 
@@ -697,6 +964,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   renderFlowSvg();
   runFlowCalculation();
+
+  if (tspHazardSelect) {
+    populateLabTspStartSelect(tspHazardSelect.value);
+  }
+  runTspCalculation();
 
   // Probe Python backend health
   fetch("/api/health")

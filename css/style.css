@@ -682,6 +682,206 @@ html, body {
   justify-content: flex-end;
 }
 
+/* ==========================================================================
+   TRAVELLING SALESMAN PROBLEM (TSP) RESCUE MISSION STYLES
+   ========================================================================== */
+.quick-toggle-row.tsp-highlight-row {
+  border-left: 3px solid #f59e0b;
+  background: rgba(245, 158, 11, 0.05);
+}
+
+.quick-toggle-row.tsp-highlight-row:hover {
+  background: rgba(245, 158, 11, 0.09);
+}
+
+.tsp-mission-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-top: none;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  padding: 0.75rem 0.85rem;
+  margin-top: -0.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  animation: slideDownTsp 0.25s ease-out;
+}
+
+@keyframes slideDownTsp {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.tsp-select-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tsp-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.tsp-region-dropdown {
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: var(--radius-sm);
+  padding: 5px 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #0f172a;
+  outline: none;
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+}
+
+.tsp-region-dropdown:focus {
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.15);
+}
+
+.tsp-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.tsp-stat-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--radius-sm);
+  padding: 6px 4px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tsp-stat-val {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #b45309;
+  font-family: var(--font-mono);
+}
+
+.tsp-stat-lbl {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.tsp-tour-sequence {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--radius-sm);
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.tsp-seq-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #334155;
+}
+
+.tsp-badge-algo {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #b45309;
+  background: #fef3c7;
+  padding: 2px 6px;
+  border-radius: var(--radius-full);
+}
+
+.tsp-seq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-height: 120px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.tsp-seq-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: #1e293b;
+  padding: 2px 4px;
+  border-radius: 4px;
+  background: #f8fafc;
+}
+
+.tsp-seq-item.is-base {
+  background: #ecfdf5;
+  color: #047857;
+  font-weight: 700;
+}
+
+.tsp-seq-num {
+  font-weight: 800;
+  font-size: 0.68rem;
+  color: #d97706;
+  width: 18px;
+}
+
+.tsp-seq-item.is-base .tsp-seq-num {
+  color: #059669;
+}
+
+.tsp-seq-name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tsp-seq-survivors {
+  font-size: 0.65rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.btn-dispatch-rescue {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 7px 10px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.25);
+  transition: all var(--transition-fast);
+}
+
+.btn-dispatch-rescue:hover {
+  background: linear-gradient(135deg, #d97706, #b45309);
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.35);
+  transform: translateY(-1px);
+}
+
+.btn-dispatch-rescue:active {
+  transform: translateY(0);
+}
+
 @media (max-width: 900px) {
   .app-container {
     flex-direction: column;

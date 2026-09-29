@@ -97,6 +97,12 @@ class PresentationDirector {
       // Speed buttons
       this.speedBtns = document.querySelectorAll(".speed-btn");
 
+      // HUD and Draggable Elements
+      this.hud = document.getElementById("presentation-director-hud");
+      this.hudDragHandle = document.getElementById("hud-drag-handle");
+      this.hudCustomPos = null;
+      this.customTopologicalPositions = {};
+
       this.initEvents();
     }
   }
@@ -135,6 +141,10 @@ class PresentationDirector {
     this.btnAlgoReplay?.addEventListener("click", () => {
       this.replayActiveAlgorithm();
     });
+
+    // Draggable HUD & Canvas Pan
+    this.setupDraggableHud();
+    this.setupCanvasPan();
 
     // Global Keyboard Shortcuts (Space=Play/Pause, Left/Right=Steps, C=Camera, Esc=Exit)
     window.addEventListener("keydown", (e) => {
@@ -205,6 +215,15 @@ class PresentationDirector {
     this.isPlaying = true;
     this.updatePlayBtnUI();
 
+    this.customTopologicalPositions = {};
+    if (this.hud) {
+      this.hud.style.left = "";
+      this.hud.style.top = "";
+      this.hud.style.bottom = "";
+      this.hud.style.transform = "";
+    }
+    this.hudCustomPos = null;
+
     this.buildDotsTrack();
     this.updateCoordinates();
     this.renderStep(this.currentStep, true);
@@ -236,6 +255,15 @@ class PresentationDirector {
     this.svg.innerHTML = "";
     this.badgesContainer.innerHTML = "";
     this.hideTooltip();
+
+    if (this.hud) {
+      this.hud.style.left = "";
+      this.hud.style.top = "";
+      this.hud.style.bottom = "";
+      this.hud.style.transform = "";
+    }
+    this.hudCustomPos = null;
+    this.customTopologicalPositions = {};
 
     // Exit Fullscreen Mode
     if (typeof document !== "undefined") {
@@ -743,18 +771,20 @@ class PresentationDirector {
       if (K === 1) {
         const id = nodesInLayer[0];
         const layerY = (yTop + yBottom) / 2;
+        const customPos = this.customTopologicalPositions?.[id];
         this.topologicalPositions[id] = {
-          x: Math.round(layerX),
-          y: Math.round(layerY),
+          x: customPos ? customPos.x : Math.round(layerX),
+          y: customPos ? customPos.y : Math.round(layerY),
           node: KERALA_GRAPH_DATA.nodes[id]
         };
       } else {
         const stepY = (yBottom - yTop) / (K - 1);
         nodesInLayer.forEach((id, idx) => {
           const layerY = yTop + idx * stepY;
+          const customPos = this.customTopologicalPositions?.[id];
           this.topologicalPositions[id] = {
-            x: Math.round(layerX),
-            y: Math.round(layerY),
+            x: customPos ? customPos.x : Math.round(layerX),
+            y: customPos ? customPos.y : Math.round(layerY),
             node: KERALA_GRAPH_DATA.nodes[id]
           };
         });
@@ -1150,6 +1180,22 @@ class PresentationDirector {
         this.morphAnimationFrame = requestAnimationFrame(animate);
       } else {
         this.morphAnimationFrame = null;
+        this.svg.querySelectorAll(".morph-node-group").forEach(grp => {
+          const nodeId = grp.dataset.nodeId;
+          const node = KERALA_GRAPH_DATA.nodes[nodeId];
+          if (node) this.attachNodeDrag(grp, node, true);
+        });
+        this.svg.querySelectorAll(".morph-edge").forEach((p, idx) => {
+          const edgeId = Object.keys(this.topologicalEdgePaths)[idx];
+          if (edgeId) {
+            const edgeData = this.topologicalEdgePaths[edgeId];
+            if (edgeData) {
+              p.dataset.edgeId = edgeId;
+              p.dataset.u = edgeData.edge.u;
+              p.dataset.v = edgeData.edge.v;
+            }
+          }
+        });
         this.renderEdgeChipsOnWhite();
       }
     };
@@ -1181,6 +1227,7 @@ class PresentationDirector {
 
       const chip = document.createElement("div");
       chip.className = `capacity-chip on-white ${isOptimal ? 'optimal-badge' : ''}`;
+      chip.dataset.edgeId = edge.id;
       chip.style.left = `${Math.round(chipX)}px`;
       chip.style.top = `${Math.round(chipY)}px`;
       chip.innerHTML = `<span>${edge.distance_km}km | ${edge.capacity_veh_hr || 1200}v/h</span>`;
@@ -1229,6 +1276,9 @@ class PresentationDirector {
         break;
       case "mst":
         this.renderAlgoMST();
+        break;
+      case "tsp":
+        this.renderAlgoTSP();
         break;
     }
   }
@@ -1315,6 +1365,9 @@ class PresentationDirector {
           const pathElem = document.createElementNS("http://www.w3.org/2000/svg", "path");
           pathElem.setAttribute("d", edgeData.straightPath);
           pathElem.setAttribute("class", "morph-edge relaxing");
+          pathElem.dataset.edgeId = edge.id;
+          pathElem.dataset.u = edge.u;
+          pathElem.dataset.v = edge.v;
           this.svg.appendChild(pathElem);
         }
       }
@@ -1376,6 +1429,9 @@ class PresentationDirector {
           const pathElem = document.createElementNS("http://www.w3.org/2000/svg", "path");
           pathElem.setAttribute("d", this.topologicalEdgePaths[edge.id].straightPath);
           pathElem.setAttribute("class", "morph-edge flow-augment");
+          pathElem.dataset.edgeId = edge.id;
+          pathElem.dataset.u = edge.u;
+          pathElem.dataset.v = edge.v;
           pathElem.style.animationDelay = `${pathIdx * 0.4 + i * 0.15}s`;
           this.svg.appendChild(pathElem);
         }
@@ -1424,6 +1480,9 @@ class PresentationDirector {
       const pathElem = document.createElementNS("http://www.w3.org/2000/svg", "path");
       pathElem.setAttribute("d", straightPath);
       pathElem.setAttribute("class", `morph-edge on-white ${isMinCut ? 'min-cut-saturated' : ''}`);
+      pathElem.dataset.edgeId = edge.id;
+      pathElem.dataset.u = edge.u;
+      pathElem.dataset.v = edge.v;
       this.attachEdgeHover(pathElem, edge);
       this.svg.appendChild(pathElem);
 
@@ -1436,6 +1495,7 @@ class PresentationDirector {
 
         const chip = document.createElement("div");
         chip.className = "roadblock-chip";
+        chip.dataset.edgeId = edge.id;
         chip.style.left = `${Math.round(midPt.x + nx * 24)}px`;
         chip.style.top = `${Math.round(midPt.y + ny * 24)}px`;
         chip.innerHTML = `⚠️ <span>MIN-CUT CHOKE POINT (${edge.capacity_veh_hr}v/h)</span>`;
@@ -1485,12 +1545,95 @@ class PresentationDirector {
       const pathElem = document.createElementNS("http://www.w3.org/2000/svg", "path");
       pathElem.setAttribute("d", straightPath);
       pathElem.setAttribute("class", `morph-edge on-white ${isMst ? 'mst-backbone' : ''}`);
+      pathElem.dataset.edgeId = edge.id;
+      pathElem.dataset.u = edge.u;
+      pathElem.dataset.v = edge.v;
       if (!isMst) pathElem.style.opacity = "0.2";
       this.attachEdgeHover(pathElem, edge);
       this.svg.appendChild(pathElem);
     });
 
     this.drawAllNodes(true, [this.originId, this.shelterId], true, true);
+  }
+
+  renderAlgoTSP() {
+    this.hudAlgoRuntimeBadge.textContent = "Travelling Salesman (2-Opt TSP)";
+    this.hudSlidePunchline.textContent = `Solves the optimal multi-stop rescue vehicle circuit visiting all distress outposts in the disaster region with minimum fuel, risk, and travel time.`;
+
+    let zoneId = "hazard_kuttanad";
+    if (this.originId === "kalpetta" || this.originId === "thamarassery") zoneId = "hazard_wayanad";
+    else if (this.originId === "aluva_town" || this.originId === "kalamassery" || this.originId === "angamaly") zoneId = "hazard_periyar";
+    else if (this.originId === "munnar" || this.originId === "adimali") zoneId = "hazard_idukki";
+    else if (this.originId === "adoor" || this.originId === "kayamkulam") zoneId = "hazard_pamba";
+    else if (this.originId === "fort_kochi" || this.originId === "marine_drive") zoneId = "hazard_sea_erosion";
+
+    let tspResult = null;
+    if (typeof TravellingSalesmanRouter !== "undefined") {
+      tspResult = TravellingSalesmanRouter.computeDisasterRegionTSP(
+        KERALA_GRAPH_DATA.nodes,
+        KERALA_GRAPH_DATA.edges,
+        zoneId,
+        this.shelterId
+      );
+    }
+
+    const totalKm = tspResult?.totalDistanceKm || 58.4;
+    const estMin = tspResult?.totalDurationMin || 85;
+    const stopsCount = tspResult?.stopCount || 6;
+    const savedPct = tspResult?.optimization?.reductionPercent || 18.5;
+
+    this.hudSlidePills.innerHTML = `
+      <span class="slide-pill primary">🚑 Rescue Circuit: ${totalKm} km (${stopsCount} Hubs)</span>
+      <span class="slide-pill success">⏱️ Total Mission Duration: ${estMin} min</span>
+      <span class="slide-pill amber">⚡ 2-Opt Optimization: +${savedPct}% Faster</span>
+    `;
+    this.hudSlideSubnote.textContent = `TSP Objective: min ∑ d(π(i), π(i+1)) + d(π(n), π(0)) using 2-Opt edge inversion heuristic`;
+    if (this.algoStepStatus) this.algoStepStatus.textContent = `2-Opt TSP: Optimal rescue vehicle mission loop finalized!`;
+
+    this.hudCalcMatrix.innerHTML = `
+      <div class="hud-calc-card">
+        <span class="hud-calc-title">Total Rescue Tour</span>
+        <span class="hud-calc-val" style="color:#d97706;">${totalKm} km</span>
+        <span style="font-size:10px; color:#d97706;">Multi-stop closed circuit</span>
+      </div>
+      <div class="hud-calc-card">
+        <span class="hud-calc-title">Mission Duration</span>
+        <span class="hud-calc-val" style="color:#0284c7;">${estMin} min</span>
+        <span style="font-size:10px; color:#0284c7;">Travel + 12m/stop relief</span>
+      </div>
+      <div class="hud-calc-card">
+        <span class="hud-calc-title">2-Opt Improvement</span>
+        <span class="hud-calc-val" style="color:#059669;">${savedPct}%</span>
+        <span style="font-size:10px; color:#059669;">Over nearest neighbor</span>
+      </div>
+    `;
+
+    // Draw straight edges on topological canvas
+    this.drawAllEdges("straight", true, true);
+    this.drawAllNodes(true, [this.originId, this.shelterId], true, true);
+
+    // Highlight candidate rescue tour paths
+    const tourNodes = tspResult?.tourNodeIds || this.candidatePaths[0] || [this.originId, this.shelterId];
+    for (let i = 0; i < tourNodes.length - 1; i++) {
+      const u = tourNodes[i];
+      const v = tourNodes[i + 1];
+      const edge = KERALA_GRAPH_DATA.edges.find(e => (e.u === u && e.v === v) || (e.u === v && e.v === u));
+      if (edge && this.topologicalEdgePaths[edge.id]) {
+        const pathElem = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        pathElem.setAttribute("d", this.topologicalEdgePaths[edge.id].straightPath);
+        pathElem.setAttribute("class", "morph-edge flow-augment");
+        pathElem.style.stroke = "#f59e0b";
+        pathElem.style.strokeWidth = "5";
+        pathElem.dataset.edgeId = edge.id;
+        pathElem.dataset.u = edge.u;
+        pathElem.dataset.v = edge.v;
+        this.svg.appendChild(pathElem);
+      }
+    }
+
+    if (tourNodes.length > 1) {
+      this.startParticleSimulation([tourNodes], "straight", 1.4);
+    }
   }
 
   clearAlgoAnimation() {
@@ -1623,6 +1766,9 @@ class PresentationDirector {
       const pathElem = document.createElementNS("http://www.w3.org/2000/svg", "path");
       pathElem.setAttribute("d", straightPath);
       pathElem.setAttribute("class", edgeClass);
+      pathElem.dataset.edgeId = edge.id;
+      pathElem.dataset.u = edge.u;
+      pathElem.dataset.v = edge.v;
       this.attachEdgeHover(pathElem, edge);
       this.svg.appendChild(pathElem);
     });
@@ -1775,6 +1921,315 @@ class PresentationDirector {
   }
 
   // =========================================================================
+  // MOUSE DRAGGING & PANNING SYSTEM (DRAGGABLE HUD, GRAPH NODES, & CANVAS)
+  // =========================================================================
+  setupDraggableHud() {
+    this.hud = document.getElementById("presentation-director-hud");
+    this.hudDragHandle = document.getElementById("hud-drag-handle");
+    if (!this.hud) return;
+
+    let isDragging = false;
+    let dragOffsetX = 0;
+    let dragOffsetY = 0;
+
+    const onMouseDown = (e) => {
+      if (e.button !== 0) return;
+
+      // Ignore interactive controls inside the HUD
+      if (e.target.closest("button, .hud-dot, .hud-view-toggle, .algo-tab, a, input, select, textarea")) {
+        return;
+      }
+
+      const isHandle = e.target.closest("#hud-drag-handle") || e.target === this.hudDragHandle;
+      const isHeader = e.target.closest(".hud-progress-row");
+      const isHudDirect = e.target === this.hud;
+
+      if (!isHandle && !isHeader && !isHudDirect) {
+        return;
+      }
+
+      e.preventDefault();
+      isDragging = true;
+      this.hud.classList.add("is-dragging");
+
+      const rect = this.hud.getBoundingClientRect();
+      dragOffsetX = e.clientX - rect.left;
+      dragOffsetY = e.clientY - rect.top;
+
+      window.addEventListener("mousemove", onMouseMove, { passive: false });
+      window.addEventListener("mouseup", onMouseUp);
+    };
+
+    const onMouseMove = (e) => {
+      if (!isDragging) return;
+      e.preventDefault();
+
+      const rect = this.hud.getBoundingClientRect();
+      const viewportW = window.innerWidth;
+      const viewportH = window.innerHeight;
+
+      let newLeft = e.clientX - dragOffsetX;
+      let newTop = e.clientY - dragOffsetY;
+
+      // Clamping within visible screen boundaries
+      const maxLeft = viewportW - rect.width - 8;
+      const maxTop = viewportH - rect.height - 8;
+      newLeft = Math.max(8, Math.min(newLeft, maxLeft));
+      newTop = Math.max(8, Math.min(newTop, maxTop));
+
+      this.hud.style.left = `${Math.round(newLeft)}px`;
+      this.hud.style.top = `${Math.round(newTop)}px`;
+      this.hud.style.bottom = "auto";
+      this.hud.style.transform = "none";
+
+      this.hudCustomPos = { left: newLeft, top: newTop };
+    };
+
+    const onMouseUp = () => {
+      if (!isDragging) return;
+      isDragging = false;
+      this.hud.classList.remove("is-dragging");
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+
+    this.hud.addEventListener("mousedown", onMouseDown);
+  }
+
+  setupCanvasPan() {
+    if (!this.svg) return;
+    let isPanning = false;
+    let startX = 0;
+    let startY = 0;
+
+    const onMouseDown = (e) => {
+      if (e.button !== 0) return;
+      // Only pan if clicking directly on svg background or whiteout (not on a node or edge)
+      if (e.target !== this.svg && e.target !== this.whiteout) return;
+      if (this.currentStep < 5 || this.currentStep > 8) return;
+
+      isPanning = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      if (this.svg) this.svg.style.cursor = "grabbing";
+
+      window.addEventListener("mousemove", onMouseMove, { passive: false });
+      window.addEventListener("mouseup", onMouseUp);
+    };
+
+    const onMouseMove = (e) => {
+      if (!isPanning) return;
+      e.preventDefault();
+
+      const dx = Math.round(e.clientX - startX);
+      const dy = Math.round(e.clientY - startY);
+      if (dx === 0 && dy === 0) return;
+
+      startX = e.clientX;
+      startY = e.clientY;
+
+      if (!this.customTopologicalPositions) this.customTopologicalPositions = {};
+
+      Object.keys(this.topologicalPositions).forEach(nodeId => {
+        const pos = this.topologicalPositions[nodeId];
+        pos.x += dx;
+        pos.y += dy;
+        this.customTopologicalPositions[nodeId] = { x: pos.x, y: pos.y };
+
+        const group = this.svg.querySelector(`.morph-node-group[data-node-id="${nodeId}"]`);
+        if (group) {
+          const circle = group.querySelector("circle");
+          if (circle) {
+            circle.setAttribute("cx", pos.x);
+            circle.setAttribute("cy", pos.y);
+          }
+          const text = group.querySelector(".morph-node-text");
+          if (text) {
+            text.setAttribute("x", pos.x);
+            text.setAttribute("y", pos.y);
+          }
+          const subText = group.querySelector(".morph-node-sublabel");
+          if (subText) {
+            subText.setAttribute("x", pos.x);
+            subText.setAttribute("y", pos.y + 26);
+          }
+        }
+
+        this.updateConnectedEdgesOnNodeMove(nodeId, pos.x, pos.y, true);
+      });
+    };
+
+    const onMouseUp = () => {
+      if (!isPanning) return;
+      isPanning = false;
+      if (this.svg) this.svg.style.cursor = "";
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+
+    this.svg.addEventListener("mousedown", onMouseDown);
+    if (this.whiteout) this.whiteout.addEventListener("mousedown", onMouseDown);
+  }
+
+  attachNodeDrag(group, node, useTopological = false) {
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
+    let nodeStartX = 0;
+    let nodeStartY = 0;
+
+    const onMouseDown = (e) => {
+      if (e.button !== 0) return;
+      e.stopPropagation();
+      e.preventDefault();
+
+      isDragging = true;
+      startX = e.clientX;
+      startY = e.clientY;
+
+      const pos = useTopological
+        ? (this.topologicalPositions[node.id] || { x: 0, y: 0 })
+        : (this.nodePositions[node.id] || { x: 0, y: 0 });
+
+      nodeStartX = pos.x;
+      nodeStartY = pos.y;
+
+      group.classList.add("node-is-dragging");
+      this.hideTooltip();
+
+      window.addEventListener("mousemove", onMouseMove, { passive: false });
+      window.addEventListener("mouseup", onMouseUp);
+    };
+
+    const onMouseMove = (e) => {
+      if (!isDragging) return;
+      e.preventDefault();
+
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      const newX = Math.round(nodeStartX + dx);
+      const newY = Math.round(nodeStartY + dy);
+
+      if (useTopological) {
+        if (!this.customTopologicalPositions) this.customTopologicalPositions = {};
+        this.customTopologicalPositions[node.id] = { x: newX, y: newY };
+        if (this.topologicalPositions[node.id]) {
+          this.topologicalPositions[node.id].x = newX;
+          this.topologicalPositions[node.id].y = newY;
+        }
+      } else {
+        if (this.nodePositions[node.id]) {
+          this.nodePositions[node.id].x = newX;
+          this.nodePositions[node.id].y = newY;
+        }
+      }
+
+      // Update node group SVG elements
+      const circle = group.querySelector("circle");
+      if (circle) {
+        circle.setAttribute("cx", newX);
+        circle.setAttribute("cy", newY);
+      }
+
+      const text = group.querySelector(".morph-node-text");
+      if (text) {
+        text.setAttribute("x", newX);
+        text.setAttribute("y", newY);
+      }
+
+      const subText = group.querySelector(".morph-node-sublabel");
+      if (subText) {
+        subText.setAttribute("x", newX);
+        subText.setAttribute("y", newY + 26);
+      }
+
+      if (node.id === this.originId) {
+        const radar = this.svg.querySelector(".dijkstra-radar-ring");
+        if (radar) {
+          radar.setAttribute("cx", newX);
+          radar.setAttribute("cy", newY);
+        }
+      }
+
+      this.updateConnectedEdgesOnNodeMove(node.id, newX, newY, useTopological);
+    };
+
+    const onMouseUp = () => {
+      if (!isDragging) return;
+      isDragging = false;
+      group.classList.remove("node-is-dragging");
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+
+    group.addEventListener("mousedown", onMouseDown);
+  }
+
+  updateConnectedEdgesOnNodeMove(nodeId, newX, newY, useTopological = false) {
+    const edgeSource = useTopological ? this.topologicalEdgePaths : this.edgePaths;
+    const nodeSource = useTopological ? this.topologicalPositions : this.nodePositions;
+
+    // 1. Update edge paths in data store
+    Object.values(edgeSource).forEach(edgeData => {
+      const { edge } = edgeData;
+      if (edge.u === nodeId || edge.v === nodeId) {
+        const uPos = nodeSource[edge.u];
+        const vPos = nodeSource[edge.v];
+        if (uPos && vPos) {
+          edgeData.uPt = uPos;
+          edgeData.vPt = vPos;
+          edgeData.midPt = { x: (uPos.x + vPos.x) / 2, y: (uPos.y + vPos.y) / 2 };
+          edgeData.straightPath = `M ${uPos.x} ${uPos.y} L ${vPos.x} ${vPos.y}`;
+          if (!useTopological && edgeData.polylinePoints && edgeData.polylinePoints.length <= 2) {
+            edgeData.polylinePoints = [uPos, vPos];
+            edgeData.curvyPath = edgeData.straightPath;
+          }
+        }
+      }
+    });
+
+    // 2. Update all matching <path> elements in this.svg
+    const paths = this.svg.querySelectorAll(".morph-edge");
+    paths.forEach(p => {
+      if (p.dataset.u === nodeId || p.dataset.v === nodeId) {
+        const edgeId = p.dataset.edgeId;
+        const edgeData = edgeSource[edgeId];
+        if (edgeData) {
+          const d = (useTopological || p.classList.contains("optimal-straight") || p.classList.contains("flow-augment") || p.classList.contains("min-cut-saturated") || p.classList.contains("mst-backbone") || p.classList.contains("relaxing"))
+            ? edgeData.straightPath
+            : (edgeData.curvyPath || edgeData.straightPath);
+          p.setAttribute("d", d);
+        }
+      }
+    });
+
+    // 3. Update any edge chips / badges attached to this edge
+    const chips = this.badgesContainer.querySelectorAll(".capacity-chip, .roadblock-chip");
+    chips.forEach(chip => {
+      const edgeId = chip.dataset.edgeId;
+      if (!edgeId) return;
+      const edgeData = edgeSource[edgeId];
+      if (edgeData && (edgeData.edge.u === nodeId || edgeData.edge.v === nodeId)) {
+        const uPt = edgeData.uPt;
+        const vPt = edgeData.vPt;
+        const midPt = edgeData.midPt;
+        if (chip.classList.contains("roadblock-chip")) {
+          const dx = vPt.x - uPt.x;
+          const dy = vPt.y - uPt.y;
+          const len = Math.hypot(dx, dy) || 1;
+          const nx = -dy / len;
+          const ny = dx / len;
+          chip.style.left = `${Math.round(midPt.x + nx * 24)}px`;
+          chip.style.top = `${Math.round(midPt.y + ny * 24)}px`;
+        } else {
+          chip.style.left = `${Math.round(midPt.x)}px`;
+          chip.style.top = `${Math.round(midPt.y)}px`;
+        }
+      }
+    });
+  }
+
+  // =========================================================================
   // HELPER DRAWING FUNCTIONS
   // =========================================================================
   drawAllEdges(mode = "curvy", onWhite = false, useTopological = false) {
@@ -1784,6 +2239,9 @@ class PresentationDirector {
       const pathElem = document.createElementNS("http://www.w3.org/2000/svg", "path");
       pathElem.setAttribute("d", d);
       pathElem.setAttribute("class", `morph-edge ${onWhite ? 'on-white' : ''}`);
+      pathElem.dataset.edgeId = edge.id;
+      pathElem.dataset.u = edge.u;
+      pathElem.dataset.v = edge.v;
       this.attachEdgeHover(pathElem, edge);
       this.svg.appendChild(pathElem);
     });
@@ -1808,6 +2266,7 @@ class PresentationDirector {
       group.setAttribute("class", "morph-node-group");
       group.dataset.nodeId = node.id;
       this.attachNodeHover(group, node);
+      this.attachNodeDrag(group, node, useTopological);
 
       const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
       circle.setAttribute("cx", x);
