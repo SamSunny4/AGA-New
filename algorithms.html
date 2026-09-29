@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kerala SafeRoute | Graph Algorithm Calculations Lab</title>
+  <meta name="description" content="Interactive calculation lab explaining Dijkstra's Shortest Path, Minimum Spanning Tree, and Maximum Flow / Minimum Cut for disaster evacuation planning.">
+  
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%230ea5e9%22/><path d=%22M30 65 L50 25 L70 65 Z%22 fill=%22%23ffffff%22/></svg>">
+  
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/algorithms.css">
+</head>
+<body>
+
+  <!-- Educational Disclaimer Banner -->
+  <aside class="disclaimer-banner" role="alert" aria-label="Educational Disclaimer">
+    <span class="pill-tag">Educational Prototype</span>
+    <span><strong>Simulated Demonstration Data:</strong> Graph algorithms, node capacities, and sample calculations are designed for academic study. NOT FOR REAL EMERGENCY NAVIGATION.</span>
+  </aside>
+
+  <!-- Sticky Global Navigation Bar -->
+  <header class="navbar">
+    <a href="index.html" class="nav-brand" id="brand-link">
+      <div class="brand-icon-wrapper">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <h1 class="brand-title">Kerala SafeRoute</h1>
+        <span class="brand-subtitle">Graph Algorithms for Disaster Evacuation Planning</span>
+      </div>
+    </a>
+
+    <nav aria-label="Main Navigation">
+      <ul class="nav-links">
+        <li>
+          <a href="index.html" class="nav-link" id="nav-planner">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+            <span>Route Planner</span>
+          </a>
+        </li>
+        <li>
+          <a href="algorithms.html" class="nav-link active" id="nav-algorithms">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            <span>Algorithm Calculations</span>
+            <span class="nav-link-badge">Interactive Lab</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <div class="nav-actions">
+      <a href="index.html" class="btn-ghost">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        <span>Back to Map</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- Algorithm Lab Main Container -->
+  <main class="calc-page-wrapper">
+    
+    <!-- Hero Introduction -->
+    <section class="calc-hero">
+      <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 0.5rem; flex-wrap: wrap;">
+        <span class="calc-hero-badge">Interactive Algorithm Workbench</span>
+        <span id="algo-backend-badge" class="backend-chip python">🐍 Python 3.13 NetworkX Backend</span>
+      </div>
+      <h2 class="calc-hero-title">Graph Theory in Emergency Logistics</h2>
+      <p class="calc-hero-desc">
+        During monsoon deluges and storm surges, standard shortest-distance navigation fails because low-lying roads become death traps. Explore how three classic graph algorithms solve critical challenges: finding the safest path, deploying minimal emergency communications, and unblocking evacuation bottlenecks.
+      </p>
+    </section>
+
+    <!-- Navigation Tabs for the 3 Algorithms -->
+    <nav class="algo-tabs-bar" aria-label="Algorithm Selector">
+      <button type="button" class="algo-tab-btn active" data-target="card-dijkstra">
+        <span class="algo-tab-num">01</span>
+        <span>Dijkstra's Shortest & Safest Path</span>
+      </button>
+      <button type="button" class="algo-tab-btn" data-target="card-mst">
+        <span class="algo-tab-num">02</span>
+        <span>Minimum Spanning Tree (MST)</span>
+      </button>
+      <button type="button" class="algo-tab-btn" data-target="card-maxflow">
+        <span class="algo-tab-num">03</span>
+        <span>Maximum Flow & Min-Cut</span>
+      </button>
+    </nav>
+
+    <!-- ===================================================================
+         ALGORITHM 1: DIJKSTRA'S SHORTEST & SAFEST PATH
+         =================================================================== -->
+    <article class="algo-card" id="card-dijkstra" aria-labelledby="dijkstra-heading">
+      
+      <div class="algo-card-header">
+        <div class="algo-title-group">
+          <h3 class="algo-name" id="dijkstra-heading">
+            <span>Dijkstra's Algorithm</span>
+            <span class="algo-badge dijkstra">Optimal Route</span>
+          </h3>
+          <p class="algo-purpose">
+            Finds the minimum cumulative weight path from a threatened origin to a highland refuge. By incorporating elevation penalties and flood risk into edge weights, the algorithm balances travel distance against physical hazard exposure.
+          </p>
+        </div>
+      </div>
+
+      <!-- Interactive Controls Bar -->
+      <div class="algo-controls-bar">
+        <div class="control-inline">
+          <label for="dijkstra-start-node">Source Node:</label>
+          <select id="dijkstra-start-node">
+            <option value="A" selected>A (Waterfront Town)</option>
+            <option value="B">B (Bridge Causeway)</option>
+            <option value="C">C (Inland Highway)</option>
+          </select>
+        </div>
+
+        <div class="control-inline">
+          <label for="dijkstra-end-node">Target Shelter:</label>
+          <select id="dijkstra-end-node">
+            <option value="T" selected>T (Highland Shelter, +22m)</option>
+            <option value="E">E (Suburban Ridge, +15m)</option>
+          </select>
+        </div>
+
+        <div class="control-inline">
+          <label for="dijkstra-cost-mode">Optimization Objective:</label>
+          <select id="dijkstra-cost-mode">
+            <option value="combined" selected>Combined Travel & Disaster Risk Cost</option>
+            <option value="distance">Physical Metric Distance Only</option>
+          </select>
+        </div>
+
+        <button type="button" class="btn-primary" id="btn-run-dijkstra" style="margin-left: auto;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          <span>Run Calculation</span>
+        </button>
+      </div>
+
+      <!-- Workbench Layout: Visual Graph + Steps/Results -->
+      <div class="workbench-grid">
+        
+        <!-- SVG Visual Canvas -->
+        <div class="graph-visualizer-box">
+          <div class="viz-header">
+            <span class="viz-title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><line x1="8.5" y1="8.5" x2="15.5" y2="15.5"/></svg>
+              Sample Evacuation Network Graph
+            </span>
+            <span style="font-size:11px; color:#64748b;">Cyan = Optimal Path • Nodes show Elevation</span>
+          </div>
+          <svg class="graph-svg-canvas" id="dijkstra-svg" viewBox="0 0 540 360" preserveAspectRatio="xMidYMid meet"></svg>
+        </div>
+
+        <!-- Results & Execution Log -->
+        <div class="execution-log-box">
+          
+          <div class="calc-summary-card">
+            <div class="calc-summary-row">
+              <span class="calc-summary-label">Selected Evacuation Path:</span>
+              <span class="calc-summary-value accent-cyan" id="dijkstra-result-route">Computing...</span>
+            </div>
+            <div class="calc-summary-row">
+              <span class="calc-summary-label">Total Metric Distance:</span>
+              <span class="calc-summary-value" id="dijkstra-result-dist">--</span>
+            </div>
+            <div class="calc-summary-row">
+              <span class="calc-summary-label">Total Combined Cost:</span>
+              <span class="calc-summary-value accent-cyan" id="dijkstra-result-cost">--</span>
+            </div>
+            <div style="font-size: 0.78rem; color: #94a3b8; margin-top: 0.35rem; line-height: 1.4;" id="dijkstra-explanation">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- Step Progression Table -->
+          <div class="steps-container">
+            <div class="steps-title">
+              <span>Execution Progression (Iteration Log)</span>
+              <span>Dijkstra Priority Queue</span>
+            </div>
+            <div id="dijkstra-steps-container">
+              <!-- Dynamically populated steps -->
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Real-world Disaster Relevance -->
+      <div class="disaster-relevance-callout">
+        <span class="callout-icon">💡</span>
+        <div class="callout-content">
+          <h4 class="callout-heading">Why Dijkstra is Critical in Disaster Evacuation Planning</h4>
+          <p class="callout-body">
+            In standard conditions, the fastest path from Waterfront Town (A) to Shelter (T) is through low-elevation nodes B and D (17.0 km). However, during an active flood surge, roads along B and D submerge under water. By dynamically weighting edges with our transparent simulated risk formula, Dijkstra automatically redirects evacuees across the slightly longer but elevated inland ridge (C & E), saving lives without manual trial-and-error.
+          </p>
+        </div>
+      </div>
+
+    </article>
+
+    <!-- ===================================================================
+         ALGORITHM 2: MINIMUM SPANNING TREE (PRIM'S & KRUSKAL'S)
+         =================================================================== -->
+    <article class="algo-card" id="card-mst" style="display: none;" aria-labelledby="mst-heading">
+      
+      <div class="algo-card-header">
+        <div class="algo-title-group">
+          <h3 class="algo-name" id="mst-heading">
+            <span>Minimum Spanning Tree (MST)</span>
+            <span class="algo-badge mst">Lifeline Network</span>
+          </h3>
+          <p class="algo-purpose">
+            Connects all designated relief camps, hospitals, and command centers using the minimum possible total edge weight, with zero redundant cycles. In disaster recovery, this models deploying rapid satellite/fiber communication lines or clearing emergency road corridors with scarce bulldozer resources.
+          </p>
+        </div>
+      </div>
+
+      <!-- Controls Bar -->
+      <div class="algo-controls-bar">
+        <div class="control-inline">
+          <label for="mst-algo-select">Algorithm Method:</label>
+          <select id="mst-algo-select">
+            <option value="kruskal" selected>Kruskal's Algorithm (Edge Sorting & Disjoint Set Union)</option>
+            <option value="prim">Prim's Algorithm (Greedy Cut Growth)</option>
+          </select>
+        </div>
+
+        <div class="control-inline">
+          <label for="mst-start-node">Prim's Seed Node:</label>
+          <select id="mst-start-node" disabled>
+            <option value="HQ" selected>HQ (Emergency Operations)</option>
+            <option value="HOSP">HOSP (Hospital)</option>
+            <option value="CAMP">CAMP (Relief Camp)</option>
+          </select>
+        </div>
+
+        <button type="button" class="btn-primary" id="btn-run-mst" style="margin-left: auto;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          <span>Run Calculation</span>
+        </button>
+      </div>
+
+      <!-- Workbench Layout -->
+      <div class="workbench-grid">
+        
+        <!-- SVG Visual Canvas -->
+        <div class="graph-visualizer-box">
+          <div class="viz-header">
+            <span class="viz-title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="3"/><circle cx="5" cy="19" r="3"/><circle cx="19" cy="19" r="3"/><line x1="12" y1="8" x2="5" y2="16"/><line x1="12" y1="8" x2="19" y2="16"/></svg>
+              Emergency Communication & Relief Hubs
+            </span>
+            <span style="font-size:11px; color:#34d399;">Emerald = Selected Spanning Tree Edges</span>
+          </div>
+          <svg class="graph-svg-canvas" id="mst-svg" viewBox="0 0 540 360" preserveAspectRatio="xMidYMid meet"></svg>
+        </div>
+
+        <!-- Results & Execution Log -->
+        <div class="execution-log-box">
+          
+          <div class="calc-summary-card">
+            <div class="calc-summary-row">
+              <span class="calc-summary-label">Total Minimal Network Distance:</span>
+              <span class="calc-summary-value accent-emerald" id="mst-result-weight">Computing...</span>
+            </div>
+            <div class="calc-summary-row">
+              <span class="calc-summary-label">Spanning Tree Topology:</span>
+              <span class="calc-summary-value" id="mst-result-count">--</span>
+            </div>
+            <div class="calc-summary-row">
+              <span class="calc-summary-label">Selected Critical Edges:</span>
+              <span class="calc-summary-value" style="font-size:0.85rem;" id="mst-result-edges">--</span>
+            </div>
+          </div>
+
+          <!-- Step Progression Table -->
+          <div class="steps-container">
+            <div class="steps-title">
+              <span>Step-by-Step Decision Log</span>
+              <span>Accepted vs Rejected Edges</span>
+            </div>
+            <div id="mst-steps-container">
+              <!-- Dynamically populated steps -->
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Real-world Disaster Relevance -->
+      <div class="disaster-relevance-callout">
+        <span class="callout-icon">📡</span>
+        <div class="callout-content">
+          <h4 class="callout-heading">Disaster Application: Resilient Lifeline Communications</h4>
+          <p class="callout-body">
+            Following a cyclone or devastating deluge, cellular base stations and terrestrial power lines often suffer total blackout. By computing the Minimum Spanning Tree across key relief camps and hospitals, disaster relief teams can deploy emergency fiber lines, tactical microwave dishes, or mobile satellite terminals with minimum cable length and zero redundant spending, ensuring 100% interconnected coordination across all bases.
+          </p>
+        </div>
+      </div>
+
+    </article>
+
+    <!-- ===================================================================
+         ALGORITHM 3: MAXIMUM FLOW & MINIMUM CUT (EDMONDS-KARP)
+         =================================================================== -->
+    <article class="algo-card" id="card-maxflow" style="display: none;" aria-labelledby="maxflow-heading">
+      
+      <div class="algo-card-header">
+        <div class="algo-title-group">
+          <h3 class="algo-name" id="maxflow-heading">
+            <span>Maximum Flow & Minimum Cut (Edmonds-Karp)</span>
+            <span class="algo-badge maxflow">Capacity Analysis</span>
+          </h3>
+          <p class="algo-purpose">
+            Calculates the maximum vehicle evacuation throughput per hour from a threatened coastal sector to high-ground safety. Identifies the exact saturated bottleneck roads (the Minimum Cut) that limit the entire region's evacuation capacity.
+          </p>
+        </div>
+      </div>
+
+      <!-- Controls Bar -->
+      <div class="algo-controls-bar">
+        <div class="control-inline">
+          <span>Source: <strong>S (Threatened Coastal Sector)</strong></span>
+        </div>
+        <div class="control-inline">
+          <span>Sink: <strong>T (Safe Highland Terminal)</strong></span>
+        </div>
+        <div class="control-inline">
+          <span>Method: <strong>BFS Augmenting Paths in Residual Graph</strong></span>
+        </div>
+
+        <button type="button" class="btn-primary" id="btn-run-maxflow" style="margin-left: auto;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          <span>Run Calculation</span>
+        </button>
+      </div>
+
+      <!-- Workbench Layout -->
+      <div class="workbench-grid">
+        
+        <!-- SVG Visual Canvas -->
+        <div class="graph-visualizer-box">
+          <div class="viz-header">
+            <span class="viz-title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              Directed Capacity Graph (Flow / Max Veh per Hr)
+            </span>
+            <span style="font-size:11px; color:#fb7185;">Red Dashed = Saturated Min-Cut Bottlenecks</span>
+          </div>
+          <svg class="graph-svg-canvas" id="flow-svg" viewBox="0 0 540 360" preserveAspectRatio="xMidYMid meet"></svg>
+        </div>
+
+        <!-- Results & Execution Log -->
+        <div class="execution-log-box">
+          
+          <div class="calc-summary-card">
+            <div class="calc-summary-row">
+              <span class="calc-summary-label">Maximum Evacuation Throughput:</span>
+              <span class="calc-summary-value accent-cyan" id="flow-result-max">Computing...</span>
+            </div>
+            <div class="calc-summary-row">
+              <span class="calc-summary-label">Capacity of Minimum Cut:</span>
+              <span class="calc-summary-value accent-amber" id="flow-result-cut">--</span>
+            </div>
+            <div class="calc-summary-row">
+              <span class="calc-summary-label">Bottleneck Edges (Min-Cut):</span>
+              <span class="calc-summary-value" style="font-size:0.8rem; color:#fb7185;" id="flow-result-bottleneck">--</span>
+            </div>
+            <div style="font-size: 0.78rem; color: #94a3b8; margin-top: 0.35rem; line-height: 1.4;" id="flow-interpretation">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- Step Progression Table -->
+          <div class="steps-container">
+            <div class="steps-title">
+              <span>Edmonds-Karp Iterations</span>
+              <span>Augmenting Paths via BFS</span>
+            </div>
+            <div id="flow-steps-container">
+              <!-- Dynamically populated steps -->
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Real-world Disaster Relevance -->
+      <div class="disaster-relevance-callout">
+        <span class="callout-icon">🚦</span>
+        <div class="callout-content">
+          <h4 class="callout-heading">Operational Takeaway: Evacuation Traffic Optimization</h4>
+          <p class="callout-body">
+            By the <strong>Max-Flow Min-Cut Theorem</strong>, the maximum rate at which vehicles can flee a disaster zone equals the total capacity of the narrowest bottleneck cut separating the source from the destination. In our sample network, widening arterial road S→B from 1,500 to 3,000 veh/hr provides <strong>zero benefit</strong> to overall evacuation speed, because the downstream bridge links (A→C and B→D) will choke. Authorities must instead deploy traffic wardens or establish contraflow lanes specifically on the identified Minimum Cut edges!
+          </p>
+        </div>
+      </div>
+
+    </article>
+
+  </main>
+
+  <!-- Scripts -->
+  <script src="js/dijkstra.js"></script>
+  <script src="js/mst.js"></script>
+  <script src="js/maxflow.js"></script>
+  <script src="js/app-algorithms.js"></script>
+</body>
+</html>

@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kerala SafeRoute | Graph-Based Disaster Evacuation Planner</title>
+  <meta name="description" content="A student project demonstrating how graph algorithms like Dijkstra support disaster evacuation planning in Kerala.">
+  
+  <!-- Favicon / Brand SVG -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%230ea5e9%22/><path d=%22M30 65 L50 25 L70 65 Z%22 fill=%22%23ffffff%22/></svg>">
+  
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/map.css">
+  <link rel="stylesheet" href="css/morph-presentation.css">
+</head>
+<body>
+
+  <!-- Mandatory Educational Disclaimer Banner -->
+  <aside class="disclaimer-banner" role="alert" aria-label="Educational Disclaimer">
+    <span class="pill-tag">Educational Prototype</span>
+    <span><strong>Simulated Demonstration Data:</strong> All locations, hazard polygons, and evacuation routes are for academic graph algorithm research. NOT FOR REAL-TIME EMERGENCY USE.</span>
+  </aside>
+
+  <!-- Sticky Global Navigation Bar -->
+  <header class="navbar">
+    <a href="index.html" class="nav-brand" id="brand-link">
+      <div class="brand-icon-wrapper">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <h1 class="brand-title">Kerala SafeRoute</h1>
+        <span class="brand-subtitle">Graph Algorithms for Disaster Evacuation Planning</span>
+      </div>
+    </a>
+
+    <nav aria-label="Main Navigation">
+      <ul class="nav-links">
+        <li>
+          <a href="index.html" class="nav-link active" id="nav-planner">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+            <span>Route Planner</span>
+            <span class="nav-link-badge">Interactive Map</span>
+          </a>
+        </li>
+        <li>
+          <a href="algorithms.html" class="nav-link" id="nav-algorithms">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            <span>Algorithm Calculations</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <div class="nav-actions">
+      <button class="btn-ghost" id="btn-open-about" title="Project Information & Graph Formula Details">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <span>About / Formula</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Dashboard Container -->
+  <main class="app-container">
+    
+    <!-- Left Configuration & Results Sidebar -->
+    <aside class="sidebar-panel" aria-label="Evacuation Controls and Results">
+      
+      <div class="panel-header">
+        <div class="panel-title-row">
+          <h2 class="panel-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.2"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg>
+            Kochi Evacuation Grid
+          </h2>
+          <span class="panel-badge">Dijkstra Engine</span>
+        </div>
+        <p class="panel-desc">
+          Select origin, hazard conditions, and road blockages. The graph engine calculates the safest minimum-cost evacuation path.
+        </p>
+      </div>
+
+      <div class="panel-body">
+
+        <!-- Interactive Cinematic Presentation / Morph Launch Button -->
+        <button type="button" class="btn-presentation" id="btn-start-presentation" title="Play animated 9-phase visual graph transformation demo">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          <span>🎬 Launch Visual Algorithm Demonstration</span>
+        </button>
+
+        <!-- Control 1: Evacuation Origin -->
+        <div class="control-group">
+          <label for="origin-select" class="control-label">
+            <span>Starting Point</span>
+            <span class="control-label-hint">Origin Node</span>
+          </label>
+          <select id="origin-select" class="select-custom" aria-label="Select Starting Point">
+            <!-- Populated dynamically via JS -->
+          </select>
+        </div>
+
+        <!-- Control 2: Destination Shelter -->
+        <div class="control-group">
+          <label for="shelter-select" class="control-label">
+            <span>Destination Safe Camp</span>
+            <span class="control-label-hint">Target Sink</span>
+          </label>
+          <select id="shelter-select" class="select-custom" aria-label="Select Destination Shelter">
+            <!-- Populated dynamically via JS -->
+          </select>
+        </div>
+
+        <!-- Control 3: Minimal Flood Surge Toggle -->
+        <div class="quick-toggle-row">
+          <div class="quick-toggle-info">
+            <span class="quick-toggle-title">🌊 Monsoon Flood Surge</span>
+            <span class="quick-toggle-sub" id="flood-toggle-sub">Active flood elevation penalty</span>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="flood-quick-toggle" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+
+        <!-- Hidden / compatible controls to preserve existing JS compatibility -->
+        <div style="display: none;">
+          <select id="disaster-type-select"><option value="flood" selected>flood</option></select>
+          <div class="severity-selector">
+            <button type="button" class="severity-btn active" data-sev="moderate"></button>
+            <button type="button" class="severity-btn" data-sev="severe"></button>
+            <button type="button" class="severity-btn" data-sev="low"></button>
+          </div>
+          <div id="closure-toggles-list"></div>
+          <button type="button" id="btn-recalculate"></button>
+        </div>
+
+        <!-- Minimal Action Bar -->
+        <div class="action-buttons">
+          <button type="button" class="btn-secondary" id="btn-reset-defaults" title="Reset all controls to initial settings">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+            <span>Reset Defaults</span>
+          </button>
+        </div>
+
+        <!-- Evacuation Route Result Card -->
+        <article class="result-card" id="evacuation-result-card" aria-live="polite">
+          
+          <div class="result-header">
+            <div>
+              <h3 class="result-shelter-title" id="result-shelter-title">Calculating Safest Route...</h3>
+              <div class="result-shelter-loc" id="result-shelter-meta">Elevation: +26m • High Ground Safe Camp</div>
+            </div>
+            <span class="status-chip optimal" id="result-status-chip">Optimal</span>
+          </div>
+
+          <!-- Key Metrics Grid -->
+          <div class="metrics-grid">
+            <div class="metric-box">
+              <span class="metric-label">Travel Distance</span>
+              <span class="metric-value" id="metric-distance">-- <span class="metric-unit">km</span></span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-label">Est. Travel Time</span>
+              <span class="metric-value" id="metric-time">-- <span class="metric-unit">min</span></span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-label">Simulated Risk</span>
+              <span class="metric-value" id="metric-risk">--<span class="metric-unit">/100</span></span>
+            </div>
+          </div>
+
+          <!-- Risk Meter Bar & Heuristic Label -->
+          <div class="risk-meter-container">
+            <div class="risk-meter-header">
+              <span class="risk-title">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                Simulated Risk Estimate
+              </span>
+            </div>
+            <div class="risk-progress-bar">
+              <div class="risk-progress-fill" id="risk-progress-fill" style="width: 25%; background-color: #10b981;"></div>
+            </div>
+            <div class="risk-formula-callout" id="risk-formula-text">
+              <strong>Simulated Risk Estimate:</strong> Heuristic formula combining road elevation, flood susceptibility, and hazard proximity. Not an AI model or real-time sensor stream.
+            </div>
+          </div>
+
+          <!-- Waypoint Sequence -->
+          <div class="itinerary-box">
+            <div class="itinerary-header">
+              <span>Evacuation Waypoints (Dijkstra Traversal)</span>
+            </div>
+            <ol class="waypoint-list" id="waypoint-list">
+              <!-- Waypoints populated dynamically -->
+            </ol>
+          </div>
+
+        </article>
+
+      </div>
+    </aside>
+
+    <!-- Map Interactive Area -->
+    <section class="map-container-wrapper" aria-label="Interactive Map of Kerala Road Network">
+      
+      <!-- Live Map Status Indicator -->
+      <div class="map-status-banner">
+        <span class="status-dot"></span>
+        <span>Graph Model: <strong>Kochi Metropolitan Sample Network</strong></span>
+      </div>
+
+      <!-- Floating Map Header Controls -->
+      <div class="map-top-controls">
+        
+        <!-- Quick Layer Toggles -->
+        <div class="map-layer-toggles">
+          <label class="layer-toggle-btn" title="Toggle hazard inundation zones">
+            <input type="checkbox" id="toggle-hazards" checked>
+            <span>Hazards</span>
+          </label>
+          <label class="layer-toggle-btn" title="Toggle physical road network">
+            <input type="checkbox" id="toggle-roads" checked>
+            <span>Roads</span>
+          </label>
+          <label class="layer-toggle-btn" title="Toggle safe relief hubs">
+            <input type="checkbox" id="toggle-shelters" checked>
+            <span>Shelters</span>
+          </label>
+        </div>
+
+        <!-- Map Settings Trigger Button -->
+        <button type="button" class="btn-map-settings" id="btn-map-settings" title="Map Settings: Satellite, Terrain, Overlays">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span>Map Settings</span>
+        </button>
+
+      </div>
+
+      <!-- Map Settings Panel Flyout Popover -->
+      <div class="map-settings-panel" id="map-settings-panel" aria-label="Map Settings Window">
+        <div class="settings-panel-header">
+          <div class="settings-panel-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+            <span>Map View & Basemap Settings</span>
+          </div>
+          <button type="button" class="btn-close-settings" id="btn-close-settings" title="Close Settings">✕</button>
+        </div>
+
+        <!-- Section 1: Basemap Style -->
+        <div class="settings-section">
+          <div class="settings-section-title">Basemap Imagery Style</div>
+          <div class="basemap-grid">
+            <button type="button" class="basemap-option-card active" data-basemap="osm">
+              <span class="basemap-icon">🗺️</span>
+              <div class="basemap-text-group">
+                <span class="basemap-name">OpenStreetMap</span>
+                <span class="basemap-sub">Standard clean street network</span>
+              </div>
+            </button>
+            <button type="button" class="basemap-option-card" data-basemap="satellite">
+              <span class="basemap-icon">🛰️</span>
+              <div class="basemap-text-group">
+                <span class="basemap-name">Satellite View</span>
+                <span class="basemap-sub">High-res orbital imagery</span>
+              </div>
+            </button>
+            <button type="button" class="basemap-option-card" data-basemap="hybrid">
+              <span class="basemap-icon">🛰️🏷️</span>
+              <div class="basemap-text-group">
+                <span class="basemap-name">Satellite Hybrid</span>
+                <span class="basemap-sub">Satellite + street/place labels</span>
+              </div>
+            </button>
+            <button type="button" class="basemap-option-card" data-basemap="topo">
+              <span class="basemap-icon">⛰️</span>
+              <div class="basemap-text-group">
+                <span class="basemap-name">Topo / Terrain</span>
+                <span class="basemap-sub">Elevation contours & hillshade</span>
+              </div>
+            </button>
+            <button type="button" class="basemap-option-card" data-basemap="street">
+              <span class="basemap-icon">🏙️</span>
+              <div class="basemap-text-group">
+                <span class="basemap-name">Esri City Streets</span>
+                <span class="basemap-sub">Google Maps-style urban layout</span>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Section 2: Overlays ("This and That") -->
+        <div class="settings-section">
+          <div class="settings-section-title">Map Layer Overlays ("This & That")</div>
+          <div class="settings-toggles-list">
+            <label class="setting-toggle-row">
+              <div class="setting-info">
+                <span class="setting-name">🏷️ Place & Highway Labels</span>
+                <span class="setting-desc">Display city, water, and locality names</span>
+              </div>
+              <input type="checkbox" id="setting-toggle-labels" class="setting-checkbox">
+            </label>
+            <label class="setting-toggle-row">
+              <div class="setting-info">
+                <span class="setting-name">🚗 Road Capacity Markers</span>
+                <span class="setting-desc">Display vehicle throughput badges on road edges</span>
+              </div>
+              <input type="checkbox" id="setting-toggle-capacities" class="setting-checkbox">
+            </label>
+            <label class="setting-toggle-row">
+              <div class="setting-info">
+                <span class="setting-name">🌙 Dark EOC Mode (Night Radar)</span>
+                <span class="setting-desc">Emergency room night vision inverted filter</span>
+              </div>
+              <input type="checkbox" id="setting-toggle-dark" class="setting-checkbox">
+            </label>
+          </div>
+        </div>
+
+        <!-- Section 3: Quick Camera Focus -->
+        <div class="settings-section">
+          <div class="settings-section-title">Quick Camera Presets</div>
+          <div class="camera-presets-row">
+            <button type="button" class="btn-preset-cam" data-cam="kochi">📍 Kochi Central</button>
+            <button type="button" class="btn-preset-cam" data-cam="periyar">🌊 Periyar Basin</button>
+            <button type="button" class="btn-preset-cam" data-cam="fortkochi">🏖️ Fort Kochi Coast</button>
+            <button type="button" class="btn-preset-cam" data-cam="kakkanad">⛰️ Kakkanad Plateau</button>
+          </div>
+        </div>
+
+      </div>
+
+
+      <!-- Floating Map Legend -->
+      <div class="map-legend-card" aria-label="Map Legend">
+        <div class="legend-title">
+          <span>Map Legend</span>
+          <span style="font-size:10px; color:#64748b;">Graph Symbols</span>
+        </div>
+        <div class="legend-items">
+          <div class="legend-row">
+            <span class="legend-swatch optimal-path"></span>
+            <span>Recommended Evacuation Route</span>
+          </div>
+          <div class="legend-row">
+            <span class="legend-swatch normal-road"></span>
+            <span>Open Road (Weighted Edge)</span>
+          </div>
+          <div class="legend-row">
+            <span class="legend-swatch closed-road"></span>
+            <span>Closed / Submerged Road</span>
+          </div>
+          <div class="legend-row">
+            <span class="legend-icon-badge origin">●</span>
+            <span>Evacuation Starting Point</span>
+          </div>
+          <div class="legend-row">
+            <span class="legend-icon-badge shelter">🛡️</span>
+            <span>Designated Safe Shelter</span>
+          </div>
+          <div class="legend-row">
+            <span class="legend-swatch hazard-zone"></span>
+            <span>Hazard Inundation Area</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Leaflet Map Div -->
+      <div id="map"></div>
+
+      <!-- Cinematic Presentation & Graph Morph Overlay -->
+      <div id="presentation-overlay" aria-label="Visual Graph Transformation and Algorithm Demonstration">
+        <!-- Whiteout background for technical graph canvas -->
+        <div id="morph-whiteout"></div>
+        
+        <!-- SVG Canvas for Curvy <-> Straight Lines & Nodes -->
+        <svg id="morph-svg"></svg>
+        
+        <!-- Floating HTML Capacity Badges and Roadblock Notices -->
+        <div id="morph-dom-badges" class="morph-dom-badges"></div>
+
+        <!-- Presentation Director HUD -->
+        <div class="presentation-director-hud" id="presentation-director-hud" role="region" aria-label="Presentation Controls">
+          <!-- Top Row: Step Badge, Progress Dots, Close Button -->
+          <div class="hud-progress-row">
+            <span class="hud-step-badge" id="hud-step-badge">Phase 1 of 9</span>
+            <div class="hud-dots-track" id="hud-dots-track"></div>
+            <button type="button" class="hud-close-btn" id="hud-btn-close" title="Exit Presentation Mode">
+              <span>✕ Exit Demo</span>
+            </button>
+          </div>
+
+          <!-- Narrator Teleprompter Box -->
+          <div class="hud-narrator-box">
+            <div class="hud-narrator-title" id="hud-narrator-title">
+              <span>📍 Step 1: Establishing Origin & Target Refuge</span>
+            </div>
+            <div class="hud-narrator-text" id="hud-narrator-text">
+              The emergency planner designates the origin and target refuge...
+            </div>
+            <div class="hud-narrator-formula" id="hud-narrator-formula">
+              Graph Vertices: S = Origin, T = Refuge
+            </div>
+          </div>
+
+          <!-- Dynamic Calculation Highlights Matrix (Active during Step 7) -->
+          <div class="hud-calc-matrix" id="hud-calc-matrix" style="display: none;"></div>
+
+          <!-- Controls Row: Play/Pause, Next, Prev, Timer -->
+          <div class="hud-controls-row">
+            <div class="hud-btn-group">
+              <button type="button" class="hud-btn secondary" id="hud-btn-prev">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                <span>Prev Step</span>
+              </button>
+              <button type="button" class="hud-btn primary" id="hud-btn-play">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                <span>Pause</span>
+              </button>
+              <button type="button" class="hud-btn primary" id="hud-btn-next">
+                <span>Next Step</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
+            </div>
+
+            <div class="hud-autoplay-tag" id="hud-autoplay-tag">
+              <span class="autoplay-pulse"></span>
+              <span>Auto-Advancing (5s)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Educational Info & Methodology Modal -->
+  <div class="modal-overlay" id="about-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modal-title">About Kerala SafeRoute (Student Project)</h3>
+        <button class="modal-close-btn" id="btn-close-about" aria-label="Close modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>
+          <strong>Kerala SafeRoute</strong> is a student project demonstrating how fundamental <strong>Graph Data Structures and Algorithms</strong> can assist emergency planning authorities during monsoons and coastal inundation events in Kerala.
+        </p>
+
+        <h4>1. Graph Representation</h4>
+        <ul>
+          <li><strong>Vertices $(V)$:</strong> Key road intersections, bridges, and designated emergency relief shelters in the Kochi urban corridor.</li>
+          <li><strong>Edges $(E)$:</strong> Connecting roads with physical distance $(km)$ and topographical elevation $(m)$.</li>
+        </ul>
+
+        <h4>2. Simulated Risk Estimate & Edge Cost Formulation</h4>
+        <p>
+          Traditional navigation systems optimize purely for the shortest physical distance. In disaster scenarios, shorter paths often traverse flooded depressions or riverbanks. In this project:
+        </p>
+        <p style="background: rgba(0,0,0,0.3); padding: 0.6rem; border-radius: 6px; font-family: var(--font-mono); font-size: 0.8rem;">
+          Edge Weight $W_e = \text{Distance}_e \times \left(1 + 2.5 \times \frac{\text{SimulatedRisk}_e}{100}\right)$
+        </p>
+        <p>
+          Where $\text{SimulatedRisk}$ is calculated using a transparent heuristic:
+          <br>
+          • <strong>Elevation Penalty:</strong> Roads below 4 meters suffer higher risk multipliers.
+          <br>
+          • <strong>Hazard Proximity:</strong> Roads crossing the Periyar river floodplain or Vembanad backwater receive hazard weight surcharges.
+          <br>
+          • <strong>Severity Multiplier:</strong> Yellow (1.0x), Orange (1.8x), and Red Alert (3.0x).
+        </p>
+
+        <h4>3. Dijkstra's Algorithm</h4>
+        <p>
+          Dijkstra's algorithm finds the path that minimizes the cumulative combined travel and risk weight. When roads are marked closed, their edges are removed from the graph, forcing the algorithm to find alternative higher-ground routes.
+        </p>
+        
+        <h4>4. Attribution & Data Notice</h4>
+        <p>
+          Map tiles courtesy of &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" style="color:#38bdf8;">OpenStreetMap</a> contributors.
+          All simulated locations and flood boundaries are for demonstration purposes only.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-primary" id="btn-close-about-footer">Got it, Back to Map</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  
+  <!-- Graph Data & Logic Scripts -->
+  <script src="js/graph-data.js"></script>
+  <script src="js/dijkstra.js"></script>
+  <script src="js/maxflow.js"></script>
+  <script src="js/presentation-morph.js"></script>
+  <script src="js/app-planner.js"></script>
+</body>
+</html>
