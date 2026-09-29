@@ -978,22 +978,107 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const floodQuickToggle = document.getElementById("flood-quick-toggle");
   const floodToggleSub = document.getElementById("flood-toggle-sub");
+  const stormQuickToggle = document.getElementById("storm-quick-toggle");
+  const stormToggleSub = document.getElementById("storm-toggle-sub");
+
   if (floodQuickToggle) {
     floodQuickToggle.addEventListener("change", (e) => {
       if (e.target.checked) {
-        state.severity = "moderate";
+        state.severity = (stormQuickToggle && stormQuickToggle.checked) ? "severe" : "moderate";
         if (floodToggleSub) floodToggleSub.textContent = "Active flood elevation penalty";
       } else {
-        state.severity = "low";
+        state.severity = (stormQuickToggle && stormQuickToggle.checked) ? "severe" : "low";
         if (floodToggleSub) floodToggleSub.textContent = "Minimal flood penalty";
       }
       recalculateAndRender();
     });
   }
 
+  if (stormQuickToggle) {
+    stormQuickToggle.addEventListener("change", (e) => {
+      if (e.target.checked) {
+        state.severity = "severe";
+        if (stormToggleSub) stormToggleSub.textContent = "Active red alert deluge (3.0x penalty)";
+      } else {
+        state.severity = (floodQuickToggle && floodQuickToggle.checked) ? "moderate" : "low";
+        if (stormToggleSub) stormToggleSub.textContent = "Intense monsoon deluge & rainfall";
+      }
+      recalculateAndRender();
+    });
+  }
+
+  // Sidebar closure toggles
+  const sidebarClosureToggles = document.querySelectorAll(".sidebar-closure-toggle");
+  sidebarClosureToggles.forEach(toggle => {
+    toggle.addEventListener("change", (e) => {
+      const edgeId = e.target.dataset.edge;
+      if (edgeId) {
+        if (e.target.checked) {
+          state.closedEdges.add(edgeId);
+        } else {
+          state.closedEdges.delete(edgeId);
+        }
+        recalculateAndRender();
+      }
+    });
+  });
+
   if (recalculateBtn) {
     recalculateBtn.addEventListener("click", () => {
       recalculateAndRender();
+    });
+  }
+
+  // Layer switches (Sidebar + Top bar bidirectional sync)
+  const sidebarToggleHazards = document.getElementById("sidebar-toggle-hazards");
+  const sidebarToggleShelters = document.getElementById("sidebar-toggle-shelters");
+  const sidebarToggleRoads = document.getElementById("sidebar-toggle-roads");
+
+  if (sidebarToggleHazards) {
+    sidebarToggleHazards.addEventListener("change", (e) => {
+      state.showHazards = e.target.checked;
+      if (toggleHazardsInput) toggleHazardsInput.checked = e.target.checked;
+      renderHazardZones();
+    });
+  }
+
+  if (toggleHazardsInput) {
+    toggleHazardsInput.addEventListener("change", (e) => {
+      state.showHazards = e.target.checked;
+      if (sidebarToggleHazards) sidebarToggleHazards.checked = e.target.checked;
+      renderHazardZones();
+    });
+  }
+
+  if (sidebarToggleShelters) {
+    sidebarToggleShelters.addEventListener("change", (e) => {
+      state.showShelters = e.target.checked;
+      if (toggleSheltersInput) toggleSheltersInput.checked = e.target.checked;
+      renderNodes();
+    });
+  }
+
+  if (toggleSheltersInput) {
+    toggleSheltersInput.addEventListener("change", (e) => {
+      state.showShelters = e.target.checked;
+      if (sidebarToggleShelters) sidebarToggleShelters.checked = e.target.checked;
+      renderNodes();
+    });
+  }
+
+  if (sidebarToggleRoads) {
+    sidebarToggleRoads.addEventListener("change", (e) => {
+      state.showRoads = e.target.checked;
+      if (toggleRoadsInput) toggleRoadsInput.checked = e.target.checked;
+      renderRoadNetwork();
+    });
+  }
+
+  if (toggleRoadsInput) {
+    toggleRoadsInput.addEventListener("change", (e) => {
+      state.showRoads = e.target.checked;
+      if (sidebarToggleRoads) sidebarToggleRoads.checked = e.target.checked;
+      renderRoadNetwork();
     });
   }
 
@@ -1010,35 +1095,32 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (floodQuickToggle) floodQuickToggle.checked = true;
       if (floodToggleSub) floodToggleSub.textContent = "Active flood elevation penalty";
+      if (stormQuickToggle) stormQuickToggle.checked = false;
+      if (stormToggleSub) stormToggleSub.textContent = "Intense monsoon deluge & rainfall";
+
+      if (sidebarToggleHazards) sidebarToggleHazards.checked = true;
+      if (toggleHazardsInput) toggleHazardsInput.checked = true;
+      state.showHazards = true;
+
+      if (sidebarToggleShelters) sidebarToggleShelters.checked = true;
+      if (toggleSheltersInput) toggleSheltersInput.checked = true;
+      state.showShelters = true;
+
+      if (sidebarToggleRoads) sidebarToggleRoads.checked = true;
+      if (toggleRoadsInput) toggleRoadsInput.checked = true;
+      state.showRoads = true;
+
+      sidebarClosureToggles.forEach(chk => { chk.checked = false; });
 
       populateFormControls();
       severityBtns.forEach(b => {
         b.classList.toggle("active", b.dataset.sev === "moderate");
       });
 
-      recalculateAndRender();
-    });
-  }
-
-  // Layer switches
-  if (toggleHazardsInput) {
-    toggleHazardsInput.addEventListener("change", (e) => {
-      state.showHazards = e.target.checked;
       renderHazardZones();
-    });
-  }
-
-  if (toggleRoadsInput) {
-    toggleRoadsInput.addEventListener("change", (e) => {
-      state.showRoads = e.target.checked;
-      renderRoadNetwork();
-    });
-  }
-
-  if (toggleSheltersInput) {
-    toggleSheltersInput.addEventListener("change", (e) => {
-      state.showShelters = e.target.checked;
       renderNodes();
+      renderRoadNetwork();
+      recalculateAndRender();
     });
   }
 

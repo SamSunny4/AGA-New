@@ -309,6 +309,33 @@ html, body {
   box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.12);
 }
 
+.toggle-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.toggle-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.2rem 0.2rem 0 0.2rem;
+}
+
+.toggle-section-title {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+}
+
+.toggle-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
 /* Minimal Disaster Quick Toggle */
 .quick-toggle-row {
   display: flex;
@@ -318,6 +345,12 @@ html, body {
   background: var(--bg-tertiary);
   border-radius: var(--radius-md);
   border: 1px solid var(--border-subtle);
+  transition: all var(--transition-fast);
+}
+
+.quick-toggle-row:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
 }
 
 .quick-toggle-info {

@@ -75,16 +75,142 @@
         </button>
 
 
-        <!-- Control 3: Minimal Flood Surge Toggle -->
-        <div class="quick-toggle-row">
-          <div class="quick-toggle-info">
-            <span class="quick-toggle-title"> Monsoon Flood Surge</span>
-            <span class="quick-toggle-sub" id="flood-toggle-sub">Active flood elevation penalty</span>
+        <!-- Disaster & Environmental Controls -->
+        <div class="toggle-section">
+          <div class="toggle-section-header">
+            <span class="toggle-section-title">Disaster Conditions</span>
           </div>
-          <label class="toggle-switch">
-            <input type="checkbox" id="flood-quick-toggle" checked>
-            <span class="toggle-slider"></span>
-          </label>
+          <div class="toggle-list">
+            
+            <!-- Option 1: Monsoon Flood Surge -->
+            <div class="quick-toggle-row">
+              <div class="quick-toggle-info">
+                <span class="quick-toggle-title">Monsoon Flood Surge</span>
+                <span class="quick-toggle-sub" id="flood-toggle-sub">Active flood elevation penalty</span>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="flood-quick-toggle" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <!-- Option 2: Red Alert Storm Mode -->
+            <div class="quick-toggle-row">
+              <div class="quick-toggle-info">
+                <span class="quick-toggle-title">Red Alert Storm Mode</span>
+                <span class="quick-toggle-sub" id="storm-toggle-sub">Intense monsoon deluge &amp; rainfall</span>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="storm-quick-toggle">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Map & Infrastructure Overlays -->
+        <div class="toggle-section">
+          <div class="toggle-section-header">
+            <span class="toggle-section-title">Map Overlays</span>
+          </div>
+          <div class="toggle-list">
+
+            <!-- Option 3: Hazard Inundation Zones -->
+            <div class="quick-toggle-row">
+              <div class="quick-toggle-info">
+                <span class="quick-toggle-title">Hazard Inundation Zones</span>
+                <span class="quick-toggle-sub">Coastal surge &amp; flood river basins</span>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="sidebar-toggle-hazards" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <!-- Option 4: High-Ground Shelters -->
+            <div class="quick-toggle-row">
+              <div class="quick-toggle-info">
+                <span class="quick-toggle-title">High-Ground Shelters</span>
+                <span class="quick-toggle-sub">16 designated safe sanctuaries</span>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="sidebar-toggle-shelters" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <!-- Option 5: Statewide Road Grid -->
+            <div class="quick-toggle-row">
+              <div class="quick-toggle-info">
+                <span class="quick-toggle-title">Statewide Road Grid</span>
+                <span class="quick-toggle-sub">91 real GIS evacuation corridors</span>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="sidebar-toggle-roads" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Simulated Roadblock Failures -->
+        <div class="toggle-section">
+          <div class="toggle-section-header">
+            <span class="toggle-section-title">Simulated Road Closures</span>
+          </div>
+          <div class="toggle-list">
+
+            <!-- Roadblock 1: Wayanad Churam -->
+            <div class="quick-toggle-row">
+              <div class="quick-toggle-info">
+                <span class="quick-toggle-title">Wayanad Churam Landslide</span>
+                <span class="quick-toggle-sub">NH 766 Ghat mountain pass blocked</span>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" class="sidebar-closure-toggle" data-edge="e_thamarassery_kalpetta">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <!-- Roadblock 2: Munnar Gap Road -->
+            <div class="quick-toggle-row">
+              <div class="quick-toggle-info">
+                <span class="quick-toggle-title">Munnar Gap Road Rockfall</span>
+                <span class="quick-toggle-sub">NH 85 mountain corridor blocked</span>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" class="sidebar-closure-toggle" data-edge="e_adimali_munnar">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <!-- Roadblock 3: AC Canal Delta -->
+            <div class="quick-toggle-row">
+              <div class="quick-toggle-info">
+                <span class="quick-toggle-title">AC Canal Delta Submersion</span>
+                <span class="quick-toggle-sub">Kuttanad delta road submerged</span>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" class="sidebar-closure-toggle" data-edge="e_alappuzha_kuttanad">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <!-- Roadblock 4: Periyar River Aluva Bridge -->
+            <div class="quick-toggle-row">
+              <div class="quick-toggle-info">
+                <span class="quick-toggle-title">Periyar River Aluva Bridge</span>
+                <span class="quick-toggle-sub">NH 544 bridge overflow breach</span>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" class="sidebar-closure-toggle" data-edge="e_kalamassery_aluva">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+          </div>
         </div>
 
         <!-- Hidden / compatible controls to preserve existing JS compatibility -->
@@ -291,6 +417,11 @@
 
         <!-- Presentation Director HUD (Clean Slide Format) -->
         <div class="presentation-director-hud" id="presentation-director-hud" role="region" aria-label="Presentation Controls">
+          <!-- Move / Drag Grip Handle -->
+          <div class="hud-drag-handle" id="hud-drag-handle" title="Click and drag with mouse to move window anywhere on screen">
+            <span class="hud-drag-pill"></span>
+          </div>
+
           <!-- Top Row: Slide Badge, Camera View Toggle, Progress Dots, Close Button -->
           <div class="hud-progress-row">
             <div class="hud-left-meta">

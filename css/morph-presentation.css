@@ -230,8 +230,19 @@ body.presentation-fullscreen-mode #presentation-overlay {
 
 /* Morph Nodes */
 .morph-node-group {
-  cursor: pointer;
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: grab;
+  user-select: none;
+  transition: transform 0.15s ease;
+}
+
+.morph-node-group:active,
+.morph-node-group.node-is-dragging {
+  cursor: grabbing !important;
+}
+
+.morph-node-group.node-is-dragging circle {
+  filter: drop-shadow(0 0 14px rgba(2, 132, 199, 0.95)) !important;
+  transform: scale(1.25) !important;
 }
 
 .morph-node-group:hover circle {
@@ -453,11 +464,54 @@ body.presentation-fullscreen-mode #presentation-overlay {
   backdrop-filter: blur(14px);
   box-shadow: 0 12px 36px rgba(15, 23, 42, 0.14);
   z-index: 10;
-  padding: 0.9rem 1.15rem;
+  padding: 0.4rem 1.15rem 0.9rem 1.15rem;
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
+  gap: 0.55rem;
   pointer-events: auto;
+  transition: box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.hud-drag-handle {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2px 0 6px 0;
+  cursor: grab;
+  user-select: none;
+}
+
+.hud-drag-handle:active,
+.presentation-director-hud.is-dragging .hud-drag-handle {
+  cursor: grabbing;
+}
+
+.hud-drag-pill {
+  width: 44px;
+  height: 4px;
+  border-radius: 4px;
+  background: #cbd5e1;
+  transition: all 0.2s ease;
+}
+
+.hud-drag-handle:hover .hud-drag-pill {
+  background: #0284c7;
+  width: 58px;
+}
+
+.presentation-director-hud.is-dragging {
+  user-select: none;
+  box-shadow: 0 20px 48px rgba(15, 23, 42, 0.26);
+  opacity: 0.96;
+}
+
+.hud-progress-row {
+  cursor: grab;
+}
+
+.presentation-director-hud.is-dragging .hud-progress-row {
+  cursor: grabbing;
 }
 
 .hud-progress-row {
