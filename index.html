@@ -387,21 +387,41 @@
         <!-- Floating HTML Capacity Badges and Roadblock Notices -->
         <div id="morph-dom-badges" class="morph-dom-badges"></div>
 
+        <!-- Interactive Node / Edge Hover Tooltip -->
+        <div id="morph-tooltip" class="morph-tooltip"></div>
+
         <!-- Presentation Director HUD -->
         <div class="presentation-director-hud" id="presentation-director-hud" role="region" aria-label="Presentation Controls">
-          <!-- Top Row: Step Badge, Progress Dots, Close Button -->
+          <!-- Top Row: Step Badge, Camera View Toggle, Audio Narrator, Progress Dots, Close Button -->
           <div class="hud-progress-row">
-            <span class="hud-step-badge" id="hud-step-badge">Phase 1 of 9</span>
-            <div class="hud-dots-track" id="hud-dots-track"></div>
-            <button type="button" class="hud-close-btn" id="hud-btn-close" title="Exit Presentation Mode">
-              <span>✕ Exit Demo</span>
-            </button>
+            <div class="hud-left-meta">
+              <span class="hud-step-badge" id="hud-step-badge">Phase 1 of 9</span>
+              <div class="hud-view-toggle" id="hud-view-toggle" title="Switch Presentation Camera">
+                <button type="button" class="hud-view-btn active" id="btn-view-corridor" data-view="corridor">🎯 Corridor View</button>
+                <button type="button" class="hud-view-btn" id="btn-view-statewide" data-view="statewide">🌴 Full Kerala</button>
+              </div>
+            </div>
+
+            <div class="hud-dots-track" id="hud-dots-track" title="Click any phase to jump directly"></div>
+
+            <div class="hud-right-actions">
+              <button type="button" class="hud-audio-btn" id="hud-btn-audio" title="Toggle Automated Voice Narration (Web Speech)">
+                <span id="audio-icon">🔇</span>
+                <span id="audio-text">Voice: Off</span>
+              </button>
+              <button type="button" class="hud-close-btn" id="hud-btn-close" title="Exit Presentation Mode (Esc)">
+                <span>✕ Exit</span>
+              </button>
+            </div>
           </div>
 
           <!-- Narrator Teleprompter Box -->
           <div class="hud-narrator-box">
-            <div class="hud-narrator-title" id="hud-narrator-title">
-              <span>📍 Step 1: Establishing Origin & Target Refuge</span>
+            <div class="hud-narrator-header">
+              <div class="hud-narrator-title" id="hud-narrator-title">
+                <span>📍 Step 1: Establishing Origin &amp; Target Refuge</span>
+              </div>
+              <span class="hud-algo-runtime-badge" id="hud-algo-runtime-badge">Python 3.13 Engine</span>
             </div>
             <div class="hud-narrator-text" id="hud-narrator-text">
               The emergency planner designates the origin and target refuge...
@@ -411,29 +431,60 @@
             </div>
           </div>
 
-          <!-- Dynamic Calculation Highlights Matrix (Active during Step 7) -->
+          <!-- Interactive Algorithm Explorer Tabs (Active during Step 7 & 8) -->
+          <div class="hud-algo-tabs" id="hud-algo-tabs" style="display: none;">
+            <button type="button" class="algo-tab active" data-algo="dijkstra">⚡ Dijkstra &amp; A* Search</button>
+            <button type="button" class="algo-tab" data-algo="maxflow">🌊 Edmonds-Karp Max-Flow</button>
+            <button type="button" class="algo-tab" data-algo="mincut">✂️ Min-Cut Bottlenecks</button>
+            <button type="button" class="algo-tab" data-algo="mst">🌲 Spanning Tree (MST)</button>
+          </div>
+
+          <!-- Dynamic Calculation Highlights Matrix -->
           <div class="hud-calc-matrix" id="hud-calc-matrix" style="display: none;"></div>
 
-          <!-- Controls Row: Play/Pause, Next, Prev, Timer -->
+          <!-- Algorithm Relaxation Stepper / Animation Trigger -->
+          <div class="hud-algo-stepper" id="hud-algo-stepper" style="display: none;">
+            <div class="algo-step-info">
+              <span class="algo-step-dot"></span>
+              <span class="algo-step-status" id="algo-step-status">Priority Queue: Relaxing node distances</span>
+            </div>
+            <button type="button" class="algo-replay-btn" id="btn-algo-replay">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              <span>Simulate Wave</span>
+            </button>
+          </div>
+
+          <!-- Controls Row: Play/Pause, Next, Prev, Speed, Timer -->
           <div class="hud-controls-row">
             <div class="hud-btn-group">
-              <button type="button" class="hud-btn secondary" id="hud-btn-prev">
+              <button type="button" class="hud-btn secondary" id="hud-btn-prev" title="Previous Phase (Left Arrow)">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-                <span>Prev Step</span>
+                <span>Prev</span>
               </button>
-              <button type="button" class="hud-btn primary" id="hud-btn-play">
+              <button type="button" class="hud-btn primary" id="hud-btn-play" title="Play / Pause Auto-Advance (Spacebar)">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
                 <span>Pause</span>
               </button>
-              <button type="button" class="hud-btn primary" id="hud-btn-next">
-                <span>Next Step</span>
+              <button type="button" class="hud-btn primary" id="hud-btn-next" title="Next Phase (Right Arrow)">
+                <span>Next</span>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
               </button>
             </div>
 
-            <div class="hud-autoplay-tag" id="hud-autoplay-tag">
-              <span class="autoplay-pulse"></span>
-              <span>Auto-Advancing (5s)</span>
+            <!-- Speed Selector -->
+            <div class="hud-speed-group" title="Auto-advance pacing">
+              <span class="speed-label">Speed:</span>
+              <button type="button" class="speed-btn" data-speed="0.5">0.5×</button>
+              <button type="button" class="speed-btn active" data-speed="1">1×</button>
+              <button type="button" class="speed-btn" data-speed="2">2×</button>
+            </div>
+
+            <div class="hud-meta-group">
+              <div class="hud-autoplay-tag" id="hud-autoplay-tag">
+                <span class="autoplay-pulse"></span>
+                <span id="autoplay-text">Auto-Advancing (5s)</span>
+              </div>
+              <span class="hud-kbd-hint" title="Keyboard Shortcuts: Space=Play/Pause, Left/Right=Step, C=Camera, Esc=Exit">⌨️ Shortcuts</span>
             </div>
           </div>
         </div>
