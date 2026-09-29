@@ -235,12 +235,15 @@ body.presentation-fullscreen-mode #presentation-overlay {
 }
 
 .morph-node-group:hover circle {
+  transform-box: fill-box;
+  transform-origin: center;
   transform: scale(1.2);
   filter: drop-shadow(0 0 10px rgba(2, 132, 199, 0.8)) !important;
 }
 
 .morph-node-circle {
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-box: fill-box;
   transform-origin: center;
   fill: #ffffff;
   stroke: #475569;
@@ -298,7 +301,9 @@ body.presentation-fullscreen-mode #presentation-overlay {
 .morph-node-circle.current-eval {
   fill: #cffafe !important;
   stroke: #06b6d4 !important;
-  stroke-width: 5 !important;
+  stroke-width: 4 !important;
+  transform-box: fill-box;
+  transform-origin: center;
   transform: scale(1.15);
 }
 
