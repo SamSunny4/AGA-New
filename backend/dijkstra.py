@@ -226,7 +226,7 @@ def run_dijkstra(
         target_route = reconstruct_path(target_id)
         return {
             "status": "success",
-            "backend": "Python 3.13 NetworkX SafeRoute Engine",
+            "backend": "Python 3.13 NetworkX PlanEsc Engine",
             "sourceId": source_id,
             "targetId": target_id,
             "route": target_route,
@@ -295,7 +295,7 @@ def run_dijkstra(
 
     return {
         "status": "success",
-        "backend": "Python 3.13 NetworkX SafeRoute Engine",
+        "backend": "Python 3.13 NetworkX PlanEsc Engine",
         "sourceId": source_id,
         "targetId": optimal_route["destinationId"] if optimal_route else None,
         "route": optimal_route,

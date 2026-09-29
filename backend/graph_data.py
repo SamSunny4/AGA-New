@@ -1,5 +1,5 @@
 """
-Kerala SafeRoute - Full Kerala Statewide Evacuation Network (Python Backend)
+PlanEsc - Full Kerala Statewide Evacuation Network (Python Backend)
 Loads the statewide graph from data/full_kerala_graph.json
 """
 import json

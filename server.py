@@ -1,5 +1,5 @@
 """
-Kerala SafeRoute - Python Backend Server & REST API
+PlanEsc - Python Backend Server & REST API
 Provides high-performance graph algorithm calculations:
 - Dijkstra's & A* Shortest/Safest Evacuation Path
 - Minimum Spanning Tree (Kruskal's & Prim's)
@@ -80,7 +80,7 @@ class SafeRouteAPIHandler(SimpleHTTPRequestHandler):
         if path == "/api/health":
             self.send_json({
                 "status": "online",
-                "backend": "Python 3.13 NetworkX SafeRoute Engine",
+                "backend": "Python 3.13 NetworkX PlanEsc Engine",
                 "algorithms": ["Dijkstra", "A*", "Kruskal MST", "Prim MST", "Edmonds-Karp MaxFlow", "Min-Cut"],
                 "region": "Kochi, Kerala"
             })
@@ -178,7 +178,7 @@ def run_server(port: int = 8008, bind_address: str = "0.0.0.0"):
     server_address = (bind_address, port)
     httpd = ThreadingHTTPServer(server_address, SafeRouteAPIHandler)
     print("=" * 60)
-    print(f"Kerala SafeRoute Python Backend running on http://localhost:{port}")
+    print(f"PlanEsc Python Backend running on http://localhost:{port}")
     print("Serving web application and REST API endpoints:")
     print("  * GET  /api/health")
     print("  * GET  /api/graph")
@@ -193,7 +193,7 @@ def run_server(port: int = 8008, bind_address: str = "0.0.0.0"):
         httpd.server_close()
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Kerala SafeRoute Python Server")
+    parser = argparse.ArgumentParser(description="PlanEsc Python Server")
     parser.add_argument("--port", type=int, default=8008, help="Port to listen on (default 8008)")
     parser.add_argument("--bind", type=str, default="0.0.0.0", help="Address to bind to (default 0.0.0.0)")
     args = parser.parse_args()

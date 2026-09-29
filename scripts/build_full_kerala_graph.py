@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Full Kerala Evacuation Graph Builder
-Builds a statewide 55+ node, 16 shelter, 85+ corridor evacuation network for Kerala SafeRoute.
+Builds a statewide 55+ node, 16 shelter, 85+ corridor evacuation network for PlanEsc.
 Fetches real turn-by-turn driving polylines via OSRM.
 """
 
@@ -933,7 +933,7 @@ def main():
 
     # Write clean Python backend/graph_data.py loader
     py_content = '''"""
-Kerala SafeRoute - Full Kerala Statewide Evacuation Network (Python Backend)
+PlanEsc - Full Kerala Statewide Evacuation Network (Python Backend)
 Loads the statewide graph from data/full_kerala_graph.json
 """
 import json
@@ -957,7 +957,7 @@ ROAD_CLOSURE_PRESETS = _DATA["roadClosurePresets"]
 
     # Write JS js/graph-data.js
     js_content = f'''/**
- * Kerala SafeRoute - Full Kerala Statewide Evacuation Network Data
+ * PlanEsc - Full Kerala Statewide Evacuation Network Data
  * Scale: Full State of Kerala (14 Districts)
  * Total Nodes: {len(NODES)} (including 16 Safe Shelters)
  * Total Edges: {len(edges)} Real-World Highways & Corridors

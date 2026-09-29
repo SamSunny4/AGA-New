@@ -1,5 +1,5 @@
 /**
- * Kerala SafeRoute - Route Planner Application Controller
+ * PlanEsc - Route Planner Application Controller
  * Handles Leaflet map interactions, controls, Dijkstra dynamic recalculation,
  * and result card rendering.
  */
@@ -57,7 +57,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Basemap Tile Layers (Zero API key required, zero watermarks)
   const BASEMAPS = {
     osm: L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors | Kerala SafeRoute',
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors | PlanEsc',
       maxZoom: 19
     }),
     satellite: L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
@@ -73,11 +73,11 @@ document.addEventListener("DOMContentLoaded", () => {
       })
     ]),
     topo: L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}", {
-      attribution: 'Tiles &copy; Esri, USGS, NOAA | Kerala SafeRoute Topo',
+      attribution: 'Tiles &copy; Esri, USGS, NOAA | PlanEsc Topo',
       maxZoom: 19
     }),
     street: L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}", {
-      attribution: 'Tiles &copy; Esri, DeLorme, NAVTEQ | Kerala SafeRoute',
+      attribution: 'Tiles &copy; Esri, DeLorme, NAVTEQ | PlanEsc',
       maxZoom: 19
     })
   };
@@ -116,106 +116,112 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 2. Populate Dropdowns & Presets with Regional Optgroups
   function populateFormControls() {
-    // Populate Origin dropdown grouped by region
-    originSelect.innerHTML = "";
-    const regions = {
-      "South": { label: "️ South Kerala (TVM, Kollam, Alappuzha, Pathanamthitta)", group: document.createElement("optgroup") },
-      "Central": { label: "📍 Central Kerala (Kochi, Thrissur, Kottayam)", group: document.createElement("optgroup") },
-      "Highland": { label: "️ Western Ghats & High Ranges (Idukki, Munnar, Wayanad)", group: document.createElement("optgroup") },
-      "North": { label: "️ North Malabar (Palakkad, Malappuram, Kozhikode, Kannur, Kasaragod)", group: document.createElement("optgroup") }
-    };
-    Object.values(regions).forEach(r => r.group.label = r.label);
+    if (originSelect) {
+      // Populate Origin dropdown grouped by region
+      originSelect.innerHTML = "";
+      const regions = {
+        "South": { label: "️ South Kerala (TVM, Kollam, Alappuzha, Pathanamthitta)", group: document.createElement("optgroup") },
+        "Central": { label: "📍 Central Kerala (Kochi, Thrissur, Kottayam)", group: document.createElement("optgroup") },
+        "Highland": { label: "️ Western Ghats & High Ranges (Idukki, Munnar, Wayanad)", group: document.createElement("optgroup") },
+        "North": { label: "️ North Malabar (Palakkad, Malappuram, Kozhikode, Kannur, Kasaragod)", group: document.createElement("optgroup") }
+      };
+      Object.values(regions).forEach(r => r.group.label = r.label);
 
-    Object.values(KERALA_GRAPH_DATA.nodes).forEach(node => {
-      const option = document.createElement("option");
-      option.value = node.id;
-      option.textContent = `${node.name} (${node.type === 'shelter' ? 'Safe Camp' : 'Junction'})`;
-      if (node.id === state.selectedOrigin) option.selected = true;
-
-      const regKey = node.region || "Central";
-      if (regions[regKey]) {
-        regions[regKey].group.appendChild(option);
-      } else {
-        regions["Central"].group.appendChild(option);
-      }
-    });
-
-    Object.values(regions).forEach(r => {
-      if (r.group.children.length > 0) originSelect.appendChild(r.group);
-    });
-
-    // Populate Shelter dropdown grouped by region
-    shelterSelect.innerHTML = "";
-    const autoOption = document.createElement("option");
-    autoOption.value = "auto";
-    autoOption.textContent = " Auto-Select Safest & Closest Safe Hub";
-    shelterSelect.appendChild(autoOption);
-
-    const shelterRegions = {
-      "South": { label: "️ South Kerala Safe Havens", group: document.createElement("optgroup") },
-      "Central": { label: "📍 Central Kerala Safe Hubs", group: document.createElement("optgroup") },
-      "Highland": { label: "️ High-Range Mountain Citadels", group: document.createElement("optgroup") },
-      "North": { label: "️ North Malabar Mega Shelters", group: document.createElement("optgroup") }
-    };
-    Object.values(shelterRegions).forEach(r => r.group.label = r.label);
-
-    Object.values(KERALA_GRAPH_DATA.nodes)
-      .filter(n => n.type === "shelter")
-      .forEach(shelter => {
+      Object.values(KERALA_GRAPH_DATA.nodes).forEach(node => {
         const option = document.createElement("option");
-        option.value = shelter.id;
-        option.textContent = `️ ${shelter.name} (+${shelter.elevation}m • Cap: ${shelter.capacity?.toLocaleString() || 3000})`;
-        if (shelter.id === state.selectedShelter) option.selected = true;
+        option.value = node.id;
+        option.textContent = `${node.name} (${node.type === 'shelter' ? 'Safe Camp' : 'Junction'})`;
+        if (node.id === state.selectedOrigin) option.selected = true;
 
-        const regKey = shelter.region || "Central";
-        if (shelterRegions[regKey]) {
-          shelterRegions[regKey].group.appendChild(option);
+        const regKey = node.region || "Central";
+        if (regions[regKey]) {
+          regions[regKey].group.appendChild(option);
         } else {
-          shelterRegions["Central"].group.appendChild(option);
+          regions["Central"].group.appendChild(option);
         }
       });
 
-    Object.values(shelterRegions).forEach(r => {
-      if (r.group.children.length > 0) shelterSelect.appendChild(r.group);
-    });
+      Object.values(regions).forEach(r => {
+        if (r.group.children.length > 0) originSelect.appendChild(r.group);
+      });
+    }
+
+    if (shelterSelect) {
+      // Populate Shelter dropdown grouped by region
+      shelterSelect.innerHTML = "";
+      const autoOption = document.createElement("option");
+      autoOption.value = "auto";
+      autoOption.textContent = " Auto-Select Safest & Closest Safe Hub";
+      shelterSelect.appendChild(autoOption);
+
+      const shelterRegions = {
+        "South": { label: "️ South Kerala Safe Havens", group: document.createElement("optgroup") },
+        "Central": { label: "📍 Central Kerala Safe Hubs", group: document.createElement("optgroup") },
+        "Highland": { label: "️ High-Range Mountain Citadels", group: document.createElement("optgroup") },
+        "North": { label: "️ North Malabar Mega Shelters", group: document.createElement("optgroup") }
+      };
+      Object.values(shelterRegions).forEach(r => r.group.label = r.label);
+
+      Object.values(KERALA_GRAPH_DATA.nodes)
+        .filter(n => n.type === "shelter")
+        .forEach(shelter => {
+          const option = document.createElement("option");
+          option.value = shelter.id;
+          option.textContent = `️ ${shelter.name} (+${shelter.elevation}m • Cap: ${shelter.capacity?.toLocaleString() || 3000})`;
+          if (shelter.id === state.selectedShelter) option.selected = true;
+
+          const regKey = shelter.region || "Central";
+          if (shelterRegions[regKey]) {
+            shelterRegions[regKey].group.appendChild(option);
+          } else {
+            shelterRegions["Central"].group.appendChild(option);
+          }
+        });
+
+      Object.values(shelterRegions).forEach(r => {
+        if (r.group.children.length > 0) shelterSelect.appendChild(r.group);
+      });
+    }
 
     // Populate Road Closure Checkboxes
-    closureTogglesContainer.innerHTML = "";
-    ROAD_CLOSURE_PRESETS.forEach(preset => {
-      const itemDiv = document.createElement("div");
-      itemDiv.className = "closure-item";
+    if (closureTogglesContainer) {
+      closureTogglesContainer.innerHTML = "";
+      ROAD_CLOSURE_PRESETS.forEach(preset => {
+        const itemDiv = document.createElement("div");
+        itemDiv.className = "closure-item";
 
-      const label = document.createElement("label");
-      label.className = "closure-label";
+        const label = document.createElement("label");
+        label.className = "closure-label";
 
-      const checkbox = document.createElement("input");
-      checkbox.type = "checkbox";
-      checkbox.dataset.edgeId = preset.edgeId;
-      checkbox.checked = state.closedEdges.has(preset.edgeId);
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.dataset.edgeId = preset.edgeId;
+        checkbox.checked = state.closedEdges.has(preset.edgeId);
 
-      checkbox.addEventListener("change", (e) => {
-        if (e.target.checked) {
-          state.closedEdges.add(preset.edgeId);
-        } else {
-          state.closedEdges.delete(preset.edgeId);
-        }
-        recalculateAndRender();
+        checkbox.addEventListener("change", (e) => {
+          if (e.target.checked) {
+            state.closedEdges.add(preset.edgeId);
+          } else {
+            state.closedEdges.delete(preset.edgeId);
+          }
+          recalculateAndRender();
+        });
+
+        const spanText = document.createElement("span");
+        spanText.textContent = preset.label;
+
+        label.appendChild(checkbox);
+        label.appendChild(spanText);
+
+        const badge = document.createElement("span");
+        badge.className = "closure-badge";
+        badge.textContent = "Blocked";
+
+        itemDiv.appendChild(label);
+        itemDiv.appendChild(badge);
+        closureTogglesContainer.appendChild(itemDiv);
       });
-
-      const spanText = document.createElement("span");
-      spanText.textContent = preset.label;
-
-      label.appendChild(checkbox);
-      label.appendChild(spanText);
-
-      const badge = document.createElement("span");
-      badge.className = "closure-badge";
-      badge.textContent = "Blocked";
-
-      itemDiv.appendChild(label);
-      itemDiv.appendChild(badge);
-      closureTogglesContainer.appendChild(itemDiv);
-    });
+    }
   }
 
   // 3. Render Static Map Layers: Hazards, Roads, and Nodes
@@ -415,15 +421,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
     state.selectedOrigin = "custom_origin";
 
-    // Update originSelect dropdown
-    let customOpt = originSelect.querySelector('option[value="custom_origin"]');
-    if (!customOpt) {
-      customOpt = document.createElement("option");
-      customOpt.value = "custom_origin";
-      originSelect.insertBefore(customOpt, originSelect.firstChild);
+    if (originSelect) {
+      // Update originSelect dropdown
+      let customOpt = originSelect.querySelector('option[value="custom_origin"]');
+      if (!customOpt) {
+        customOpt = document.createElement("option");
+        customOpt.value = "custom_origin";
+        originSelect.insertBefore(customOpt, originSelect.firstChild);
+      }
+      customOpt.textContent = `📍 Custom Location (${lat.toFixed(4)}°N, ${lng.toFixed(4)}°E)`;
+      originSelect.value = "custom_origin";
     }
-    customOpt.textContent = `📍 Custom Location (${lat.toFixed(4)}°N, ${lng.toFixed(4)}°E)`;
-    originSelect.value = "custom_origin";
 
     // Update or create draggable marker
     if (customOriginMarker) {
@@ -545,7 +553,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (btn) {
           btn.addEventListener("click", () => {
             state.selectedOrigin = node.id;
-            originSelect.value = node.id;
+            if (originSelect) originSelect.value = node.id;
             map.closePopup();
             recalculateAndRender();
           });
@@ -559,8 +567,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // Helper to update UI backend status chip
   function updateBackendStatus(isOnline, engineText) {
     const banner = document.querySelector(".map-status-banner");
+    if (!banner) return;
     let chip = document.getElementById("backend-status-chip");
-    if (!chip && banner) {
+    if (!chip) {
       chip = document.createElement("span");
       chip.id = "backend-status-chip";
       banner.appendChild(chip);
@@ -684,19 +693,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function updateResultCard(route) {
     const destination = route.destinationNode;
-    resultShelterTitle.textContent = destination.name;
-    resultShelterMeta.textContent = `📍 +${destination.elevation}m Elevation • Safe Capacity: ${destination.capacity} people`;
+    if (resultShelterTitle && destination) resultShelterTitle.textContent = destination.name;
+    if (resultShelterMeta && destination) resultShelterMeta.textContent = `📍 +${destination.elevation}m Elevation • Safe Capacity: ${destination.capacity} people`;
 
     // Status chip
-    if (route.averageRiskScore < 30) {
-      resultStatusChip.className = "status-chip optimal";
-      resultStatusChip.textContent = "Optimal Safety";
-    } else if (route.averageRiskScore < 60) {
-      resultStatusChip.className = "status-chip warning";
-      resultStatusChip.textContent = "Caution Advised";
-    } else {
-      resultStatusChip.className = "status-chip danger";
-      resultStatusChip.textContent = "High Risk Corridors";
+    if (resultStatusChip) {
+      if (route.averageRiskScore < 30) {
+        resultStatusChip.className = "status-chip optimal";
+        resultStatusChip.textContent = "Optimal Safety";
+      } else if (route.averageRiskScore < 60) {
+        resultStatusChip.className = "status-chip warning";
+        resultStatusChip.textContent = "Caution Advised";
+      } else {
+        resultStatusChip.className = "status-chip danger";
+        resultStatusChip.textContent = "High Risk Corridors";
+      }
     }
 
     // Metrics
@@ -718,80 +729,96 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Distance: prefer OSRM real-road distance, fall back to graph estimate
     const displayKm = route.totalKm;
-    metricDistance.innerHTML = `${displayKm} <span class="metric-unit">km</span>`;
+    if (metricDistance) metricDistance.innerHTML = `${displayKm} <span class="metric-unit">km</span>`;
 
     // Travel time: use OSRM duration if available, else estimate from speed
-    if (route.osrmDurationMin) {
-      metricTime.innerHTML = `${route.osrmDurationMin} <span class="metric-unit">min</span>`;
-    } else {
-      const avgSpeed = state.severity === 'severe' ? 22 : (state.severity === 'moderate' ? 32 : 45);
-      const estMinutes = Math.round((displayKm / avgSpeed) * 60) + (route.stepCount * 2);
-      metricTime.innerHTML = `${estMinutes} <span class="metric-unit">min</span>`;
+    if (metricTime) {
+      if (route.osrmDurationMin) {
+        metricTime.innerHTML = `${route.osrmDurationMin} <span class="metric-unit">min</span>`;
+      } else {
+        const avgSpeed = state.severity === 'severe' ? 22 : (state.severity === 'moderate' ? 32 : 45);
+        const estMinutes = Math.round((displayKm / avgSpeed) * 60) + (route.stepCount * 2);
+        metricTime.innerHTML = `${estMinutes} <span class="metric-unit">min</span>`;
+      }
     }
 
-    metricRisk.innerHTML = `${route.averageRiskScore}<span class="metric-unit">/100</span>`;
+    if (metricRisk) metricRisk.innerHTML = `${route.averageRiskScore}<span class="metric-unit">/100</span>`;
 
     // Risk Meter Progress
-    riskProgressFill.style.width = `${Math.min(100, Math.max(10, route.averageRiskScore))}%`;
-    if (route.averageRiskScore < 35) {
-      riskProgressFill.style.backgroundColor = "#10b981";
-    } else if (route.averageRiskScore < 65) {
-      riskProgressFill.style.backgroundColor = "#f59e0b";
-    } else {
-      riskProgressFill.style.backgroundColor = "#f43f5e";
+    if (riskProgressFill) {
+      riskProgressFill.style.width = `${Math.min(100, Math.max(10, route.averageRiskScore))}%`;
+      if (route.averageRiskScore < 35) {
+        riskProgressFill.style.backgroundColor = "#10b981";
+      } else if (route.averageRiskScore < 65) {
+        riskProgressFill.style.backgroundColor = "#f59e0b";
+      } else {
+        riskProgressFill.style.backgroundColor = "#f43f5e";
+      }
     }
 
     // Risk Formula Explanation
-    riskFormulaText.innerHTML = `
-      <strong>Simulated Risk Estimate Formula:</strong><br>
-      <code>Risk = (Susceptibility × 45 + ElevationPenalty × 35 + HazardProximity × 20) × (${state.severity.toUpperCase()} Multiplier)</code>.<br>
-      <em>Note: Heuristic metric calculation; not an AI model or real-time sensor stream.</em>
-    `;
+    if (riskFormulaText) {
+      riskFormulaText.innerHTML = `
+        <strong>Simulated Risk Estimate Formula:</strong><br>
+        <code>Risk = (Susceptibility × 45 + ElevationPenalty × 35 + HazardProximity × 20) × (${state.severity.toUpperCase()} Multiplier)</code>.<br>
+        <em>Note: Heuristic metric calculation; not an AI model or real-time sensor stream.</em>
+      `;
+    }
 
     // Itinerary List
-    waypointList.innerHTML = "";
-    route.pathNodes.forEach((nodeId, idx) => {
-      const node = KERALA_GRAPH_DATA.nodes[nodeId];
-      const li = document.createElement("li");
-      li.className = `waypoint-item ${idx === 0 ? 'origin' : (idx === route.pathNodes.length - 1 ? 'shelter' : '')}`;
+    if (waypointList) {
+      waypointList.innerHTML = "";
+      route.pathNodes.forEach((nodeId, idx) => {
+        const node = KERALA_GRAPH_DATA.nodes[nodeId];
+        const li = document.createElement("li");
+        li.className = `waypoint-item ${idx === 0 ? 'origin' : (idx === route.pathNodes.length - 1 ? 'shelter' : '')}`;
 
-      const nameSpan = document.createElement("span");
-      nameSpan.className = "waypoint-name";
-      nameSpan.textContent = `${idx + 1}. ${node.name}`;
+        const nameSpan = document.createElement("span");
+        nameSpan.className = "waypoint-name";
+        nameSpan.textContent = `${idx + 1}. ${node.name}`;
 
-      const metaSpan = document.createElement("span");
-      metaSpan.className = "waypoint-meta";
-      metaSpan.textContent = `Elev: +${node.elevation}m`;
+        const metaSpan = document.createElement("span");
+        metaSpan.className = "waypoint-meta";
+        metaSpan.textContent = `Elev: +${node.elevation}m`;
 
-      li.appendChild(nameSpan);
-      li.appendChild(metaSpan);
-      waypointList.appendChild(li);
-    });
+        li.appendChild(nameSpan);
+        li.appendChild(metaSpan);
+        waypointList.appendChild(li);
+      });
+    }
   }
 
   function renderUnreachableCard() {
-    resultShelterTitle.textContent = "No Safe Route Available";
-    resultShelterMeta.textContent = "All road connections to safe shelters are currently blocked or submerged.";
-    resultStatusChip.className = "status-chip danger";
-    resultStatusChip.textContent = "Isolated Sector";
+    if (resultShelterTitle) resultShelterTitle.textContent = "No Safe Route Available";
+    if (resultShelterMeta) resultShelterMeta.textContent = "All road connections to safe shelters are currently blocked or submerged.";
+    if (resultStatusChip) {
+      resultStatusChip.className = "status-chip danger";
+      resultStatusChip.textContent = "Isolated Sector";
+    }
 
-    metricDistance.innerHTML = `-- <span class="metric-unit">km</span>`;
-    metricTime.innerHTML = `-- <span class="metric-unit">min</span>`;
-    metricRisk.innerHTML = `100<span class="metric-unit">/100</span>`;
+    if (metricDistance) metricDistance.innerHTML = `-- <span class="metric-unit">km</span>`;
+    if (metricTime) metricTime.innerHTML = `-- <span class="metric-unit">min</span>`;
+    if (metricRisk) metricRisk.innerHTML = `100<span class="metric-unit">/100</span>`;
 
-    riskProgressFill.style.width = "100%";
-    riskProgressFill.style.backgroundColor = "#f43f5e";
+    if (riskProgressFill) {
+      riskProgressFill.style.width = "100%";
+      riskProgressFill.style.backgroundColor = "#f43f5e";
+    }
 
-    riskFormulaText.innerHTML = `
-      <strong>⚠️ Network Disconnection:</strong><br>
-      The Dijkstra algorithm could not discover any open path from <strong>${KERALA_GRAPH_DATA.nodes[state.selectedOrigin]?.name}</strong> to an emergency shelter without crossing blocked roads. Please reopen road links or consider amphibious/air rescue simulation.
-    `;
+    if (riskFormulaText) {
+      riskFormulaText.innerHTML = `
+        <strong>⚠️ Network Disconnection:</strong><br>
+        The Dijkstra algorithm could not discover any open path from <strong>${KERALA_GRAPH_DATA.nodes[state.selectedOrigin]?.name}</strong> to an emergency shelter without crossing blocked roads. Please reopen road links or consider amphibious/air rescue simulation.
+      `;
+    }
 
-    waypointList.innerHTML = `
-      <li class="waypoint-item" style="color:#fb7185;">
-        <span>Origin isolated by active road closures.</span>
-      </li>
-    `;
+    if (waypointList) {
+      waypointList.innerHTML = `
+        <li class="waypoint-item" style="color:#fb7185;">
+          <span>Origin isolated by active road closures.</span>
+        </li>
+      `;
+    }
   }
 
   /**
@@ -913,23 +940,27 @@ document.addEventListener("DOMContentLoaded", () => {
     setCustomOrigin(e.latlng.lat, e.latlng.lng, false);
   });
 
-  originSelect.addEventListener("change", (e) => {
-    state.hasUserInteracted = true;
-    state.selectedOrigin = e.target.value;
-    if (e.target.value !== "custom_origin" && customOriginMarker && map.hasLayer(customOriginMarker)) {
-      map.removeLayer(customOriginMarker);
-    }
-    if (e.target.value === "custom_origin" && customOriginMarker && !map.hasLayer(customOriginMarker)) {
-      customOriginMarker.addTo(map);
-    }
-    recalculateAndRender();
-  });
+  if (originSelect) {
+    originSelect.addEventListener("change", (e) => {
+      state.hasUserInteracted = true;
+      state.selectedOrigin = e.target.value;
+      if (e.target.value !== "custom_origin" && customOriginMarker && map.hasLayer(customOriginMarker)) {
+        map.removeLayer(customOriginMarker);
+      }
+      if (e.target.value === "custom_origin" && customOriginMarker && !map.hasLayer(customOriginMarker)) {
+        customOriginMarker.addTo(map);
+      }
+      recalculateAndRender();
+    });
+  }
 
-  shelterSelect.addEventListener("change", (e) => {
-    state.hasUserInteracted = true;
-    state.selectedShelter = e.target.value;
-    recalculateAndRender();
-  });
+  if (shelterSelect) {
+    shelterSelect.addEventListener("change", (e) => {
+      state.hasUserInteracted = true;
+      state.selectedShelter = e.target.value;
+      recalculateAndRender();
+    });
+  }
 
   disasterSelect.addEventListener("change", (e) => {
     state.disasterType = e.target.value;
@@ -966,23 +997,28 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  resetBtn.addEventListener("click", () => {
-    state.selectedOrigin = "fort_kochi";
-    state.selectedShelter = "auto";
-    state.disasterType = "flood";
-    state.severity = "moderate";
-    state.closedEdges.clear();
+  if (resetBtn) {
+    resetBtn.addEventListener("click", () => {
+      state.selectedOrigin = "fort_kochi";
+      state.selectedShelter = "auto";
+      state.disasterType = "flood";
+      state.severity = "moderate";
+      state.closedEdges.clear();
 
-    if (floodQuickToggle) floodQuickToggle.checked = true;
-    if (floodToggleSub) floodToggleSub.textContent = "Active flood elevation penalty";
+      if (originSelect) originSelect.value = "fort_kochi";
+      if (shelterSelect) shelterSelect.value = "auto";
 
-    populateFormControls();
-    severityBtns.forEach(b => {
-      b.classList.toggle("active", b.dataset.sev === "moderate");
+      if (floodQuickToggle) floodQuickToggle.checked = true;
+      if (floodToggleSub) floodToggleSub.textContent = "Active flood elevation penalty";
+
+      populateFormControls();
+      severityBtns.forEach(b => {
+        b.classList.toggle("active", b.dataset.sev === "moderate");
+      });
+
+      recalculateAndRender();
     });
-
-    recalculateAndRender();
-  });
+  }
 
   // Layer switches
   if (toggleHazardsInput) {
