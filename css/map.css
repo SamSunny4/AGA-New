@@ -86,6 +86,72 @@
   100% { transform: scale(1.5); opacity: 0; }
 }
 
+/* Dynamic Custom Draggable Origin Pin */
+.custom-drag-pin {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: grab;
+  position: relative;
+}
+
+.custom-drag-pin:active {
+  cursor: grabbing;
+}
+
+.custom-drag-head {
+  background: #0284c7;
+  color: #ffffff;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.45);
+  border: 2px solid #ffffff;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.custom-drag-beacon {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #0284c7;
+  border: 3px solid #ffffff;
+  box-shadow: 0 0 10px rgba(2, 132, 199, 0.8);
+  margin-top: 2px;
+  position: relative;
+}
+
+.custom-drag-beacon::after {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid #0284c7;
+  animation: pulse-ring 1.8s infinite ease-out;
+}
+
+/* Pin Placement Hint */
+.pin-placement-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #0369a1;
+  background: #f0f9ff;
+  border: 1px dashed #7dd3fc;
+  padding: 6px 10px;
+  border-radius: 8px;
+  margin-top: 8px;
+  line-height: 1.4;
+}
+
 /* Shelter Marker */
 .shelter-pin {
   width: 30px;

@@ -321,10 +321,121 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  let customOriginMarker = null;
+
+  // Set evacuation starting point to any arbitrary latitude & longitude on the map
+  function setCustomOrigin(lat, lng, flyTo = false) {
+    state.hasUserInteracted = true;
+
+    // Find nearest 3 nodes in Kerala graph
+    const nearestNodes = Object.values(KERALA_GRAPH_DATA.nodes)
+      .filter(n => n.id !== "custom_origin")
+      .map(n => {
+        const dLat = (n.lat - lat) * Math.PI / 180;
+        const dLng = (n.lng - lng) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                  Math.cos(lat * Math.PI / 180) * Math.cos(n.lat * Math.PI / 180) *
+                  Math.sin(dLng/2) * Math.sin(dLng/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        const distKm = 6371 * c;
+        return { node: n, distKm };
+      })
+      .sort((a, b) => a.distKm - b.distKm);
+
+    const closest = nearestNodes[0];
+    const secondClosest = nearestNodes[1];
+    const estimatedElevation = Math.max(1, Math.round(closest.node.elevation));
+
+    // Register / update custom_origin node
+    const customNode = {
+      id: "custom_origin",
+      name: `Custom Location (${lat.toFixed(4)}°N, ${lng.toFixed(4)}°E)`,
+      lat: lat,
+      lng: lng,
+      elevation: estimatedElevation,
+      type: "intersection",
+      isOriginPreset: false,
+      desc: `User-selected starting coordinate near ${closest.node.name} (${closest.distKm.toFixed(1)} km).`
+    };
+    KERALA_GRAPH_DATA.nodes["custom_origin"] = customNode;
+
+    // Remove any previous custom connector edges
+    KERALA_GRAPH_DATA.edges = KERALA_GRAPH_DATA.edges.filter(e => !e.id.startsWith("e_custom_"));
+
+    // Add connector edges to closest 2 network nodes
+    [closest, secondClosest].forEach((target, idx) => {
+      const roadDist = Math.max(0.5, Math.round(target.distKm * 1.25 * 10) / 10);
+      KERALA_GRAPH_DATA.edges.push({
+        id: `e_custom_${idx}_${target.node.id}`,
+        name: `Access Road to ${target.node.name}`,
+        u: "custom_origin",
+        v: target.node.id,
+        distance_km: roadDist,
+        capacity_veh_hr: 1500,
+        elevation: estimatedElevation,
+        flood_susceptibility: 0.25,
+        hazard_proximity: null,
+        isToggleable: false,
+        path: [
+          [lat, lng],
+          [target.node.lat, target.node.lng]
+        ]
+      });
+    });
+
+    state.selectedOrigin = "custom_origin";
+
+    // Update originSelect dropdown
+    let customOpt = originSelect.querySelector('option[value="custom_origin"]');
+    if (!customOpt) {
+      customOpt = document.createElement("option");
+      customOpt.value = "custom_origin";
+      originSelect.insertBefore(customOpt, originSelect.firstChild);
+    }
+    customOpt.textContent = `📍 Custom Location (${lat.toFixed(4)}°N, ${lng.toFixed(4)}°E)`;
+    originSelect.value = "custom_origin";
+
+    // Update or create draggable marker
+    if (customOriginMarker) {
+      customOriginMarker.setLatLng([lat, lng]);
+      if (!map.hasLayer(customOriginMarker)) {
+        customOriginMarker.addTo(map);
+      }
+    } else {
+      const customIcon = L.divIcon({
+        className: "custom-drag-pin",
+        html: `
+          <div class="custom-drag-head">📍 Start Point (Drag)</div>
+          <div class="custom-drag-beacon"></div>
+        `,
+        iconSize: [120, 48],
+        iconAnchor: [60, 44]
+      });
+      customOriginMarker = L.marker([lat, lng], {
+        icon: customIcon,
+        draggable: true,
+        zIndexOffset: 3000
+      }).addTo(map);
+
+      customOriginMarker.on("dragend", (event) => {
+        const newPos = event.target.getLatLng();
+        setCustomOrigin(newPos.lat, newPos.lng, false);
+      });
+    }
+
+    if (flyTo) {
+      map.flyTo([lat, lng], Math.max(map.getZoom(), 11), { duration: 1.0 });
+    }
+
+    recalculateAndRender();
+  }
+
   function renderNodes() {
     nodeLayerGroup.clearLayers();
 
     Object.values(KERALA_GRAPH_DATA.nodes).forEach(node => {
+      if (node.id === "custom_origin") return; // Rendered by customOriginMarker
+
       const isOrigin = node.id === state.selectedOrigin;
       const isShelter = node.type === "shelter";
 
@@ -409,7 +520,9 @@ document.addEventListener("DOMContentLoaded", () => {
       targetId: targetId,
       disasterType: state.disasterType,
       severity: state.severity,
-      closedEdgeIds: Array.from(state.closedEdges)
+      closedEdgeIds: Array.from(state.closedEdges),
+      nodes: KERALA_GRAPH_DATA.nodes,
+      edges: KERALA_GRAPH_DATA.edges
     };
 
     try {
@@ -611,9 +724,20 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // 5. Event Listeners
+  // Map Click Listener: Set evacuation starting point anywhere on the map
+  map.on("click", (e) => {
+    setCustomOrigin(e.latlng.lat, e.latlng.lng, false);
+  });
+
   originSelect.addEventListener("change", (e) => {
     state.hasUserInteracted = true;
     state.selectedOrigin = e.target.value;
+    if (e.target.value !== "custom_origin" && customOriginMarker && map.hasLayer(customOriginMarker)) {
+      map.removeLayer(customOriginMarker);
+    }
+    if (e.target.value === "custom_origin" && customOriginMarker && !map.hasLayer(customOriginMarker)) {
+      customOriginMarker.addTo(map);
+    }
     recalculateAndRender();
   });
 
