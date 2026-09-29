@@ -72,15 +72,15 @@ class PresentationDirector {
   }
 
   startPresentation(originId, shelterId) {
-    this.originId = originId || this.state.selectedOrigin || "fort_kochi";
-    this.shelterId = shelterId || (this.state.selectedShelter !== "auto" ? this.state.selectedShelter : "shelter_kakkanad");
+    this.originId = originId || this.state.selectedOrigin || "kuttanad";
+    this.shelterId = shelterId || (this.state.selectedShelter !== "auto" ? this.state.selectedShelter : "shelter_alappuzha");
 
     // Fit all nodes and road network to viewport with bottom room for presentation HUD
     const allLatLngs = Object.values(KERALA_GRAPH_DATA.nodes).map(n => [n.lat, n.lng]);
     this.map.fitBounds(L.latLngBounds(allLatLngs), {
-      paddingTopLeft: [50, 50],
-      paddingBottomRight: [50, 180],
-      maxZoom: 13,
+      paddingTopLeft: [40, 40],
+      paddingBottomRight: [40, 160],
+      maxZoom: 9,
       animate: false
     });
 
@@ -204,20 +204,27 @@ class PresentationDirector {
 
   // Pre-calculate Dijkstra, Predicted Blocks, and Max Flow
   computeAlgorithmsData() {
-    // 1. Dijkstra calculation from origin to shelter
+    // 1. Dijkstra calculation from origin to shelter (supports auto-shelter selection)
+    let target = this.shelterId;
+    if (!target || target === "auto") {
+      target = null;
+    }
     const dijkstraResult = DijkstraRouter.runDijkstra(
       KERALA_GRAPH_DATA.nodes,
       KERALA_GRAPH_DATA.edges,
       this.originId,
-      this.shelterId,
+      target,
       { disasterType: this.state.disasterType, severity: this.state.severity, closedEdgeIds: new Set() }
     );
-    this.optimalPath = dijkstraResult.route;
+    this.optimalPath = dijkstraResult.optimalShelterRoute || dijkstraResult.route;
+    if (this.optimalPath && this.optimalPath.destinationId) {
+      this.shelterId = this.optimalPath.destinationId;
+    }
 
-    // 2. Predict blocked edges (roads with elevation < 4m or proximity to hazard)
+    // 2. Predict blocked edges (roads with low elevation or severe hazard proximity)
     this.predictedBlockedEdges.clear();
     KERALA_GRAPH_DATA.edges.forEach(e => {
-      if (e.elevation <= 3.5 || e.hazard_proximity === "hazard_vembanad" || e.id === "e_edappally_cheranalloor") {
+      if (e.elevation <= 2.5 || e.hazard_proximity === "hazard_kuttanad" || e.hazard_proximity === "hazard_wayanad" || e.id === "e_alappuzha_kuttanad" || e.id === "e_thamarassery_kalpetta") {
         this.predictedBlockedEdges.add(e.id);
       }
     });

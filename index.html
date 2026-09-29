@@ -75,12 +75,12 @@
         <div class="panel-title-row">
           <h2 class="panel-title">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.2"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg>
-            Kochi Evacuation Grid
+            Kerala Evacuation Grid
           </h2>
-          <span class="panel-badge">Dijkstra Engine</span>
+          <span class="panel-badge">Statewide Network</span>
         </div>
         <p class="panel-desc">
-          Select origin, hazard conditions, and road blockages. The graph engine calculates the safest minimum-cost evacuation path.
+          Statewide 14-district disaster evacuation planner. Select any origin across Kerala to calculate safest routes to regional high-ground sanctuaries.
         </p>
       </div>
 
@@ -210,7 +210,7 @@
       <!-- Live Map Status Indicator -->
       <div class="map-status-banner">
         <span class="status-dot"></span>
-        <span>Graph Model: <strong>Kochi Metropolitan Sample Network</strong></span>
+        <span>Graph Model: <strong>Statewide Kerala 14-District Network (67 Nodes • 16 Shelters • 77 Corridors)</strong></span>
       </div>
 
       <!-- Floating Map Header Controls -->
@@ -324,10 +324,11 @@
         <div class="settings-section">
           <div class="settings-section-title">Quick Camera Presets</div>
           <div class="camera-presets-row">
-            <button type="button" class="btn-preset-cam" data-cam="kochi">📍 Kochi Central</button>
-            <button type="button" class="btn-preset-cam" data-cam="periyar">🌊 Periyar Basin</button>
-            <button type="button" class="btn-preset-cam" data-cam="fortkochi">🏖️ Fort Kochi Coast</button>
-            <button type="button" class="btn-preset-cam" data-cam="kakkanad">⛰️ Kakkanad Plateau</button>
+            <button type="button" class="btn-preset-cam active" data-cam="kerala">🌴 Statewide</button>
+            <button type="button" class="btn-preset-cam" data-cam="south">🏛️ South Kerala</button>
+            <button type="button" class="btn-preset-cam" data-cam="central">📍 Central</button>
+            <button type="button" class="btn-preset-cam" data-cam="highlands">⛰️ High Ranges</button>
+            <button type="button" class="btn-preset-cam" data-cam="north">🏖️ North Malabar</button>
           </div>
         </div>
 

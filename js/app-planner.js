@@ -13,6 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
     severity: "moderate",      // 'low', 'moderate', 'severe'
     closedEdges: new Set(),
     activeRouteResult: null,
+    hasUserInteracted: false,
     showHazards: true,
     showRoads: true,
     showShelters: true
@@ -43,10 +44,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const toggleRoadsInput = document.getElementById("toggle-roads");
   const toggleSheltersInput = document.getElementById("toggle-shelters");
 
-  // 1. Initialize Leaflet Map
+  // 1. Initialize Leaflet Map (Statewide Full Kerala bounds)
   const map = L.map("map", {
     zoomControl: false,
-    minZoom: 10,
+    minZoom: 6,
     maxZoom: 18
   }).setView(KERALA_GRAPH_DATA.metadata.center, KERALA_GRAPH_DATA.metadata.defaultZoom);
 
@@ -113,33 +114,70 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // 2. Populate Dropdowns & Presets
+  // 2. Populate Dropdowns & Presets with Regional Optgroups
   function populateFormControls() {
-    // Populate Origin dropdown
+    // Populate Origin dropdown grouped by region
     originSelect.innerHTML = "";
+    const regions = {
+      "South": { label: "🏛️ South Kerala (TVM, Kollam, Alappuzha, Pathanamthitta)", group: document.createElement("optgroup") },
+      "Central": { label: "📍 Central Kerala (Kochi, Thrissur, Kottayam)", group: document.createElement("optgroup") },
+      "Highland": { label: "⛰️ Western Ghats & High Ranges (Idukki, Munnar, Wayanad)", group: document.createElement("optgroup") },
+      "North": { label: "🏖️ North Malabar (Palakkad, Malappuram, Kozhikode, Kannur, Kasaragod)", group: document.createElement("optgroup") }
+    };
+    Object.values(regions).forEach(r => r.group.label = r.label);
+
     Object.values(KERALA_GRAPH_DATA.nodes).forEach(node => {
       const option = document.createElement("option");
       option.value = node.id;
       option.textContent = `${node.name} (${node.type === 'shelter' ? 'Safe Camp' : 'Junction'})`;
       if (node.id === state.selectedOrigin) option.selected = true;
-      originSelect.appendChild(option);
+
+      const regKey = node.region || "Central";
+      if (regions[regKey]) {
+        regions[regKey].group.appendChild(option);
+      } else {
+        regions["Central"].group.appendChild(option);
+      }
     });
 
-    // Populate Shelter dropdown
+    Object.values(regions).forEach(r => {
+      if (r.group.children.length > 0) originSelect.appendChild(r.group);
+    });
+
+    // Populate Shelter dropdown grouped by region
     shelterSelect.innerHTML = "";
     const autoOption = document.createElement("option");
     autoOption.value = "auto";
     autoOption.textContent = "⚡ Auto-Select Safest & Closest Safe Hub";
     shelterSelect.appendChild(autoOption);
 
+    const shelterRegions = {
+      "South": { label: "🏛️ South Kerala Safe Havens", group: document.createElement("optgroup") },
+      "Central": { label: "📍 Central Kerala Safe Hubs", group: document.createElement("optgroup") },
+      "Highland": { label: "⛰️ High-Range Mountain Citadels", group: document.createElement("optgroup") },
+      "North": { label: "🏖️ North Malabar Mega Shelters", group: document.createElement("optgroup") }
+    };
+    Object.values(shelterRegions).forEach(r => r.group.label = r.label);
+
     Object.values(KERALA_GRAPH_DATA.nodes)
       .filter(n => n.type === "shelter")
       .forEach(shelter => {
         const option = document.createElement("option");
         option.value = shelter.id;
-        option.textContent = `🛡️ ${shelter.name} (+${shelter.elevation}m)`;
-        shelterSelect.appendChild(option);
+        option.textContent = `🛡️ ${shelter.name} (+${shelter.elevation}m • Cap: ${shelter.capacity?.toLocaleString() || 3000})`;
+        if (shelter.id === state.selectedShelter) option.selected = true;
+
+        const regKey = shelter.region || "Central";
+        if (shelterRegions[regKey]) {
+          shelterRegions[regKey].group.appendChild(option);
+        } else {
+          shelterRegions["Central"].group.appendChild(option);
+        }
       });
+
+    Object.values(shelterRegions).forEach(r => {
+      if (r.group.children.length > 0) shelterSelect.appendChild(r.group);
+    });
 
     // Populate Road Closure Checkboxes
     closureTogglesContainer.innerHTML = "";
@@ -455,11 +493,11 @@ document.addEventListener("DOMContentLoaded", () => {
     routeLayerGroup.addLayer(bgLine);
     routeLayerGroup.addLayer(glowLine);
 
-    // Zoom map slightly to fit route if reasonable
-    if (routeCoords.length > 1) {
+    // Zoom map to fit route once the user interacts with selection
+    if (state.hasUserInteracted && routeCoords.length > 1) {
       map.fitBounds(L.latLngBounds(routeCoords), {
         padding: [60, 60],
-        maxZoom: 14
+        maxZoom: 13
       });
     }
 
@@ -574,11 +612,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 5. Event Listeners
   originSelect.addEventListener("change", (e) => {
+    state.hasUserInteracted = true;
     state.selectedOrigin = e.target.value;
     recalculateAndRender();
   });
 
   shelterSelect.addEventListener("change", (e) => {
+    state.hasUserInteracted = true;
     state.selectedShelter = e.target.value;
     recalculateAndRender();
   });
@@ -752,15 +792,18 @@ document.addEventListener("DOMContentLoaded", () => {
     mapContainer.classList.toggle("dark-eoc-mode", e.target.checked);
   });
 
-  // Quick Camera Presets
+  // Quick Camera Presets (Statewide Full Kerala)
   const CAM_PRESETS = {
-    kochi: { center: [10.015, 76.315], zoom: 12 },
-    periyar: { center: [10.105, 76.345], zoom: 13 },
-    fortkochi: { center: [9.965, 76.255], zoom: 14 },
-    kakkanad: { center: [10.016, 76.345], zoom: 14 }
+    kerala: { center: [10.35, 76.51], zoom: 8 },
+    south: { center: [8.85, 76.75], zoom: 9 },
+    central: { center: [10.15, 76.35], zoom: 10 },
+    highlands: { center: [10.05, 77.05], zoom: 10 },
+    north: { center: [11.85, 75.60], zoom: 9 }
   };
   document.querySelectorAll(".btn-preset-cam").forEach(btn => {
     btn.addEventListener("click", () => {
+      document.querySelectorAll(".btn-preset-cam").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
       const preset = CAM_PRESETS[btn.dataset.cam];
       if (preset) {
         map.flyTo(preset.center, preset.zoom, { duration: 1.2 });

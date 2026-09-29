@@ -1,1017 +1,5 @@
-/**
- * Kerala SafeRoute - Full Kerala Statewide Evacuation Network Data
- * Scale: Full State of Kerala (14 Districts)
- * Total Nodes: 67 (including 16 Safe Shelters)
- * Total Edges: 77 Real-World Highways & Corridors
- */
-
-const KERALA_GRAPH_DATA = {
-  metadata: {
-  "region": "State of Kerala - Statewide Disaster Evacuation Network",
-  "center": [
-    10.35,
-    76.51
-  ],
-  "defaultZoom": 8,
-  "districtCount": 14,
-  "nodeCount": 67,
-  "edgeCount": 77,
-  "shelterCount": 16,
-  "simulatedDisclaimer": "Demonstration dataset for academic graph algorithm evacuation planning across Kerala."
-},
-  nodes: {
-  "tvm_city": {
-    "id": "tvm_city",
-    "name": "Thiruvananthapuram Central (East Fort)",
-    "lat": 8.4875,
-    "lng": 76.9486,
-    "elevation": 14.0,
-    "type": "intersection",
-    "district": "Thiruvananthapuram",
-    "region": "South",
-    "isOriginPreset": true,
-    "desc": "Capital urban center and transit junction, near Karamana river basin."
-  },
-  "attingal": {
-    "id": "attingal",
-    "name": "Attingal NH 66 Junction",
-    "lat": 8.6965,
-    "lng": 76.8143,
-    "elevation": 18.0,
-    "type": "intersection",
-    "district": "Thiruvananthapuram",
-    "region": "South",
-    "isOriginPreset": true,
-    "desc": "North Thiruvananthapuram arterial gateway along the Vamanapuram river."
-  },
-  "nedumangad": {
-    "id": "nedumangad",
-    "name": "Nedumangad Foothills Junction",
-    "lat": 8.6045,
-    "lng": 77.0016,
-    "elevation": 45.0,
-    "type": "intersection",
-    "district": "Thiruvananthapuram",
-    "region": "South",
-    "desc": "Midland foothills connecting the southern Western Ghats."
-  },
-  "shelter_tvm": {
-    "id": "shelter_tvm",
-    "name": "Trivandrum Kudappanakunnu Civil Complex Safe Haven",
-    "lat": 8.5482,
-    "lng": 76.9582,
-    "elevation": 65.0,
-    "type": "shelter",
-    "district": "Thiruvananthapuram",
-    "region": "South",
-    "capacity": 5000,
-    "desc": "Elevated civil station hilltop plateau with emergency power and medical supplies."
-  },
-  "kollam_city": {
-    "id": "kollam_city",
-    "name": "Kollam Port & Chinnakada",
-    "lat": 8.8932,
-    "lng": 76.6141,
-    "elevation": 5.5,
-    "type": "intersection",
-    "district": "Kollam",
-    "region": "South",
-    "isOriginPreset": true,
-    "desc": "Ashtamudi lake and coastal harbor basin, vulnerable to backwater inundation."
-  },
-  "kottarakkara": {
-    "id": "kottarakkara",
-    "name": "Kottarakkara MC Road Hub",
-    "lat": 8.9989,
-    "lng": 76.7725,
-    "elevation": 38.0,
-    "type": "intersection",
-    "district": "Kollam",
-    "region": "South",
-    "isOriginPreset": true,
-    "desc": "Major midland road junction on the Main Central (MC) Road."
-  },
-  "karunagappally": {
-    "id": "karunagappally",
-    "name": "Karunagappally NH 66",
-    "lat": 9.0551,
-    "lng": 76.5367,
-    "elevation": 7.0,
-    "type": "intersection",
-    "district": "Kollam",
-    "region": "South",
-    "desc": "Coastal coastal bypass near Kayamkulam Kayal."
-  },
-  "shelter_kollam": {
-    "id": "shelter_kollam",
-    "name": "Kollam Kottarakkara Jubilee High Ground Camp",
-    "lat": 9.0012,
-    "lng": 76.776,
-    "elevation": 42.0,
-    "type": "shelter",
-    "district": "Kollam",
-    "region": "South",
-    "capacity": 3500,
-    "desc": "Highland educational and disaster relief camp outside the Ashtamudi surge zone."
-  },
-  "adoor": {
-    "id": "adoor",
-    "name": "Adoor Central Bypass",
-    "lat": 9.153,
-    "lng": 76.7356,
-    "elevation": 32.0,
-    "type": "intersection",
-    "district": "Pathanamthitta",
-    "region": "South",
-    "isOriginPreset": true,
-    "desc": "Southern gateway to Pathanamthitta district along MC Road."
-  },
-  "pathanamthitta_city": {
-    "id": "pathanamthitta_city",
-    "name": "Pathanamthitta Ring Road",
-    "lat": 9.2648,
-    "lng": 76.787,
-    "elevation": 42.0,
-    "type": "intersection",
-    "district": "Pathanamthitta",
-    "region": "South",
-    "isOriginPreset": true,
-    "desc": "District headquarters on Achankovil river, gateway to Sabarimala hills."
-  },
-  "thiruvalla": {
-    "id": "thiruvalla",
-    "name": "Thiruvalla MC Road Junction",
-    "lat": 9.3835,
-    "lng": 76.5741,
-    "elevation": 12.0,
-    "type": "intersection",
-    "district": "Pathanamthitta",
-    "region": "South",
-    "desc": "Lowland junction near the confluence of Manimala and Pamba rivers."
-  },
-  "shelter_pathanamthitta": {
-    "id": "shelter_pathanamthitta",
-    "name": "Catholicate College High Ridge Camp",
-    "lat": 9.271,
-    "lng": 76.782,
-    "elevation": 95.0,
-    "type": "shelter",
-    "district": "Pathanamthitta",
-    "region": "South",
-    "capacity": 3200,
-    "desc": "High altitude hillside campus refuge immune to Pamba river flash floods."
-  },
-  "kayamkulam": {
-    "id": "kayamkulam",
-    "name": "Kayamkulam NH 66",
-    "lat": 9.1724,
-    "lng": 76.5011,
-    "elevation": 6.0,
-    "type": "intersection",
-    "district": "Alappuzha",
-    "region": "South",
-    "desc": "Coastal commercial town bordered by backwaters."
-  },
-  "alappuzha_town": {
-    "id": "alappuzha_town",
-    "name": "Alappuzha Town & Canal Circle",
-    "lat": 9.4981,
-    "lng": 76.3388,
-    "elevation": 2.2,
-    "type": "intersection",
-    "district": "Alappuzha",
-    "region": "South",
-    "isOriginPreset": true,
-    "desc": "Vulnerable low-elevation coastal canal network and marine beach front."
-  },
-  "kuttanad": {
-    "id": "kuttanad",
-    "name": "Kuttanad Water Basin (Nedumudi)",
-    "lat": 9.4357,
-    "lng": 76.3986,
-    "elevation": -1.5,
-    "type": "intersection",
-    "district": "Alappuzha",
-    "region": "South",
-    "isOriginPreset": true,
-    "desc": "Sub-sea-level agricultural delta bowl, first to submerge in monsoon deluges."
-  },
-  "cherthala": {
-    "id": "cherthala",
-    "name": "Cherthala NH 66",
-    "lat": 9.6845,
-    "lng": 76.3328,
-    "elevation": 5.2,
-    "type": "intersection",
-    "district": "Alappuzha",
-    "region": "Central",
-    "desc": "North Alappuzha highway connecting to Greater Kochi industrial corridor."
-  },
-  "shelter_alappuzha": {
-    "id": "shelter_alappuzha",
-    "name": "Alappuzha SD College Highland Camp",
-    "lat": 9.472,
-    "lng": 76.353,
-    "elevation": 12.5,
-    "type": "shelter",
-    "district": "Alappuzha",
-    "region": "South",
-    "capacity": 3000,
-    "desc": "Elevated campus ridge sanctuary above the Kuttanad delta water levels."
-  },
-  "changanassery": {
-    "id": "changanassery",
-    "name": "Changanassery Bypass",
-    "lat": 9.4442,
-    "lng": 76.5398,
-    "elevation": 11.5,
-    "type": "intersection",
-    "district": "Kottayam",
-    "region": "South",
-    "desc": "Eastern edge of Kuttanad basin and gateway along MC Road."
-  },
-  "kottayam_city": {
-    "id": "kottayam_city",
-    "name": "Kottayam Baker Junction",
-    "lat": 9.5916,
-    "lng": 76.5222,
-    "elevation": 15.0,
-    "type": "intersection",
-    "district": "Kottayam",
-    "region": "South",
-    "isOriginPreset": true,
-    "desc": "Major midland commercial junction and Meenachil river crossing."
-  },
-  "pala": {
-    "id": "pala",
-    "name": "Pala River Highway",
-    "lat": 9.71,
-    "lng": 76.683,
-    "elevation": 30.0,
-    "type": "intersection",
-    "district": "Kottayam",
-    "region": "Central",
-    "desc": "Foothill town on the banks of Meenachil river, connecting to high ranges."
-  },
-  "shelter_kottayam": {
-    "id": "shelter_kottayam",
-    "name": "CMS College Elevated Ridge Safe Hub",
-    "lat": 9.598,
-    "lng": 76.525,
-    "elevation": 35.0,
-    "type": "shelter",
-    "district": "Kottayam",
-    "region": "South",
-    "capacity": 3500,
-    "desc": "Historic hilltop campus above maximum Meenachil river flood level."
-  },
-  "kumily": {
-    "id": "kumily",
-    "name": "Kumily (Thekkady Gateway)",
-    "lat": 9.605,
-    "lng": 77.1658,
-    "elevation": 880.0,
-    "type": "intersection",
-    "district": "Idukki",
-    "region": "Highland",
-    "isOriginPreset": true,
-    "desc": "Periyar Tiger Reserve mountain border town on NH 183."
-  },
-  "kattappana": {
-    "id": "kattappana",
-    "name": "Kattappana High Ranges",
-    "lat": 9.7744,
-    "lng": 77.1192,
-    "elevation": 950.0,
-    "type": "intersection",
-    "district": "Idukki",
-    "region": "Highland",
-    "desc": "Central cardamon hills plateau in the high Western Ghats."
-  },
-  "idukki_painavu": {
-    "id": "idukki_painavu",
-    "name": "Painavu (Idukki District HQ)",
-    "lat": 9.8504,
-    "lng": 76.9744,
-    "elevation": 750.0,
-    "type": "intersection",
-    "district": "Idukki",
-    "region": "Highland",
-    "isOriginPreset": true,
-    "desc": "Administrative headquarters near the massive Idukki Arch Dam."
-  },
-  "adimali": {
-    "id": "adimali",
-    "name": "Adimali Gap Road Junction",
-    "lat": 10.0125,
-    "lng": 76.9532,
-    "elevation": 520.0,
-    "type": "intersection",
-    "district": "Idukki",
-    "region": "Highland",
-    "desc": "Key transit junction on NH 85 prone to monsoon rockfalls."
-  },
-  "munnar": {
-    "id": "munnar",
-    "name": "Munnar Hill Station",
-    "lat": 10.0889,
-    "lng": 77.0595,
-    "elevation": 1532.0,
-    "type": "intersection",
-    "district": "Idukki",
-    "region": "Highland",
-    "isOriginPreset": true,
-    "desc": "Confluence of three mountain rivers, vulnerable to flash landslides."
-  },
-  "shelter_idukki": {
-    "id": "shelter_idukki",
-    "name": "Painavu Govt High Plateau Refuge",
-    "lat": 9.849,
-    "lng": 76.978,
-    "elevation": 1020.0,
-    "type": "shelter",
-    "district": "Idukki",
-    "region": "Highland",
-    "capacity": 4000,
-    "desc": "Bedrock reinforced high plateau complex safe from debris flows."
-  },
-  "shelter_munnar": {
-    "id": "shelter_munnar",
-    "name": "Munnar High-Range Sports Complex Refuge",
-    "lat": 10.092,
-    "lng": 77.065,
-    "elevation": 1550.0,
-    "type": "shelter",
-    "district": "Idukki",
-    "region": "Highland",
-    "capacity": 2500,
-    "desc": "Elevated bedrock sports arena above the valley flood line."
-  },
-  "muvattupuzha": {
-    "id": "muvattupuzha",
-    "name": "Muvattupuzha 130 Junction",
-    "lat": 9.9818,
-    "lng": 76.5779,
-    "elevation": 22.0,
-    "type": "intersection",
-    "district": "Ernakulam",
-    "region": "Central",
-    "isOriginPreset": true,
-    "desc": "Confluence of three rivers connecting high ranges to Kochi plains."
-  },
-  "kothamangalam": {
-    "id": "kothamangalam",
-    "name": "Kothamangalam Gateway",
-    "lat": 10.0617,
-    "lng": 76.6268,
-    "elevation": 36.0,
-    "type": "intersection",
-    "district": "Ernakulam",
-    "region": "Central",
-    "desc": "Gateway to High Ranges along NH 85."
-  },
-  "fort_kochi": {
-    "id": "fort_kochi",
-    "name": "Fort Kochi (Heritage Beach)",
-    "lat": 9.9658,
-    "lng": 76.2425,
-    "elevation": 2.1,
-    "type": "intersection",
-    "district": "Ernakulam",
-    "region": "Central",
-    "isOriginPreset": true,
-    "desc": "Coastal western locality, highly vulnerable to marine tidal surges."
-  },
-  "marine_drive": {
-    "id": "marine_drive",
-    "name": "Kochi Marine Drive Waterfront",
-    "lat": 9.979,
-    "lng": 76.275,
-    "elevation": 3.2,
-    "type": "intersection",
-    "district": "Ernakulam",
-    "region": "Central",
-    "desc": "Vembanad lake waterfront corridor in Ernakulam CBD."
-  },
-  "vyttila": {
-    "id": "vyttila",
-    "name": "Vyttila Mobility Hub",
-    "lat": 9.9696,
-    "lng": 76.3204,
-    "elevation": 4.8,
-    "type": "intersection",
-    "district": "Ernakulam",
-    "region": "Central",
-    "isOriginPreset": true,
-    "desc": "Kerala's largest transit nexus connecting NH 66, Kochi Metro, and water buses."
-  },
-  "edappally": {
-    "id": "edappally",
-    "name": "Edappally Toll Metro Hub",
-    "lat": 10.0248,
-    "lng": 76.3079,
-    "elevation": 6.5,
-    "type": "intersection",
-    "district": "Ernakulam",
-    "region": "Central",
-    "desc": "Crucial convergence of NH 66 and NH 544."
-  },
-  "kalamassery": {
-    "id": "kalamassery",
-    "name": "Kalamassery Premier Junction",
-    "lat": 10.0538,
-    "lng": 76.3214,
-    "elevation": 8.0,
-    "type": "intersection",
-    "district": "Ernakulam",
-    "region": "Central",
-    "desc": "NH 544 industrial highway near CUSAT university."
-  },
-  "aluva_town": {
-    "id": "aluva_town",
-    "name": "Aluva Riverside Town",
-    "lat": 10.1076,
-    "lng": 76.3516,
-    "elevation": 7.5,
-    "type": "intersection",
-    "district": "Ernakulam",
-    "region": "Central",
-    "isOriginPreset": true,
-    "desc": "Periyar riverbank city, severe flood exposure during dam discharges."
-  },
-  "north_paravur": {
-    "id": "north_paravur",
-    "name": "North Paravur Town Circle",
-    "lat": 10.1472,
-    "lng": 76.2307,
-    "elevation": 4.5,
-    "type": "intersection",
-    "district": "Ernakulam",
-    "region": "Central",
-    "isOriginPreset": true,
-    "desc": "Coastal riverine delta intersection linking Vypin to NH 66."
-  },
-  "angamaly": {
-    "id": "angamaly",
-    "name": "Angamaly NH 544 Town Center",
-    "lat": 10.196,
-    "lng": 76.386,
-    "elevation": 14.0,
-    "type": "intersection",
-    "district": "Ernakulam",
-    "region": "Central",
-    "isOriginPreset": true,
-    "desc": "Northern Ernakulam terminal node for MC Road, near Cochin Airport."
-  },
-  "shelter_kakkanad": {
-    "id": "shelter_kakkanad",
-    "name": "Kakkanad Civil Station & Indoor Relief Camp",
-    "lat": 10.0159,
-    "lng": 76.3419,
-    "elevation": 26.5,
-    "type": "shelter",
-    "district": "Ernakulam",
-    "region": "Central",
-    "capacity": 3500,
-    "desc": "High plateau administrative complex with heavy helipad relief logistics."
-  },
-  "shelter_aluva": {
-    "id": "shelter_aluva",
-    "name": "Aluva UC College Elevated Campus Camp",
-    "lat": 10.125,
-    "lng": 76.342,
-    "elevation": 19.5,
-    "type": "shelter",
-    "district": "Ernakulam",
-    "region": "Central",
-    "capacity": 2800,
-    "desc": "Elevated campus ridge sanctuary above Periyar flood line."
-  },
-  "chalakudy": {
-    "id": "chalakudy",
-    "name": "Chalakudy NH 544",
-    "lat": 10.307,
-    "lng": 76.333,
-    "elevation": 18.0,
-    "type": "intersection",
-    "district": "Thrissur",
-    "region": "Central",
-    "isOriginPreset": true,
-    "desc": "Chalakudy river basin highway, subject to Sholayar dam flow inundation."
-  },
-  "kodungallur": {
-    "id": "kodungallur",
-    "name": "Kodungallur Coastal Heritage",
-    "lat": 10.2244,
-    "lng": 76.196,
-    "elevation": 5.0,
-    "type": "intersection",
-    "district": "Thrissur",
-    "region": "Central",
-    "desc": "Ancient port coastal delta vulnerable to Periyar estuary tidal surges."
-  },
-  "thrissur_city": {
-    "id": "thrissur_city",
-    "name": "Thrissur Swaraj Round",
-    "lat": 10.5276,
-    "lng": 76.2144,
-    "elevation": 12.0,
-    "type": "intersection",
-    "district": "Thrissur",
-    "region": "Central",
-    "isOriginPreset": true,
-    "desc": "Kerala's cultural capital circular intersection surrounding Vadakkunnathan temple."
-  },
-  "wadakkanchery": {
-    "id": "wadakkanchery",
-    "name": "Wadakkanchery Highway",
-    "lat": 10.6625,
-    "lng": 76.242,
-    "elevation": 25.0,
-    "type": "intersection",
-    "district": "Thrissur",
-    "region": "Central",
-    "desc": "Inland highway crossing towards Shoranur and northern districts."
-  },
-  "guruvayur": {
-    "id": "guruvayur",
-    "name": "Guruvayur Temple City",
-    "lat": 10.5947,
-    "lng": 76.0407,
-    "elevation": 8.0,
-    "type": "intersection",
-    "district": "Thrissur",
-    "region": "Central",
-    "desc": "Major coastal pilgrimage hub."
-  },
-  "shelter_thrissur": {
-    "id": "shelter_thrissur",
-    "name": "Thrissur KAU Vellanikkara Campus Safe Hub",
-    "lat": 10.547,
-    "lng": 76.281,
-    "elevation": 48.0,
-    "type": "shelter",
-    "district": "Thrissur",
-    "region": "Central",
-    "capacity": 5500,
-    "desc": "Extensive Kerala Agricultural University elevated hilltop campus haven."
-  },
-  "palakkad_city": {
-    "id": "palakkad_city",
-    "name": "Palakkad Fort & Victoria",
-    "lat": 10.7867,
-    "lng": 76.6548,
-    "elevation": 84.0,
-    "type": "intersection",
-    "district": "Palakkad",
-    "region": "North",
-    "isOriginPreset": true,
-    "desc": "Gateway through the Palakkad Gap in the Western Ghats."
-  },
-  "shoranur": {
-    "id": "shoranur",
-    "name": "Shoranur Railway River Hub",
-    "lat": 10.7627,
-    "lng": 76.2778,
-    "elevation": 49.0,
-    "type": "intersection",
-    "district": "Palakkad",
-    "region": "Central",
-    "desc": "Bharathapuzha river crossing and major railway intersection."
-  },
-  "shelter_palakkad": {
-    "id": "shelter_palakkad",
-    "name": "Palakkad Govt Victoria College Safe Hub",
-    "lat": 10.781,
-    "lng": 76.649,
-    "elevation": 85.0,
-    "type": "shelter",
-    "district": "Palakkad",
-    "region": "North",
-    "capacity": 4200,
-    "desc": "High elevation inland educational campus with multi-building accommodation."
-  },
-  "tirur": {
-    "id": "tirur",
-    "name": "Tirur Coastal Railway Hub",
-    "lat": 10.9147,
-    "lng": 75.9229,
-    "elevation": 11.0,
-    "type": "intersection",
-    "district": "Malappuram",
-    "region": "North",
-    "isOriginPreset": true,
-    "desc": "Coastal Malabar transit town near Bharathapuzha estuary."
-  },
-  "malappuram_city": {
-    "id": "malappuram_city",
-    "name": "Malappuram Up Hill",
-    "lat": 11.0738,
-    "lng": 76.074,
-    "elevation": 68.0,
-    "type": "intersection",
-    "district": "Malappuram",
-    "region": "North",
-    "isOriginPreset": true,
-    "desc": "District headquarters located atop hills in the midland terrain."
-  },
-  "shelter_malappuram": {
-    "id": "shelter_malappuram",
-    "name": "Govt College Malappuram High Ridge Camp",
-    "lat": 11.069,
-    "lng": 76.082,
-    "elevation": 75.0,
-    "type": "shelter",
-    "district": "Malappuram",
-    "region": "North",
-    "capacity": 3800,
-    "desc": "Elevated ridge complex overlooking the Kadalundi river valley."
-  },
-  "kozhikode_city": {
-    "id": "kozhikode_city",
-    "name": "Kozhikode Mananchira Square",
-    "lat": 11.2588,
-    "lng": 75.7804,
-    "elevation": 8.0,
-    "type": "intersection",
-    "district": "Kozhikode",
-    "region": "North",
-    "isOriginPreset": true,
-    "desc": "Major North Malabar urban metropolis and coastal trade center."
-  },
-  "thamarassery": {
-    "id": "thamarassery",
-    "name": "Thamarassery Churam Gateway",
-    "lat": 11.4167,
-    "lng": 75.9333,
-    "elevation": 65.0,
-    "type": "intersection",
-    "district": "Kozhikode",
-    "region": "North",
-    "isOriginPreset": true,
-    "desc": "Base of the 9-hairpin Thamarassery Churam Ghat road to Wayanad."
-  },
-  "vadakara": {
-    "id": "vadakara",
-    "name": "Vadakara NH 66 Coastal Hub",
-    "lat": 11.6089,
-    "lng": 75.5917,
-    "elevation": 12.0,
-    "type": "intersection",
-    "district": "Kozhikode",
-    "region": "North",
-    "desc": "Northern coastal highway town connecting Kozhikode to Kannur."
-  },
-  "shelter_kozhikode": {
-    "id": "shelter_kozhikode",
-    "name": "Kozhikode Govt Medical College Campus Camp",
-    "lat": 11.272,
-    "lng": 75.836,
-    "elevation": 52.0,
-    "type": "shelter",
-    "district": "Kozhikode",
-    "region": "North",
-    "capacity": 6000,
-    "desc": "Massive elevated medical complex with extensive critical care and helipad infrastructure."
-  },
-  "kalpetta": {
-    "id": "kalpetta",
-    "name": "Kalpetta Wayanad HQ",
-    "lat": 11.605,
-    "lng": 76.0828,
-    "elevation": 780.0,
-    "type": "intersection",
-    "district": "Wayanad",
-    "region": "Highland",
-    "isOriginPreset": true,
-    "desc": "District headquarters on the high Wayanad plateau along NH 766."
-  },
-  "mananthavady": {
-    "id": "mananthavady",
-    "name": "Mananthavady North Wayanad",
-    "lat": 11.8026,
-    "lng": 76.0034,
-    "elevation": 760.0,
-    "type": "intersection",
-    "district": "Wayanad",
-    "region": "Highland",
-    "desc": "Northern Wayanad hub on the Kabini river basin."
-  },
-  "sultan_bathery": {
-    "id": "sultan_bathery",
-    "name": "Sultan Bathery East Wayanad",
-    "lat": 11.6626,
-    "lng": 76.257,
-    "elevation": 930.0,
-    "type": "intersection",
-    "district": "Wayanad",
-    "region": "Highland",
-    "desc": "Eastern high plateau gateway bordering Tamil Nadu and Karnataka."
-  },
-  "shelter_wayanad": {
-    "id": "shelter_wayanad",
-    "name": "Wayanad Kalpetta SKMJ High Plateau Safe Haven",
-    "lat": 11.609,
-    "lng": 76.088,
-    "elevation": 780.0,
-    "type": "shelter",
-    "district": "Wayanad",
-    "region": "Highland",
-    "capacity": 4500,
-    "desc": "Bedrock plateau educational arena safe from landslide and debris runs."
-  },
-  "thalassery": {
-    "id": "thalassery",
-    "name": "Thalassery Heritage Port",
-    "lat": 11.748,
-    "lng": 75.4894,
-    "elevation": 10.0,
-    "type": "intersection",
-    "district": "Kannur",
-    "region": "North",
-    "desc": "Historic Malabar port and road nexus to Coorg ghats."
-  },
-  "kannur_city": {
-    "id": "kannur_city",
-    "name": "Kannur Caltex Circle",
-    "lat": 11.8745,
-    "lng": 75.3704,
-    "elevation": 16.0,
-    "type": "intersection",
-    "district": "Kannur",
-    "region": "North",
-    "isOriginPreset": true,
-    "desc": "District capital commercial hub on NH 66."
-  },
-  "payyanur": {
-    "id": "payyanur",
-    "name": "Payyanur Perumba Circle",
-    "lat": 12.1009,
-    "lng": 75.2017,
-    "elevation": 15.0,
-    "type": "intersection",
-    "district": "Kannur",
-    "region": "North",
-    "desc": "Northern Kannur border town near Perumba river."
-  },
-  "shelter_kannur": {
-    "id": "shelter_kannur",
-    "name": "Kannur University Thavakkara Safe Complex",
-    "lat": 11.879,
-    "lng": 75.378,
-    "elevation": 45.0,
-    "type": "shelter",
-    "district": "Kannur",
-    "region": "North",
-    "capacity": 3600,
-    "desc": "Elevated campus ridge safe from coastal tidal ingress."
-  },
-  "kanhangad": {
-    "id": "kanhangad",
-    "name": "Kanhangad Town",
-    "lat": 12.3129,
-    "lng": 75.0924,
-    "elevation": 18.0,
-    "type": "intersection",
-    "district": "Kasaragod",
-    "region": "North",
-    "desc": "South Kasaragod commercial hub near Bekal Fort."
-  },
-  "kasaragod_city": {
-    "id": "kasaragod_city",
-    "name": "Kasaragod Old Bus Stand",
-    "lat": 12.4996,
-    "lng": 74.9869,
-    "elevation": 14.0,
-    "type": "intersection",
-    "district": "Kasaragod",
-    "region": "North",
-    "isOriginPreset": true,
-    "desc": "Northernmost district headquarters of Kerala on Chandragiri river."
-  },
-  "shelter_kasaragod": {
-    "id": "shelter_kasaragod",
-    "name": "Kasaragod Central University Tejaswini Hills",
-    "lat": 12.395,
-    "lng": 75.093,
-    "elevation": 68.0,
-    "type": "shelter",
-    "district": "Kasaragod",
-    "region": "North",
-    "capacity": 4000,
-    "desc": "Massive elevated university campus atop Tejaswini hills with disaster relief depot."
-  }
-},
-  hazardZones: [
-  {
-    "id": "hazard_kuttanad",
-    "name": "Kuttanad & Vembanad Delta Inundation Basin",
-    "type": "flood",
-    "severity": "extreme",
-    "color": "#0284c7",
-    "fillColor": "#38bdf8",
-    "fillOpacity": 0.28,
-    "desc": "Below-sea-level wetland delta spanning Alappuzha and Kottayam. Highly susceptible to severe river drainage congestion.",
-    "coordinates": [
-      [
-        9.72,
-        76.32
-      ],
-      [
-        9.65,
-        76.45
-      ],
-      [
-        9.48,
-        76.55
-      ],
-      [
-        9.35,
-        76.54
-      ],
-      [
-        9.32,
-        76.42
-      ],
-      [
-        9.42,
-        76.31
-      ],
-      [
-        9.6,
-        76.28
-      ]
-    ]
-  },
-  {
-    "id": "hazard_wayanad",
-    "name": "Wayanad Meppadi & Churam Landslide Hazard Zone",
-    "type": "landslide",
-    "severity": "severe",
-    "color": "#b45309",
-    "fillColor": "#f59e0b",
-    "fillOpacity": 0.32,
-    "desc": "High-slope Western Ghats escarpment prone to catastrophic debris flows and slope wash during extreme rainfall.",
-    "coordinates": [
-      [
-        11.58,
-        76.02
-      ],
-      [
-        11.64,
-        76.08
-      ],
-      [
-        11.58,
-        76.18
-      ],
-      [
-        11.48,
-        76.16
-      ],
-      [
-        11.44,
-        76.06
-      ]
-    ]
-  },
-  {
-    "id": "hazard_idukki",
-    "name": "Idukki & Munnar High-Range Landslide Corridor",
-    "type": "landslide",
-    "severity": "severe",
-    "color": "#ea580c",
-    "fillColor": "#fb923c",
-    "fillOpacity": 0.28,
-    "desc": "Munnar Gap Road and Neriamangalam river gorge. Vulnerable to road washouts and boulder blockades.",
-    "coordinates": [
-      [
-        10.12,
-        77.02
-      ],
-      [
-        10.14,
-        77.12
-      ],
-      [
-        9.98,
-        77.1
-      ],
-      [
-        9.92,
-        76.95
-      ],
-      [
-        10.02,
-        76.92
-      ]
-    ]
-  },
-  {
-    "id": "hazard_periyar",
-    "name": "Periyar River Floodplain & Dam Basin",
-    "type": "flood",
-    "severity": "moderate",
-    "color": "#0369a1",
-    "fillColor": "#0ea5e9",
-    "fillOpacity": 0.25,
-    "desc": "Low-lying riparian banks of Periyar across Aluva, Kalamassery, and Varappuzha.",
-    "coordinates": [
-      [
-        10.16,
-        76.32
-      ],
-      [
-        10.14,
-        76.42
-      ],
-      [
-        10.07,
-        76.38
-      ],
-      [
-        10.03,
-        76.28
-      ],
-      [
-        10.12,
-        76.24
-      ]
-    ]
-  },
-  {
-    "id": "hazard_pamba",
-    "name": "Pamba & Achankovil River Confluence Basin",
-    "type": "flood",
-    "severity": "moderate",
-    "color": "#0284c7",
-    "fillColor": "#38bdf8",
-    "fillOpacity": 0.24,
-    "desc": "Chengannur, Pandalam, and Thiruvalla floodplains submerged during reservoir spillway discharges.",
-    "coordinates": [
-      [
-        9.39,
-        76.54
-      ],
-      [
-        9.36,
-        76.65
-      ],
-      [
-        9.22,
-        76.72
-      ],
-      [
-        9.18,
-        76.62
-      ],
-      [
-        9.28,
-        76.52
-      ]
-    ]
-  },
-  {
-    "id": "hazard_sea_erosion",
-    "name": "Coastal Marine Surge & Erosion Belt",
-    "type": "surge",
-    "severity": "moderate",
-    "color": "#e11d48",
-    "fillColor": "#f43f5e",
-    "fillOpacity": 0.22,
-    "desc": "Vulnerable Arabian Sea littoral boundary facing severe monsoon swells and sea erosion.",
-    "coordinates": [
-      [
-        9.98,
-        76.22
-      ],
-      [
-        9.98,
-        76.26
-      ],
-      [
-        9.75,
-        76.29
-      ],
-      [
-        9.75,
-        76.24
-      ]
-    ]
-  }
-],
-  edges: [
-  {
-    "id": "e_tvm_attingal",
-    "name": "NH 66 Capital North Expressway",
-    "u": "tvm_city",
-    "v": "attingal",
-    "distance_km": 31.8,
-    "capacity_veh_hr": 2400,
-    "elevation": 16.0,
-    "flood_susceptibility": 0.25,
-    "hazard_proximity": null,
-    "isToggleable": true,
+{
+  "e_tvm_attingal": {
     "path": [
       [
         8.48745,
@@ -1221,19 +209,10 @@ const KERALA_GRAPH_DATA = {
         8.69645,
         76.81376
       ]
-    ]
+    ],
+    "distance_km": 31.8
   },
-  {
-    "id": "e_attingal_kollam",
-    "name": "NH 66 Kollam Bypass Approach",
-    "u": "attingal",
-    "v": "kollam_city",
-    "distance_km": 38.1,
-    "capacity_veh_hr": 2200,
-    "elevation": 12.0,
-    "flood_susceptibility": 0.35,
-    "hazard_proximity": "hazard_sea_erosion",
-    "isToggleable": true,
+  "e_attingal_kollam": {
     "path": [
       [
         8.69645,
@@ -1443,19 +422,10 @@ const KERALA_GRAPH_DATA = {
         8.89326,
         76.6143
       ]
-    ]
+    ],
+    "distance_km": 38.1
   },
-  {
-    "id": "e_kollam_karunagappally",
-    "name": "NH 66 Ashtamudi Basin Link",
-    "u": "kollam_city",
-    "v": "karunagappally",
-    "distance_km": 26.7,
-    "capacity_veh_hr": 2000,
-    "elevation": 6.0,
-    "flood_susceptibility": 0.65,
-    "hazard_proximity": "hazard_kuttanad",
-    "isToggleable": true,
+  "e_kollam_karunagappally": {
     "path": [
       [
         8.89326,
@@ -1669,19 +639,10 @@ const KERALA_GRAPH_DATA = {
         9.05509,
         76.53645
       ]
-    ]
+    ],
+    "distance_km": 26.7
   },
-  {
-    "id": "e_karunagappally_kayamkulam",
-    "name": "NH 66 Kayamkulam Kayal Causeway",
-    "u": "karunagappally",
-    "v": "kayamkulam",
-    "distance_km": 14.9,
-    "capacity_veh_hr": 2100,
-    "elevation": 6.5,
-    "flood_susceptibility": 0.6,
-    "hazard_proximity": "hazard_kuttanad",
-    "isToggleable": true,
+  "e_karunagappally_kayamkulam": {
     "path": [
       [
         9.05509,
@@ -1903,19 +864,10 @@ const KERALA_GRAPH_DATA = {
         9.17241,
         76.5011
       ]
-    ]
+    ],
+    "distance_km": 14.9
   },
-  {
-    "id": "e_kayamkulam_alappuzha",
-    "name": "NH 66 Coastal Strip Highway",
-    "u": "kayamkulam",
-    "v": "alappuzha_town",
-    "distance_km": 50.4,
-    "capacity_veh_hr": 2200,
-    "elevation": 4.0,
-    "flood_susceptibility": 0.7,
-    "hazard_proximity": "hazard_kuttanad",
-    "isToggleable": true,
+  "e_kayamkulam_alappuzha": {
     "path": [
       [
         9.1724,
@@ -1961,19 +913,10 @@ const KERALA_GRAPH_DATA = {
         9.4981,
         76.3388
       ]
-    ]
+    ],
+    "distance_km": 50.4
   },
-  {
-    "id": "e_alappuzha_cherthala",
-    "name": "NH 66 Vembanad Shore Highway",
-    "u": "alappuzha_town",
-    "v": "cherthala",
-    "distance_km": 22.2,
-    "capacity_veh_hr": 2400,
-    "elevation": 4.5,
-    "flood_susceptibility": 0.65,
-    "hazard_proximity": "hazard_kuttanad",
-    "isToggleable": true,
+  "e_alappuzha_cherthala": {
     "path": [
       [
         9.49808,
@@ -2187,19 +1130,10 @@ const KERALA_GRAPH_DATA = {
         9.68453,
         76.33284
       ]
-    ]
+    ],
+    "distance_km": 22.2
   },
-  {
-    "id": "e_cherthala_vyttila",
-    "name": "NH 66 Aroor-Kumbalam Expressway",
-    "u": "cherthala",
-    "v": "vyttila",
-    "distance_km": 34.0,
-    "capacity_veh_hr": 3000,
-    "elevation": 5.0,
-    "flood_susceptibility": 0.45,
-    "hazard_proximity": "hazard_kuttanad",
-    "isToggleable": true,
+  "e_cherthala_vyttila": {
     "path": [
       [
         9.68453,
@@ -2413,19 +1347,10 @@ const KERALA_GRAPH_DATA = {
         9.9696,
         76.3204
       ]
-    ]
+    ],
+    "distance_km": 34.0
   },
-  {
-    "id": "e_vyttila_edappally",
-    "name": "NH 66 Kochi Bypass Expressway",
-    "u": "vyttila",
-    "v": "edappally",
-    "distance_km": 7.7,
-    "capacity_veh_hr": 3400,
-    "elevation": 6.0,
-    "flood_susceptibility": 0.3,
-    "hazard_proximity": null,
-    "isToggleable": true,
+  "e_vyttila_edappally": {
     "path": [
       [
         9.9696,
@@ -2695,19 +1620,10 @@ const KERALA_GRAPH_DATA = {
         10.02479,
         76.30788
       ]
-    ]
+    ],
+    "distance_km": 7.7
   },
-  {
-    "id": "e_edappally_kalamassery",
-    "name": "NH 544 Metro Corridor",
-    "u": "edappally",
-    "v": "kalamassery",
-    "distance_km": 4.4,
-    "capacity_veh_hr": 3200,
-    "elevation": 8.0,
-    "flood_susceptibility": 0.2,
-    "hazard_proximity": null,
-    "isToggleable": true,
+  "e_edappally_kalamassery": {
     "path": [
       [
         10.0248,
@@ -2753,19 +1669,10 @@ const KERALA_GRAPH_DATA = {
         10.0538,
         76.3214
       ]
-    ]
+    ],
+    "distance_km": 4.4
   },
-  {
-    "id": "e_kalamassery_aluva",
-    "name": "NH 544 Periyar Approach",
-    "u": "kalamassery",
-    "v": "aluva_town",
-    "distance_km": 7.7,
-    "capacity_veh_hr": 3000,
-    "elevation": 7.5,
-    "flood_susceptibility": 0.75,
-    "hazard_proximity": "hazard_periyar",
-    "isToggleable": true,
+  "e_kalamassery_aluva": {
     "path": [
       [
         10.05373,
@@ -2983,19 +1890,10 @@ const KERALA_GRAPH_DATA = {
         10.10779,
         76.35142
       ]
-    ]
+    ],
+    "distance_km": 7.7
   },
-  {
-    "id": "e_aluva_angamaly",
-    "name": "NH 544 Airport Corridor",
-    "u": "aluva_town",
-    "v": "angamaly",
-    "distance_km": 13.5,
-    "capacity_veh_hr": 3200,
-    "elevation": 12.0,
-    "flood_susceptibility": 0.35,
-    "hazard_proximity": "hazard_periyar",
-    "isToggleable": true,
+  "e_aluva_angamaly": {
     "path": [
       [
         10.10779,
@@ -3205,19 +2103,10 @@ const KERALA_GRAPH_DATA = {
         10.1959,
         76.38577
       ]
-    ]
+    ],
+    "distance_km": 13.5
   },
-  {
-    "id": "e_angamaly_chalakudy",
-    "name": "NH 544 Karukutty Border Link",
-    "u": "angamaly",
-    "v": "chalakudy",
-    "distance_km": 15.3,
-    "capacity_veh_hr": 3000,
-    "elevation": 16.0,
-    "flood_susceptibility": 0.4,
-    "hazard_proximity": "hazard_periyar",
-    "isToggleable": true,
+  "e_angamaly_chalakudy": {
     "path": [
       [
         10.1959,
@@ -3443,19 +2332,10 @@ const KERALA_GRAPH_DATA = {
         10.30701,
         76.33308
       ]
-    ]
+    ],
+    "distance_km": 15.3
   },
-  {
-    "id": "e_chalakudy_thrissur",
-    "name": "NH 544 Thrissur South Expressway",
-    "u": "chalakudy",
-    "v": "thrissur_city",
-    "distance_km": 31.9,
-    "capacity_veh_hr": 3200,
-    "elevation": 15.0,
-    "flood_susceptibility": 0.25,
-    "hazard_proximity": null,
-    "isToggleable": true,
+  "e_chalakudy_thrissur": {
     "path": [
       [
         10.30701,
@@ -3665,19 +2545,10 @@ const KERALA_GRAPH_DATA = {
         10.52761,
         76.21437
       ]
-    ]
+    ],
+    "distance_km": 31.9
   },
-  {
-    "id": "e_thrissur_wadakkanchery",
-    "name": "SH 22 Midland Highway",
-    "u": "thrissur_city",
-    "v": "wadakkanchery",
-    "distance_km": 17.6,
-    "capacity_veh_hr": 2000,
-    "elevation": 20.0,
-    "flood_susceptibility": 0.2,
-    "hazard_proximity": null,
-    "isToggleable": true,
+  "e_thrissur_wadakkanchery": {
     "path": [
       [
         10.52761,
@@ -3895,19 +2766,10 @@ const KERALA_GRAPH_DATA = {
         10.66249,
         76.242
       ]
-    ]
+    ],
+    "distance_km": 17.6
   },
-  {
-    "id": "e_wadakkanchery_shoranur",
-    "name": "Bharathapuzha Causeway Link",
-    "u": "wadakkanchery",
-    "v": "shoranur",
-    "distance_km": 15.3,
-    "capacity_veh_hr": 1800,
-    "elevation": 35.0,
-    "flood_susceptibility": 0.35,
-    "hazard_proximity": null,
-    "isToggleable": true,
+  "e_wadakkanchery_shoranur": {
     "path": [
       [
         10.66249,
@@ -4133,19 +2995,10 @@ const KERALA_GRAPH_DATA = {
         10.763,
         76.2775
       ]
-    ]
+    ],
+    "distance_km": 15.3
   },
-  {
-    "id": "e_shoranur_tirur",
-    "name": "Kuttipuram-Tirur Highway",
-    "u": "shoranur",
-    "v": "tirur",
-    "distance_km": 56.8,
-    "capacity_veh_hr": 1900,
-    "elevation": 22.0,
-    "flood_susceptibility": 0.4,
-    "hazard_proximity": null,
-    "isToggleable": true,
+  "e_shoranur_tirur": {
     "path": [
       [
         10.763,
@@ -4359,19 +3212,10 @@ const KERALA_GRAPH_DATA = {
         10.91487,
         75.92282
       ]
-    ]
+    ],
+    "distance_km": 56.8
   },
-  {
-    "id": "e_tirur_kozhikode",
-    "name": "NH 66 Coastal Malabar Highway",
-    "u": "tirur",
-    "v": "kozhikode_city",
-    "distance_km": 53.4,
-    "capacity_veh_hr": 2400,
-    "elevation": 9.0,
-    "flood_susceptibility": 0.45,
-    "hazard_proximity": "hazard_sea_erosion",
-    "isToggleable": true,
+  "e_tirur_kozhikode": {
     "path": [
       [
         10.91487,
@@ -4581,19 +3425,10 @@ const KERALA_GRAPH_DATA = {
         11.2588,
         75.78047
       ]
-    ]
+    ],
+    "distance_km": 53.4
   },
-  {
-    "id": "e_kozhikode_vadakara",
-    "name": "NH 66 Koyilandy Coastal Corridor",
-    "u": "kozhikode_city",
-    "v": "vadakara",
-    "distance_km": 49.5,
-    "capacity_veh_hr": 2200,
-    "elevation": 11.0,
-    "flood_susceptibility": 0.3,
-    "hazard_proximity": null,
-    "isToggleable": true,
+  "e_kozhikode_vadakara": {
     "path": [
       [
         11.2588,
@@ -4807,19 +3642,10 @@ const KERALA_GRAPH_DATA = {
         11.60901,
         75.59184
       ]
-    ]
+    ],
+    "distance_km": 49.5
   },
-  {
-    "id": "e_vadakara_thalassery",
-    "name": "NH 66 Mahe Border Highway",
-    "u": "vadakara",
-    "v": "thalassery",
-    "distance_km": 21.7,
-    "capacity_veh_hr": 2200,
-    "elevation": 11.0,
-    "flood_susceptibility": 0.3,
-    "hazard_proximity": null,
-    "isToggleable": true,
+  "e_vadakara_thalassery": {
     "path": [
       [
         11.60901,
@@ -5029,19 +3855,10 @@ const KERALA_GRAPH_DATA = {
         11.74779,
         75.48941
       ]
-    ]
+    ],
+    "distance_km": 21.7
   },
-  {
-    "id": "e_thalassery_kannur",
-    "name": "NH 66 Edakkad Highway",
-    "u": "thalassery",
-    "v": "kannur_city",
-    "distance_km": 22.3,
-    "capacity_veh_hr": 2400,
-    "elevation": 14.0,
-    "flood_susceptibility": 0.25,
-    "hazard_proximity": null,
-    "isToggleable": true,
+  "e_thalassery_kannur": {
     "path": [
       [
         11.74779,
@@ -5251,19 +4068,10 @@ const KERALA_GRAPH_DATA = {
         11.87419,
         75.37036
       ]
-    ]
+    ],
+    "distance_km": 22.3
   },
-  {
-    "id": "e_kannur_payyanur",
-    "name": "NH 66 Valapattanam Bridge Link",
-    "u": "kannur_city",
-    "v": "payyanur",
-    "distance_km": 36.7,
-    "capacity_veh_hr": 2100,
-    "elevation": 15.0,
-    "flood_susceptibility": 0.3,
-    "hazard_proximity": null,
-    "isToggleable": true,
+  "e_kannur_payyanur": {
     "path": [
       [
         11.87419,
@@ -5481,19 +4289,10 @@ const KERALA_GRAPH_DATA = {
         12.10094,
         75.20173
       ]
-    ]
+    ],
+    "distance_km": 36.7
   },
-  {
-    "id": "e_payyanur_kanhangad",
-    "name": "NH 66 Nileshwaram Causeway",
-    "u": "payyanur",
-    "v": "kanhangad",
-    "distance_km": 29.7,
-    "capacity_veh_hr": 2000,
-    "elevation": 16.0,
-    "flood_susceptibility": 0.3,
-    "hazard_proximity": null,
-    "isToggleable": true,
+  "e_payyanur_kanhangad": {
     "path": [
       [
         12.10094,
@@ -5703,19 +4502,10 @@ const KERALA_GRAPH_DATA = {
         12.31304,
         75.09256
       ]
-    ]
+    ],
+    "distance_km": 29.7
   },
-  {
-    "id": "e_kanhangad_kasaragod",
-    "name": "NH 66 Chandragiri Coastal Highway",
-    "u": "kanhangad",
-    "v": "kasaragod_city",
-    "distance_km": 26.3,
-    "capacity_veh_hr": 2200,
-    "elevation": 15.0,
-    "flood_susceptibility": 0.35,
-    "hazard_proximity": null,
-    "isToggleable": true,
+  "e_kanhangad_kasaragod": {
     "path": [
       [
         12.31304,
@@ -5937,19 +4727,10 @@ const KERALA_GRAPH_DATA = {
         12.4996,
         74.98687
       ]
-    ]
+    ],
+    "distance_km": 26.3
   },
-  {
-    "id": "e_tvm_nedumangad",
-    "name": "Karakulam Foothills Highway",
-    "u": "tvm_city",
-    "v": "nedumangad",
-    "distance_km": 17.3,
-    "capacity_veh_hr": 1900,
-    "elevation": 30.0,
-    "flood_susceptibility": 0.2,
-    "hazard_proximity": null,
-    "isToggleable": true,
+  "e_tvm_nedumangad": {
     "path": [
       [
         8.48745,
@@ -6163,19 +4944,10 @@ const KERALA_GRAPH_DATA = {
         8.60463,
         77.0014
       ]
-    ]
+    ],
+    "distance_km": 17.3
   },
-  {
-    "id": "e_tvm_kottarakkara",
-    "name": "MC Road Venjaramoodu-Chadayamangalam",
-    "u": "tvm_city",
-    "v": "kottarakkara",
-    "distance_km": 72.5,
-    "capacity_veh_hr": 2200,
-    "elevation": 32.0,
-    "flood_susceptibility": 0.2,
-    "hazard_proximity": null,
-    "isToggleable": true,
+  "e_tvm_kottarakkara": {
     "path": [
       [
         8.48745,
@@ -6385,19 +5157,10 @@ const KERALA_GRAPH_DATA = {
         8.99874,
         76.77245
       ]
-    ]
+    ],
+    "distance_km": 72.5
   },
-  {
-    "id": "e_kollam_kottarakkara",
-    "name": "NH 744 Kollam-Shenkottai Arterial",
-    "u": "kollam_city",
-    "v": "kottarakkara",
-    "distance_km": 23.5,
-    "capacity_veh_hr": 2100,
-    "elevation": 24.0,
-    "flood_susceptibility": 0.25,
-    "hazard_proximity": null,
-    "isToggleable": true,
+  "e_kollam_kottarakkara": {
     "path": [
       [
         8.89326,
@@ -6615,19 +5378,10 @@ const KERALA_GRAPH_DATA = {
         8.99874,
         76.77245
       ]
-    ]
+    ],
+    "distance_km": 23.5
   },
-  {
-    "id": "e_kottarakkara_adoor",
-    "name": "MC Road Enathu Bridge Link",
-    "u": "kottarakkara",
-    "v": "adoor",
-    "distance_km": 20.9,
-    "capacity_veh_hr": 2200,
-    "elevation": 35.0,
-    "flood_susceptibility": 0.2,
-    "hazard_proximity": null,
-    "isToggleable": true,
+  "e_kottarakkara_adoor": {
     "path": [
       [
         8.99874,
@@ -6845,19 +5599,10 @@ const KERALA_GRAPH_DATA = {
         9.15303,
         76.73561
       ]
-    ]
+    ],
+    "distance_km": 20.9
   },
-  {
-    "id": "e_adoor_pathanamthitta",
-    "name": "Adoor-Pathanamthitta Highway",
-    "u": "adoor",
-    "v": "pathanamthitta_city",
-    "distance_km": 17.6,
-    "capacity_veh_hr": 1800,
-    "elevation": 38.0,
-    "flood_susceptibility": 0.2,
-    "hazard_proximity": null,
-    "isToggleable": true,
+  "e_adoor_pathanamthitta": {
     "path": [
       [
         9.15303,
@@ -7079,19 +5824,10 @@ const KERALA_GRAPH_DATA = {
         9.26477,
         76.787
       ]
-    ]
+    ],
+    "distance_km": 17.6
   },
-  {
-    "id": "e_adoor_thiruvalla",
-    "name": "MC Road Pandalam-Chengannur Link",
-    "u": "adoor",
-    "v": "thiruvalla",
-    "distance_km": 34.3,
-    "capacity_veh_hr": 2200,
-    "elevation": 18.0,
-    "flood_susceptibility": 0.7,
-    "hazard_proximity": "hazard_pamba",
-    "isToggleable": true,
+  "e_adoor_thiruvalla": {
     "path": [
       [
         9.15303,
@@ -7301,19 +6037,10 @@ const KERALA_GRAPH_DATA = {
         9.3835,
         76.57406
       ]
-    ]
+    ],
+    "distance_km": 34.3
   },
-  {
-    "id": "e_pathanamthitta_thiruvalla",
-    "name": "Kozhencherry Pamba Riverside Road",
-    "u": "pathanamthitta_city",
-    "v": "thiruvalla",
-    "distance_km": 30.8,
-    "capacity_veh_hr": 1700,
-    "elevation": 22.0,
-    "flood_susceptibility": 0.75,
-    "hazard_proximity": "hazard_pamba",
-    "isToggleable": true,
+  "e_pathanamthitta_thiruvalla": {
     "path": [
       [
         9.26477,
@@ -7523,19 +6250,10 @@ const KERALA_GRAPH_DATA = {
         9.3835,
         76.57406
       ]
-    ]
+    ],
+    "distance_km": 30.8
   },
-  {
-    "id": "e_thiruvalla_changanassery",
-    "name": "MC Road Perunna Arterial",
-    "u": "thiruvalla",
-    "v": "changanassery",
-    "distance_km": 8.7,
-    "capacity_veh_hr": 2200,
-    "elevation": 12.0,
-    "flood_susceptibility": 0.5,
-    "hazard_proximity": "hazard_kuttanad",
-    "isToggleable": true,
+  "e_thiruvalla_changanassery": {
     "path": [
       [
         9.3835,
@@ -7757,19 +6475,10 @@ const KERALA_GRAPH_DATA = {
         9.44419,
         76.5398
       ]
-    ]
+    ],
+    "distance_km": 8.7
   },
-  {
-    "id": "e_changanassery_kottayam",
-    "name": "MC Road Chingavanam Corridor",
-    "u": "changanassery",
-    "v": "kottayam_city",
-    "distance_km": 18.8,
-    "capacity_veh_hr": 2400,
-    "elevation": 14.0,
-    "flood_susceptibility": 0.35,
-    "hazard_proximity": null,
-    "isToggleable": true,
+  "e_changanassery_kottayam": {
     "path": [
       [
         9.44419,
@@ -7987,19 +6696,10 @@ const KERALA_GRAPH_DATA = {
         9.59168,
         76.52225
       ]
-    ]
+    ],
+    "distance_km": 18.8
   },
-  {
-    "id": "e_kottayam_pala",
-    "name": "Ettumanoor-Pala Highway",
-    "u": "kottayam_city",
-    "v": "pala",
-    "distance_km": 26.9,
-    "capacity_veh_hr": 2100,
-    "elevation": 22.0,
-    "flood_susceptibility": 0.25,
-    "hazard_proximity": null,
-    "isToggleable": true,
+  "e_kottayam_pala": {
     "path": [
       [
         9.59168,
@@ -8209,19 +6909,10 @@ const KERALA_GRAPH_DATA = {
         9.70979,
         76.68321
       ]
-    ]
+    ],
+    "distance_km": 26.9
   },
-  {
-    "id": "e_pala_muvattupuzha",
-    "name": "SH 8 Thodupuzha Foothills Highway",
-    "u": "pala",
-    "v": "muvattupuzha",
-    "distance_km": 37.6,
-    "capacity_veh_hr": 2000,
-    "elevation": 26.0,
-    "flood_susceptibility": 0.2,
-    "hazard_proximity": null,
-    "isToggleable": true,
+  "e_pala_muvattupuzha": {
     "path": [
       [
         9.70979,
@@ -8431,19 +7122,10 @@ const KERALA_GRAPH_DATA = {
         9.98174,
         76.57788
       ]
-    ]
+    ],
+    "distance_km": 37.6
   },
-  {
-    "id": "e_kottayam_muvattupuzha",
-    "name": "MC Road Kuravilangad-Koothattukulam",
-    "u": "kottayam_city",
-    "v": "muvattupuzha",
-    "distance_km": 53.4,
-    "capacity_veh_hr": 2200,
-    "elevation": 20.0,
-    "flood_susceptibility": 0.2,
-    "hazard_proximity": null,
-    "isToggleable": true,
+  "e_kottayam_muvattupuzha": {
     "path": [
       [
         9.59168,
@@ -8653,19 +7335,10 @@ const KERALA_GRAPH_DATA = {
         9.98174,
         76.57788
       ]
-    ]
+    ],
+    "distance_km": 53.4
   },
-  {
-    "id": "e_muvattupuzha_angamaly",
-    "name": "MC Road Perumbavoor Expressway",
-    "u": "muvattupuzha",
-    "v": "angamaly",
-    "distance_km": 34.3,
-    "capacity_veh_hr": 2400,
-    "elevation": 18.0,
-    "flood_susceptibility": 0.3,
-    "hazard_proximity": "hazard_periyar",
-    "isToggleable": true,
+  "e_muvattupuzha_angamaly": {
     "path": [
       [
         9.98174,
@@ -8875,19 +7548,10 @@ const KERALA_GRAPH_DATA = {
         10.1959,
         76.38577
       ]
-    ]
+    ],
+    "distance_km": 34.3
   },
-  {
-    "id": "e_muvattupuzha_vyttila",
-    "name": "Kochi-Madurai Kochi City Approach",
-    "u": "muvattupuzha",
-    "v": "vyttila",
-    "distance_km": 36.3,
-    "capacity_veh_hr": 2500,
-    "elevation": 14.0,
-    "flood_susceptibility": 0.35,
-    "hazard_proximity": null,
-    "isToggleable": true,
+  "e_muvattupuzha_vyttila": {
     "path": [
       [
         9.98174,
@@ -9097,19 +7761,10 @@ const KERALA_GRAPH_DATA = {
         9.9696,
         76.3204
       ]
-    ]
+    ],
+    "distance_km": 36.3
   },
-  {
-    "id": "e_alappuzha_kuttanad",
-    "name": "AC Canal Causeway West",
-    "u": "alappuzha_town",
-    "v": "kuttanad",
-    "distance_km": 11.9,
-    "capacity_veh_hr": 1400,
-    "elevation": -0.5,
-    "flood_susceptibility": 0.95,
-    "hazard_proximity": "hazard_kuttanad",
-    "isToggleable": true,
+  "e_alappuzha_kuttanad": {
     "path": [
       [
         9.49808,
@@ -9331,19 +7986,10 @@ const KERALA_GRAPH_DATA = {
         9.43537,
         76.39863
       ]
-    ]
+    ],
+    "distance_km": 11.9
   },
-  {
-    "id": "e_kuttanad_changanassery",
-    "name": "AC Canal Causeway East",
-    "u": "kuttanad",
-    "v": "changanassery",
-    "distance_km": 19.5,
-    "capacity_veh_hr": 1400,
-    "elevation": 0.5,
-    "flood_susceptibility": 0.92,
-    "hazard_proximity": "hazard_kuttanad",
-    "isToggleable": true,
+  "e_kuttanad_changanassery": {
     "path": [
       [
         9.43537,
@@ -9577,19 +8223,10 @@ const KERALA_GRAPH_DATA = {
         9.44419,
         76.5398
       ]
-    ]
+    ],
+    "distance_km": 19.5
   },
-  {
-    "id": "e_kottayam_kumily",
-    "name": "NH 183 Kottayam-Kumily (K-K Road)",
-    "u": "kottayam_city",
-    "v": "kumily",
-    "distance_km": 106.9,
-    "capacity_veh_hr": 1600,
-    "elevation": 450.0,
-    "flood_susceptibility": 0.3,
-    "hazard_proximity": "hazard_idukki",
-    "isToggleable": true,
+  "e_kottayam_kumily": {
     "path": [
       [
         9.59168,
@@ -9799,19 +8436,10 @@ const KERALA_GRAPH_DATA = {
         9.60484,
         77.16559
       ]
-    ]
+    ],
+    "distance_km": 106.9
   },
-  {
-    "id": "e_kumily_kattappana",
-    "name": "Vandanmedu Mountain Pass",
-    "u": "kumily",
-    "v": "kattappana",
-    "distance_km": 29.0,
-    "capacity_veh_hr": 1300,
-    "elevation": 910.0,
-    "flood_susceptibility": 0.25,
-    "hazard_proximity": "hazard_idukki",
-    "isToggleable": true,
+  "e_kumily_kattappana": {
     "path": [
       [
         9.60484,
@@ -10025,19 +8653,10 @@ const KERALA_GRAPH_DATA = {
         9.77437,
         77.11901
       ]
-    ]
+    ],
+    "distance_km": 29.0
   },
-  {
-    "id": "e_kattappana_idukki",
-    "name": "Idukki Arch Dam Ridgeline Road",
-    "u": "kattappana",
-    "v": "idukki_painavu",
-    "distance_km": 26.9,
-    "capacity_veh_hr": 1200,
-    "elevation": 860.0,
-    "flood_susceptibility": 0.3,
-    "hazard_proximity": "hazard_idukki",
-    "isToggleable": true,
+  "e_kattappana_idukki": {
     "path": [
       [
         9.77437,
@@ -10251,19 +8870,10 @@ const KERALA_GRAPH_DATA = {
         9.85046,
         76.97442
       ]
-    ]
+    ],
+    "distance_km": 26.9
   },
-  {
-    "id": "e_muvattupuzha_kothamangalam",
-    "name": "NH 85 High Range Gateway",
-    "u": "muvattupuzha",
-    "v": "kothamangalam",
-    "distance_km": 13.5,
-    "capacity_veh_hr": 2200,
-    "elevation": 28.0,
-    "flood_susceptibility": 0.2,
-    "hazard_proximity": null,
-    "isToggleable": true,
+  "e_muvattupuzha_kothamangalam": {
     "path": [
       [
         9.98174,
@@ -10477,19 +9087,10 @@ const KERALA_GRAPH_DATA = {
         10.06156,
         76.62676
       ]
-    ]
+    ],
+    "distance_km": 13.5
   },
-  {
-    "id": "e_kothamangalam_adimali",
-    "name": "NH 85 Neriamangalam Forest Gorge",
-    "u": "kothamangalam",
-    "v": "adimali",
-    "distance_km": 61.6,
-    "capacity_veh_hr": 1500,
-    "elevation": 280.0,
-    "flood_susceptibility": 0.4,
-    "hazard_proximity": "hazard_idukki",
-    "isToggleable": true,
+  "e_kothamangalam_adimali": {
     "path": [
       [
         10.06156,
@@ -10699,19 +9300,10 @@ const KERALA_GRAPH_DATA = {
         10.01255,
         76.95253
       ]
-    ]
+    ],
+    "distance_km": 61.6
   },
-  {
-    "id": "e_adimali_munnar",
-    "name": "NH 85 Cheeyappara Gap Road",
-    "u": "adimali",
-    "v": "munnar",
-    "distance_km": 18.0,
-    "capacity_veh_hr": 1400,
-    "elevation": 1100.0,
-    "flood_susceptibility": 0.45,
-    "hazard_proximity": "hazard_idukki",
-    "isToggleable": true,
+  "e_adimali_munnar": {
     "path": [
       [
         10.0125,
@@ -10757,19 +9349,10 @@ const KERALA_GRAPH_DATA = {
         10.0889,
         77.0595
       ]
-    ]
+    ],
+    "distance_km": 18.0
   },
-  {
-    "id": "e_idukki_adimali",
-    "name": "Painavu-Adimali Mountain Connector",
-    "u": "idukki_painavu",
-    "v": "adimali",
-    "distance_km": 36.9,
-    "capacity_veh_hr": 1100,
-    "elevation": 640.0,
-    "flood_susceptibility": 0.35,
-    "hazard_proximity": "hazard_idukki",
-    "isToggleable": true,
+  "e_idukki_adimali": {
     "path": [
       [
         9.85046,
@@ -10983,19 +9566,10 @@ const KERALA_GRAPH_DATA = {
         10.01255,
         76.95253
       ]
-    ]
+    ],
+    "distance_km": 36.9
   },
-  {
-    "id": "e_fortkochi_marine",
-    "name": "Goshree Marine Highway",
-    "u": "fort_kochi",
-    "v": "marine_drive",
-    "distance_km": 7.5,
-    "capacity_veh_hr": 2200,
-    "elevation": 2.5,
-    "flood_susceptibility": 0.6,
-    "hazard_proximity": "hazard_sea_erosion",
-    "isToggleable": true,
+  "e_fortkochi_marine": {
     "path": [
       [
         9.96567,
@@ -11201,19 +9775,10 @@ const KERALA_GRAPH_DATA = {
         9.97958,
         76.27587
       ]
-    ]
+    ],
+    "distance_km": 7.5
   },
-  {
-    "id": "e_marine_vyttila",
-    "name": "SA Road Arterial Corridor",
-    "u": "marine_drive",
-    "v": "vyttila",
-    "distance_km": 8.5,
-    "capacity_veh_hr": 2800,
-    "elevation": 4.0,
-    "flood_susceptibility": 0.4,
-    "hazard_proximity": null,
-    "isToggleable": true,
+  "e_marine_vyttila": {
     "path": [
       [
         9.97958,
@@ -11459,19 +10024,10 @@ const KERALA_GRAPH_DATA = {
         9.9696,
         76.3204
       ]
-    ]
+    ],
+    "distance_km": 8.5
   },
-  {
-    "id": "e_edappally_paravur",
-    "name": "NH 66 Varappuzha Bridge Link",
-    "u": "edappally",
-    "v": "north_paravur",
-    "distance_km": 18.1,
-    "capacity_veh_hr": 2500,
-    "elevation": 5.5,
-    "flood_susceptibility": 0.5,
-    "hazard_proximity": "hazard_periyar",
-    "isToggleable": true,
+  "e_edappally_paravur": {
     "path": [
       [
         10.02479,
@@ -11685,19 +10241,10 @@ const KERALA_GRAPH_DATA = {
         10.14755,
         76.23072
       ]
-    ]
+    ],
+    "distance_km": 18.1
   },
-  {
-    "id": "e_paravur_kodungallur",
-    "name": "NH 66 Kottappuram Bridge",
-    "u": "north_paravur",
-    "v": "kodungallur",
-    "distance_km": 11.5,
-    "capacity_veh_hr": 2200,
-    "elevation": 5.0,
-    "flood_susceptibility": 0.55,
-    "hazard_proximity": "hazard_periyar",
-    "isToggleable": true,
+  "e_paravur_kodungallur": {
     "path": [
       [
         10.14755,
@@ -11923,19 +10470,10 @@ const KERALA_GRAPH_DATA = {
         10.2244,
         76.196
       ]
-    ]
+    ],
+    "distance_km": 11.5
   },
-  {
-    "id": "e_kodungallur_thrissur",
-    "name": "Irinjalakuda-Thrissur Highway",
-    "u": "kodungallur",
-    "v": "thrissur_city",
-    "distance_km": 41.8,
-    "capacity_veh_hr": 2000,
-    "elevation": 10.0,
-    "flood_susceptibility": 0.3,
-    "hazard_proximity": null,
-    "isToggleable": true,
+  "e_kodungallur_thrissur": {
     "path": [
       [
         10.2244,
@@ -12153,19 +10691,10 @@ const KERALA_GRAPH_DATA = {
         10.52761,
         76.21437
       ]
-    ]
+    ],
+    "distance_km": 41.8
   },
-  {
-    "id": "e_thrissur_guruvayur",
-    "name": "Thrissur-Guruvayur Highway",
-    "u": "thrissur_city",
-    "v": "guruvayur",
-    "distance_km": 26.8,
-    "capacity_veh_hr": 2200,
-    "elevation": 10.0,
-    "flood_susceptibility": 0.3,
-    "hazard_proximity": null,
-    "isToggleable": true,
+  "e_thrissur_guruvayur": {
     "path": [
       [
         10.52761,
@@ -12375,19 +10904,10 @@ const KERALA_GRAPH_DATA = {
         10.5945,
         76.04113
       ]
-    ]
+    ],
+    "distance_km": 26.8
   },
-  {
-    "id": "e_thrissur_palakkad",
-    "name": "NH 544 Kuthiran Tunnel Expressway",
-    "u": "thrissur_city",
-    "v": "palakkad_city",
-    "distance_km": 67.6,
-    "capacity_veh_hr": 3500,
-    "elevation": 60.0,
-    "flood_susceptibility": 0.15,
-    "hazard_proximity": null,
-    "isToggleable": true,
+  "e_thrissur_palakkad": {
     "path": [
       [
         10.52761,
@@ -12597,19 +11117,10 @@ const KERALA_GRAPH_DATA = {
         10.78672,
         76.65481
       ]
-    ]
+    ],
+    "distance_km": 67.6
   },
-  {
-    "id": "e_palakkad_malappuram",
-    "name": "NH 966 Palakkad-Kozhikode Arterial",
-    "u": "palakkad_city",
-    "v": "malappuram_city",
-    "distance_km": 81.7,
-    "capacity_veh_hr": 2400,
-    "elevation": 72.0,
-    "flood_susceptibility": 0.2,
-    "hazard_proximity": null,
-    "isToggleable": true,
+  "e_palakkad_malappuram": {
     "path": [
       [
         10.78672,
@@ -12819,19 +11330,10 @@ const KERALA_GRAPH_DATA = {
         11.07408,
         76.0743
       ]
-    ]
+    ],
+    "distance_km": 81.7
   },
-  {
-    "id": "e_malappuram_kozhikode",
-    "name": "NH 966 Kondotty Airport Corridor",
-    "u": "malappuram_city",
-    "v": "kozhikode_city",
-    "distance_km": 45.8,
-    "capacity_veh_hr": 2600,
-    "elevation": 35.0,
-    "flood_susceptibility": 0.25,
-    "hazard_proximity": null,
-    "isToggleable": true,
+  "e_malappuram_kozhikode": {
     "path": [
       [
         11.07408,
@@ -13045,19 +11547,10 @@ const KERALA_GRAPH_DATA = {
         11.2588,
         75.78047
       ]
-    ]
+    ],
+    "distance_km": 45.8
   },
-  {
-    "id": "e_shoranur_palakkad",
-    "name": "Ottapalam-Palakkad Highway",
-    "u": "shoranur",
-    "v": "palakkad_city",
-    "distance_km": 49.8,
-    "capacity_veh_hr": 2200,
-    "elevation": 65.0,
-    "flood_susceptibility": 0.2,
-    "hazard_proximity": null,
-    "isToggleable": true,
+  "e_shoranur_palakkad": {
     "path": [
       [
         10.763,
@@ -13267,19 +11760,10 @@ const KERALA_GRAPH_DATA = {
         10.78672,
         76.65481
       ]
-    ]
+    ],
+    "distance_km": 49.8
   },
-  {
-    "id": "e_kozhikode_thamarassery",
-    "name": "NH 766 Kunnamangalam Highway",
-    "u": "kozhikode_city",
-    "v": "thamarassery",
-    "distance_km": 30.3,
-    "capacity_veh_hr": 2600,
-    "elevation": 35.0,
-    "flood_susceptibility": 0.25,
-    "hazard_proximity": null,
-    "isToggleable": true,
+  "e_kozhikode_thamarassery": {
     "path": [
       [
         11.2588,
@@ -13325,19 +11809,10 @@ const KERALA_GRAPH_DATA = {
         11.4167,
         75.9333
       ]
-    ]
+    ],
+    "distance_km": 30.3
   },
-  {
-    "id": "e_thamarassery_kalpetta",
-    "name": "NH 766 Thamarassery Churam Ghat Road",
-    "u": "thamarassery",
-    "v": "kalpetta",
-    "distance_km": 33.2,
-    "capacity_veh_hr": 1600,
-    "elevation": 420.0,
-    "flood_susceptibility": 0.7,
-    "hazard_proximity": "hazard_wayanad",
-    "isToggleable": true,
+  "e_thamarassery_kalpetta": {
     "path": [
       [
         11.4167,
@@ -13383,19 +11858,10 @@ const KERALA_GRAPH_DATA = {
         11.605,
         76.0828
       ]
-    ]
+    ],
+    "distance_km": 33.2
   },
-  {
-    "id": "e_kalpetta_sultanbathery",
-    "name": "NH 766 Meenangadi Plateau Highway",
-    "u": "kalpetta",
-    "v": "sultan_bathery",
-    "distance_km": 25.1,
-    "capacity_veh_hr": 2000,
-    "elevation": 850.0,
-    "flood_susceptibility": 0.3,
-    "hazard_proximity": "hazard_wayanad",
-    "isToggleable": true,
+  "e_kalpetta_sultanbathery": {
     "path": [
       [
         11.60466,
@@ -13609,19 +12075,10 @@ const KERALA_GRAPH_DATA = {
         11.6626,
         76.257
       ]
-    ]
+    ],
+    "distance_km": 25.1
   },
-  {
-    "id": "e_kalpetta_mananthavady",
-    "name": "SH 54 Wayanad Spine Road",
-    "u": "kalpetta",
-    "v": "mananthavady",
-    "distance_km": 31.5,
-    "capacity_veh_hr": 1800,
-    "elevation": 770.0,
-    "flood_susceptibility": 0.35,
-    "hazard_proximity": "hazard_wayanad",
-    "isToggleable": true,
+  "e_kalpetta_mananthavady": {
     "path": [
       [
         11.60466,
@@ -13839,19 +12296,10 @@ const KERALA_GRAPH_DATA = {
         11.80265,
         76.00337
       ]
-    ]
+    ],
+    "distance_km": 31.5
   },
-  {
-    "id": "e_mananthavady_thalassery",
-    "name": "Nedumpoil-Boys Town Ghat Road",
-    "u": "mananthavady",
-    "v": "thalassery",
-    "distance_km": 79.2,
-    "capacity_veh_hr": 1400,
-    "elevation": 380.0,
-    "flood_susceptibility": 0.65,
-    "hazard_proximity": "hazard_wayanad",
-    "isToggleable": true,
+  "e_mananthavady_thalassery": {
     "path": [
       [
         11.80265,
@@ -14061,19 +12509,10 @@ const KERALA_GRAPH_DATA = {
         11.74779,
         75.48941
       ]
-    ]
+    ],
+    "distance_km": 79.2
   },
-  {
-    "id": "e_tvm_shelter",
-    "name": "Kudappanakunnu High Ridge Ascent",
-    "u": "tvm_city",
-    "v": "shelter_tvm",
-    "distance_km": 9.2,
-    "capacity_veh_hr": 1800,
-    "elevation": 40.0,
-    "flood_susceptibility": 0.1,
-    "hazard_proximity": null,
-    "isToggleable": true,
+  "e_tvm_shelter": {
     "path": [
       [
         8.48745,
@@ -14307,19 +12746,10 @@ const KERALA_GRAPH_DATA = {
         8.54819,
         76.95816
       ]
-    ]
+    ],
+    "distance_km": 9.2
   },
-  {
-    "id": "e_kollam_shelter",
-    "name": "Kottarakkara Highland Shelter Link",
-    "u": "kottarakkara",
-    "v": "shelter_kollam",
-    "distance_km": 1.0,
-    "capacity_veh_hr": 1600,
-    "elevation": 40.0,
-    "flood_susceptibility": 0.1,
-    "hazard_proximity": null,
-    "isToggleable": true,
+  "e_kollam_shelter": {
     "path": [
       [
         8.99874,
@@ -14449,19 +12879,10 @@ const KERALA_GRAPH_DATA = {
         9.00141,
         76.77593
       ]
-    ]
+    ],
+    "distance_km": 1.0
   },
-  {
-    "id": "e_pathanamthitta_shelter",
-    "name": "Catholicate College Hilltop Access",
-    "u": "pathanamthitta_city",
-    "v": "shelter_pathanamthitta",
-    "distance_km": 1.1,
-    "capacity_veh_hr": 1500,
-    "elevation": 70.0,
-    "flood_susceptibility": 0.05,
-    "hazard_proximity": null,
-    "isToggleable": true,
+  "e_pathanamthitta_shelter": {
     "path": [
       [
         9.2648,
@@ -14507,19 +12928,10 @@ const KERALA_GRAPH_DATA = {
         9.271,
         76.782
       ]
-    ]
+    ],
+    "distance_km": 1.1
   },
-  {
-    "id": "e_alappuzha_shelter",
-    "name": "SD College Relief Corridor",
-    "u": "alappuzha_town",
-    "v": "shelter_alappuzha",
-    "distance_km": 5.0,
-    "capacity_veh_hr": 1800,
-    "elevation": 8.0,
-    "flood_susceptibility": 0.3,
-    "hazard_proximity": null,
-    "isToggleable": true,
+  "e_alappuzha_shelter": {
     "path": [
       [
         9.49808,
@@ -14745,19 +13157,10 @@ const KERALA_GRAPH_DATA = {
         9.47202,
         76.35277
       ]
-    ]
+    ],
+    "distance_km": 5.0
   },
-  {
-    "id": "e_kottayam_shelter",
-    "name": "CMS College Hill Climb",
-    "u": "kottayam_city",
-    "v": "shelter_kottayam",
-    "distance_km": 0.9,
-    "capacity_veh_hr": 1600,
-    "elevation": 25.0,
-    "flood_susceptibility": 0.1,
-    "hazard_proximity": null,
-    "isToggleable": true,
+  "e_kottayam_shelter": {
     "path": [
       [
         9.59168,
@@ -15047,19 +13450,10 @@ const KERALA_GRAPH_DATA = {
         9.59782,
         76.52499
       ]
-    ]
+    ],
+    "distance_km": 0.9
   },
-  {
-    "id": "e_idukki_shelter",
-    "name": "Painavu Plateau Security Ramp",
-    "u": "idukki_painavu",
-    "v": "shelter_idukki",
-    "distance_km": 0.5,
-    "capacity_veh_hr": 1200,
-    "elevation": 880.0,
-    "flood_susceptibility": 0.1,
-    "hazard_proximity": null,
-    "isToggleable": true,
+  "e_idukki_shelter": {
     "path": [
       [
         9.85046,
@@ -15137,19 +13531,10 @@ const KERALA_GRAPH_DATA = {
         9.84891,
         76.97794
       ]
-    ]
+    ],
+    "distance_km": 0.5
   },
-  {
-    "id": "e_munnar_shelter",
-    "name": "Munnar Sports High Ridge Link",
-    "u": "munnar",
-    "v": "shelter_munnar",
-    "distance_km": 2.1,
-    "capacity_veh_hr": 1200,
-    "elevation": 1540.0,
-    "flood_susceptibility": 0.15,
-    "hazard_proximity": null,
-    "isToggleable": true,
+  "e_munnar_shelter": {
     "path": [
       [
         10.08888,
@@ -15407,19 +13792,10 @@ const KERALA_GRAPH_DATA = {
         10.09214,
         77.06737
       ]
-    ]
+    ],
+    "distance_km": 2.1
   },
-  {
-    "id": "e_vyttila_shelterkakkanad",
-    "name": "Kakkanad Seaport-Airport Road",
-    "u": "vyttila",
-    "v": "shelter_kakkanad",
-    "distance_km": 8.5,
-    "capacity_veh_hr": 2800,
-    "elevation": 18.0,
-    "flood_susceptibility": 0.2,
-    "hazard_proximity": null,
-    "isToggleable": true,
+  "e_vyttila_shelterkakkanad": {
     "path": [
       [
         9.9696,
@@ -15649,19 +14025,10 @@ const KERALA_GRAPH_DATA = {
         10.01588,
         76.3419
       ]
-    ]
+    ],
+    "distance_km": 8.5
   },
-  {
-    "id": "e_aluva_shelteraluva",
-    "name": "UC College Highland Approach",
-    "u": "aluva_town",
-    "v": "shelter_aluva",
-    "distance_km": 2.8,
-    "capacity_veh_hr": 1800,
-    "elevation": 14.0,
-    "flood_susceptibility": 0.25,
-    "hazard_proximity": null,
-    "isToggleable": true,
+  "e_aluva_shelteraluva": {
     "path": [
       [
         10.10779,
@@ -16015,19 +14382,10 @@ const KERALA_GRAPH_DATA = {
         10.1246,
         76.34187
       ]
-    ]
+    ],
+    "distance_km": 2.8
   },
-  {
-    "id": "e_thrissur_shelter",
-    "name": "KAU Vellanikkara Campus Arterial",
-    "u": "thrissur_city",
-    "v": "shelter_thrissur",
-    "distance_km": 9.6,
-    "capacity_veh_hr": 2200,
-    "elevation": 30.0,
-    "flood_susceptibility": 0.1,
-    "hazard_proximity": null,
-    "isToggleable": true,
+  "e_thrissur_shelter": {
     "path": [
       [
         10.52761,
@@ -16265,19 +14623,10 @@ const KERALA_GRAPH_DATA = {
         10.54707,
         76.28101
       ]
-    ]
+    ],
+    "distance_km": 9.6
   },
-  {
-    "id": "e_palakkad_shelter",
-    "name": "Victoria College Campus Link",
-    "u": "palakkad_city",
-    "v": "shelter_palakkad",
-    "distance_km": 2.1,
-    "capacity_veh_hr": 2000,
-    "elevation": 85.0,
-    "flood_susceptibility": 0.1,
-    "hazard_proximity": null,
-    "isToggleable": true,
+  "e_palakkad_shelter": {
     "path": [
       [
         10.78672,
@@ -16519,19 +14868,10 @@ const KERALA_GRAPH_DATA = {
         10.78094,
         76.64888
       ]
-    ]
+    ],
+    "distance_km": 2.1
   },
-  {
-    "id": "e_malappuram_shelter",
-    "name": "Govt College Ridge Ascent",
-    "u": "malappuram_city",
-    "v": "shelter_malappuram",
-    "distance_km": 1.7,
-    "capacity_veh_hr": 1800,
-    "elevation": 72.0,
-    "flood_susceptibility": 0.1,
-    "hazard_proximity": null,
-    "isToggleable": true,
+  "e_malappuram_shelter": {
     "path": [
       [
         11.07408,
@@ -16753,19 +15093,10 @@ const KERALA_GRAPH_DATA = {
         11.0693,
         76.08163
       ]
-    ]
+    ],
+    "distance_km": 1.7
   },
-  {
-    "id": "e_kozhikode_shelter",
-    "name": "Medical College Relief Expressway",
-    "u": "kozhikode_city",
-    "v": "shelter_kozhikode",
-    "distance_km": 7.2,
-    "capacity_veh_hr": 2600,
-    "elevation": 30.0,
-    "flood_susceptibility": 0.1,
-    "hazard_proximity": null,
-    "isToggleable": true,
+  "e_kozhikode_shelter": {
     "path": [
       [
         11.2588,
@@ -17007,19 +15338,10 @@ const KERALA_GRAPH_DATA = {
         11.27191,
         75.83591
       ]
-    ]
+    ],
+    "distance_km": 7.2
   },
-  {
-    "id": "e_wayanad_shelter",
-    "name": "SKMJ Plateau Shelter Ramp",
-    "u": "kalpetta",
-    "v": "shelter_wayanad",
-    "distance_km": 1.2,
-    "capacity_veh_hr": 1800,
-    "elevation": 780.0,
-    "flood_susceptibility": 0.15,
-    "hazard_proximity": null,
-    "isToggleable": true,
+  "e_wayanad_shelter": {
     "path": [
       [
         11.60466,
@@ -17185,19 +15507,10 @@ const KERALA_GRAPH_DATA = {
         11.60904,
         76.08791
       ]
-    ]
+    ],
+    "distance_km": 1.2
   },
-  {
-    "id": "e_kannur_shelter",
-    "name": "Thavakkara University Gateway",
-    "u": "kannur_city",
-    "v": "shelter_kannur",
-    "distance_km": 1.4,
-    "capacity_veh_hr": 2000,
-    "elevation": 30.0,
-    "flood_susceptibility": 0.1,
-    "hazard_proximity": null,
-    "isToggleable": true,
+  "e_kannur_shelter": {
     "path": [
       [
         11.87419,
@@ -17411,19 +15724,10 @@ const KERALA_GRAPH_DATA = {
         11.87881,
         75.37836
       ]
-    ]
+    ],
+    "distance_km": 1.4
   },
-  {
-    "id": "e_kasaragod_shelter",
-    "name": "Tejaswini Hills University Highway",
-    "u": "kasaragod_city",
-    "v": "shelter_kasaragod",
-    "distance_km": 23.3,
-    "capacity_veh_hr": 2200,
-    "elevation": 45.0,
-    "flood_susceptibility": 0.1,
-    "hazard_proximity": null,
-    "isToggleable": true,
+  "e_kasaragod_shelter": {
     "path": [
       [
         12.4996,
@@ -17641,34 +15945,7 @@ const KERALA_GRAPH_DATA = {
         12.39496,
         75.09292
       ]
-    ]
+    ],
+    "distance_km": 23.3
   }
-]
-};
-
-const ROAD_CLOSURE_PRESETS = [
-  {
-    "edgeId": "e_thamarassery_kalpetta",
-    "label": "Wayanad Thamarassery Churam (Debris Landslide)"
-  },
-  {
-    "edgeId": "e_alappuzha_kuttanad",
-    "label": "AC Canal Road (Fully Submerged Delta)"
-  },
-  {
-    "edgeId": "e_adimali_munnar",
-    "label": "Munnar Gap Road (Rockfall Blockage)"
-  },
-  {
-    "edgeId": "e_kalamassery_aluva",
-    "label": "Periyar River Aluva Bridge (Flood Overflow)"
-  },
-  {
-    "edgeId": "e_adoor_thiruvalla",
-    "label": "Chengannur MC Road (Pamba River Breach)"
-  }
-];
-
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { KERALA_GRAPH_DATA, ROAD_CLOSURE_PRESETS };
 }
