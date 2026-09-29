@@ -32,6 +32,48 @@
   transform: translateY(0);
 }
 
+/* Presentation Fullscreen Theater Mode */
+body.presentation-fullscreen-mode {
+  overflow: hidden !important;
+}
+
+body.presentation-fullscreen-mode .sidebar-panel,
+body.presentation-fullscreen-mode .navbar,
+body.presentation-fullscreen-mode .disclaimer-banner {
+  display: none !important;
+}
+
+body.presentation-fullscreen-mode .app-container {
+  height: 100vh !important;
+  max-width: 100vw !important;
+  width: 100vw !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+body.presentation-fullscreen-mode .map-container-wrapper {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 99990 !important;
+}
+
+body.presentation-fullscreen-mode #map {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+}
+
+body.presentation-fullscreen-mode #presentation-overlay {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 99999 !important;
+}
+
 /* Presentation Overlay in Map Wrapper */
 #presentation-overlay {
   position: absolute;
@@ -311,16 +353,29 @@
 }
 
 .capacity-chip.on-white {
-  background: #0f172a;
-  color: #38bdf8;
-  border-color: #0f172a;
+  background: rgba(255, 255, 255, 0.95);
+  color: #0369a1;
+  border: 1.5px solid #38bdf8;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.15);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+  pointer-events: none;
+  backdrop-filter: blur(4px);
+  z-index: 10;
+  transition: transform 0.2s ease, opacity 0.2s ease;
 }
 
 .capacity-chip.optimal-badge {
   background: #0284c7;
   color: #ffffff;
-  border-color: #0284c7;
-  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.4);
+  border: 1.5px solid #0369a1;
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.4);
+  font-weight: 800;
+  z-index: 20;
 }
 
 .roadblock-chip {
@@ -490,32 +545,6 @@
   gap: 0.4rem;
 }
 
-.hud-audio-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background: #f1f5f9;
-  border: 1px solid #cbd5e1;
-  border-radius: var(--radius-sm);
-  color: #475569;
-  padding: 0.2rem 0.55rem;
-  font-size: 0.72rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  white-space: nowrap;
-}
-
-.hud-audio-btn:hover {
-  background: #e2e8f0;
-}
-
-.hud-audio-btn.active {
-  background: #ecfdf5;
-  border-color: #a7f3d0;
-  color: #059669;
-}
-
 .hud-close-btn {
   background: transparent;
   border: 1px solid #cbd5e1;
@@ -535,51 +564,169 @@
   color: #be123c;
 }
 
-/* Narrator Box */
-.hud-narrator-box {
+/* Presentation Slide Card (Clean, Punchy Presenter Format) */
+.hud-slide-card {
   background: #f8fafc;
-  border-left: 3px solid #0284c7;
+  border-left: 4px solid #0284c7;
   border-radius: 0 var(--radius-md) var(--radius-md) 0;
-  padding: 0.55rem 0.85rem;
+  padding: 0.65rem 0.95rem;
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 0.35rem;
 }
 
-.hud-narrator-header {
+.hud-slide-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 0.5rem;
 }
 
-.hud-narrator-title {
-  font-size: 0.82rem;
+.hud-slide-title {
+  font-size: 0.88rem;
   font-weight: 800;
   color: #0f172a;
+  letter-spacing: -0.01em;
 }
 
-.hud-algo-runtime-badge {
+.hud-slide-badge {
   font-family: var(--font-mono);
-  font-size: 0.65rem;
-  font-weight: 700;
-  background: #ecfdf5;
-  color: #059669;
-  border: 1px solid #a7f3d0;
-  padding: 1px 5px;
+  font-size: 0.66rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  background: #e0f2fe;
+  color: #0284c7;
+  border: 1px solid #bae6fd;
+  padding: 2px 7px;
   border-radius: var(--radius-full);
 }
 
-.hud-narrator-text {
-  font-size: 0.82rem;
-  color: #334155;
-  line-height: 1.4;
+.hud-slide-punchline {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1e293b;
+  line-height: 1.35;
 }
 
-.hud-narrator-formula {
-  font-family: var(--font-mono);
-  font-size: 0.74rem;
-  color: #0284c7;
+/* Dynamic Parameter Pills (Presenter-Friendly Badges) */
+.hud-slide-pills {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
   margin-top: 0.1rem;
+}
+
+.slide-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.slide-pill.primary {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #0284c7;
+}
+
+.slide-pill.success {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #059669;
+}
+
+.slide-pill.warning {
+  background: #fff1f2;
+  border-color: #fecdd3;
+  color: #e11d48;
+}
+
+.slide-pill.amber {
+  background: #fffbeb;
+  border-color: #fde68a;
+  color: #d97706;
+}
+
+.hud-slide-subnote {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: #64748b;
+  margin-top: 0.05rem;
+}
+
+/* Vehicle Flow Particles Animation */
+.flow-particle {
+  fill: #38bdf8;
+  filter: drop-shadow(0 0 5px rgba(56, 189, 248, 0.9));
+  animation: pulse-particle 1.2s infinite ease-in-out;
+}
+
+@keyframes pulse-particle {
+  0%, 100% { r: 3.5; opacity: 0.9; }
+  50% { r: 5; opacity: 1; filter: drop-shadow(0 0 8px #38bdf8); }
+}
+
+/* Flood Ripple Shockwave */
+.flood-ripple {
+  fill: none;
+  stroke: #e11d48;
+  stroke-width: 2;
+  animation: flood-expand 1.8s infinite cubic-bezier(0.1, 0.8, 0.3, 1);
+}
+
+@keyframes flood-expand {
+  0% { r: 8; opacity: 0.9; stroke-width: 2.5; }
+  100% { r: 38; opacity: 0; stroke-width: 0.5; }
+}
+
+/* Dijkstra Expanding Radar Ring */
+.dijkstra-radar-ring {
+  fill: none;
+  stroke: #0284c7;
+  stroke-width: 2;
+  animation: radar-pulse 2s infinite cubic-bezier(0.2, 0.8, 0.4, 1);
+}
+
+@keyframes radar-pulse {
+  0% { r: 10; opacity: 0.9; stroke-width: 3; }
+  100% { r: 90; opacity: 0; stroke-width: 0.5; }
+}
+
+/* Multi-Criteria Best Refuge Banner in Sidebar */
+.best-refuge-comparison {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-left: 3px solid #0284c7;
+  border-radius: var(--radius-sm);
+  padding: 0.45rem 0.65rem;
+  margin-top: 0.5rem;
+  font-size: 0.76rem;
+  animation: popIn 0.3s ease;
+}
+
+.comparison-tag {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 800;
+  color: #0369a1;
+  margin-bottom: 2px;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+}
+
+.comparison-body {
+  color: #1e293b;
+  line-height: 1.35;
 }
 
 /* Algorithm Sub-Tabs for Step 7 & 8 */

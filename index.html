@@ -177,6 +177,17 @@
             </div>
           </div>
 
+          <!-- Multi-Criteria Optimization Callout: Best Option vs Closest -->
+          <div class="best-refuge-comparison" id="best-refuge-comparison" style="display: none;">
+            <div class="comparison-tag">
+              <span class="comparison-icon">🛡️</span>
+              <span class="comparison-label">Multi-Criteria Optimization (Congestion &amp; Hazards)</span>
+            </div>
+            <div class="comparison-body" id="comparison-reason-text">
+              Intelligently selected high-ground sanctuary over closer low-lying sites based on road capacity, flood roadblocks, and elevation safety.
+            </div>
+          </div>
+
           <!-- Risk Meter Bar & Heuristic Label -->
           <div class="risk-meter-container">
             <div class="risk-meter-header">
@@ -390,14 +401,14 @@
         <!-- Interactive Node / Edge Hover Tooltip -->
         <div id="morph-tooltip" class="morph-tooltip"></div>
 
-        <!-- Presentation Director HUD -->
+        <!-- Presentation Director HUD (Clean Slide Format) -->
         <div class="presentation-director-hud" id="presentation-director-hud" role="region" aria-label="Presentation Controls">
-          <!-- Top Row: Step Badge, Camera View Toggle, Audio Narrator, Progress Dots, Close Button -->
+          <!-- Top Row: Slide Badge, Camera View Toggle, Progress Dots, Close Button -->
           <div class="hud-progress-row">
             <div class="hud-left-meta">
               <span class="hud-step-badge" id="hud-step-badge">Phase 1 of 9</span>
               <div class="hud-view-toggle" id="hud-view-toggle" title="Switch Presentation Camera">
-                <button type="button" class="hud-view-btn active" id="btn-view-corridor" data-view="corridor">🎯 Corridor View</button>
+                <button type="button" class="hud-view-btn active" id="btn-view-corridor" data-view="corridor">🎯 Corridor Focus</button>
                 <button type="button" class="hud-view-btn" id="btn-view-statewide" data-view="statewide">🌴 Full Kerala</button>
               </div>
             </div>
@@ -405,44 +416,47 @@
             <div class="hud-dots-track" id="hud-dots-track" title="Click any phase to jump directly"></div>
 
             <div class="hud-right-actions">
-              <button type="button" class="hud-audio-btn" id="hud-btn-audio" title="Toggle Automated Voice Narration (Web Speech)">
-                <span id="audio-icon">🔇</span>
-                <span id="audio-text">Voice: Off</span>
-              </button>
               <button type="button" class="hud-close-btn" id="hud-btn-close" title="Exit Presentation Mode (Esc)">
-                <span>✕ Exit</span>
+                <span>✕ Exit Demo</span>
               </button>
             </div>
           </div>
 
-          <!-- Narrator Teleprompter Box -->
-          <div class="hud-narrator-box">
-            <div class="hud-narrator-header">
-              <div class="hud-narrator-title" id="hud-narrator-title">
-                <span>📍 Step 1: Establishing Origin &amp; Target Refuge</span>
+          <!-- Presentation Slide Card (Clean, Punchy Presenter Format) -->
+          <div class="hud-slide-card" id="hud-slide-card">
+            <div class="hud-slide-header">
+              <div class="hud-slide-title" id="hud-narrator-title">
+                <span>📍 Phase 1: Strategic Refuge Selection</span>
               </div>
-              <span class="hud-algo-runtime-badge" id="hud-algo-runtime-badge">Python 3.13 Engine</span>
+              <span class="hud-slide-badge" id="hud-algo-runtime-badge">Multi-Criteria Optimization</span>
             </div>
-            <div class="hud-narrator-text" id="hud-narrator-text">
-              The emergency planner designates the origin and target refuge...
+            
+            <!-- Punchy 1-line presenter takeaway -->
+            <div class="hud-slide-punchline" id="hud-narrator-text">
+              Selecting the safest high-ground sanctuary based on vehicle capacity, flood roadblocks, and elevation.
             </div>
-            <div class="hud-narrator-formula" id="hud-narrator-formula">
-              Graph Vertices: S = Origin, T = Refuge
+
+            <!-- Dynamic Parameter Chips Container -->
+            <div class="hud-slide-pills" id="hud-slide-pills"></div>
+
+            <!-- Mini Formula / Parameter Note -->
+            <div class="hud-slide-subnote" id="hud-narrator-formula">
+              Objective: min f(TravelTime, CongestionDelay, FloodHazard, ElevationSafety)
             </div>
           </div>
 
-          <!-- Interactive Algorithm Explorer Tabs (Active during Step 7 & 8) -->
+          <!-- Interactive Algorithm Explorer Tabs (Active during Step 7) -->
           <div class="hud-algo-tabs" id="hud-algo-tabs" style="display: none;">
-            <button type="button" class="algo-tab active" data-algo="dijkstra">⚡ Dijkstra &amp; A* Search</button>
-            <button type="button" class="algo-tab" data-algo="maxflow">🌊 Edmonds-Karp Max-Flow</button>
-            <button type="button" class="algo-tab" data-algo="mincut">✂️ Min-Cut Bottlenecks</button>
-            <button type="button" class="algo-tab" data-algo="mst">🌲 Spanning Tree (MST)</button>
+            <button type="button" class="algo-tab active" data-algo="dijkstra">⚡ Dijkstra &amp; A* (Congestion &amp; Hazards)</button>
+            <button type="button" class="algo-tab" data-algo="maxflow">🌊 Edmonds-Karp Flow (Vehicle Volume)</button>
+            <button type="button" class="algo-tab" data-algo="mincut">✂️ Min-Cut Choke Points (Bottlenecks)</button>
+            <button type="button" class="algo-tab" data-algo="mst">🌲 Spanning Tree (Emergency Backbone)</button>
           </div>
 
           <!-- Dynamic Calculation Highlights Matrix -->
           <div class="hud-calc-matrix" id="hud-calc-matrix" style="display: none;"></div>
 
-          <!-- Algorithm Relaxation Stepper / Animation Trigger -->
+          <!-- Visual Algorithm Stepper / Replay Trigger -->
           <div class="hud-algo-stepper" id="hud-algo-stepper" style="display: none;">
             <div class="algo-step-info">
               <span class="algo-step-dot"></span>
@@ -450,11 +464,11 @@
             </div>
             <button type="button" class="algo-replay-btn" id="btn-algo-replay">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-              <span>Simulate Wave</span>
+              <span>Re-Simulate Animation</span>
             </button>
           </div>
 
-          <!-- Controls Row: Play/Pause, Next, Prev, Speed, Timer -->
+          <!-- Controls Row: Play/Pause, Next, Prev, Speed, Pacing -->
           <div class="hud-controls-row">
             <div class="hud-btn-group">
               <button type="button" class="hud-btn secondary" id="hud-btn-prev" title="Previous Phase (Left Arrow)">
@@ -472,7 +486,7 @@
             </div>
 
             <!-- Speed Selector -->
-            <div class="hud-speed-group" title="Auto-advance pacing">
+            <div class="hud-speed-group" title="Presentation pacing">
               <span class="speed-label">Speed:</span>
               <button type="button" class="speed-btn" data-speed="0.5">0.5×</button>
               <button type="button" class="speed-btn active" data-speed="1">1×</button>

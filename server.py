@@ -118,8 +118,8 @@ class SafeRouteAPIHandler(SimpleHTTPRequestHandler):
 
         # 1. Route Planning Endpoint: /api/route
         if path == "/api/route":
-            source_id = body.get("sourceId") or body.get("origin") or "fort_kochi"
-            target_id = body.get("targetId") or body.get("shelter")
+            source_id = body.get("sourceId") or body.get("originId") or body.get("origin") or "fort_kochi"
+            target_id = body.get("targetId") or body.get("shelterId") or body.get("shelter")
             if target_id == "auto":
                 target_id = None
 

@@ -636,7 +636,21 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Metrics
-    metricDistance.innerHTML = `${route.totalKm} <span class="metric-unit">km</span>`;
+    // Multi-Criteria Optimization: Best Refuge vs Closest Refuge Callout
+    const bestRefugeBox = document.getElementById("best-refuge-comparison");
+    const comparisonReasonText = document.getElementById("comparison-reason-text");
+    const bypassed = state.activeRouteResult?.bypassedInfo;
+    if (bestRefugeBox && comparisonReasonText) {
+      if (bypassed) {
+        bestRefugeBox.style.display = "block";
+        comparisonReasonText.innerHTML = `
+          <strong>🏆 Chosen Best Haven:</strong> ${route.destinationNode?.name} (+${route.destinationNode?.elevation}m)<br>
+          <span style="color:#e11d48; font-weight:700;">⚠️ Closest Refuge Bypassed:</span> ${bypassed.closestShelterName} (${bypassed.closestKm} km, +${bypassed.closestElevation}m) — low ground &amp; flood choke hazard.
+        `;
+      } else {
+        bestRefugeBox.style.display = "none";
+      }
+    }
 
     // Speed estimate based on disaster conditions: 40km/h down to 20km/h
     const avgSpeed = state.severity === 'severe' ? 22 : (state.severity === 'moderate' ? 32 : 45);
@@ -944,6 +958,7 @@ document.addEventListener("DOMContentLoaded", () => {
       // When presentation ends or is closed, re-render map state cleanly
       recalculateAndRender();
     });
+    window.presentationDirector = presentationDirector;
 
     if (btnStartPresentation) {
       btnStartPresentation.addEventListener("click", () => {

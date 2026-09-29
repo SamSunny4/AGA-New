@@ -1,16 +1,20 @@
 /**
- * Kerala SafeRoute - Advanced Cinematic Presentation & Graph Morphing Director
+ * Kerala SafeRoute - Cinematic Visual Presentation & Graph Morphing Director
  * 
- * Orchestrates the enhanced 9-phase visual demonstration:
- * 1. Set Origin & Destination (Smart Camera Framing & Elevation Profiling)
- * 2. Show Available Routes Animation (Multi-Corridor Discovery)
- * 3. Show Road Capacities (Vehicular Evacuation Throughput Badges)
- * 4. Predict Road Blocks (Flood Breach Severing & Crimson Failure Mode)
- * 5. Screen Whiteout (Topological Isolation of Network Graph G = (V,E))
- * 6. Morph Routes to Straight Edges & Places to Standardized Nodes (Smooth Geometric Path Interpolation)
- * 7. Audience Calculation Explanations (Interactive Dijkstra/A*, Edmonds-Karp Flow, Min-Cut Choke Points, Kruskal MST)
- * 8. Highlight Optimal Edge & Bottleneck Saturated Cut
- * 9. Warp Back Edges to Real Curvy Roads as Map Re-Emerges (State Evacuation Readiness)
+ * Clean, Presentation-Ready Architecture (Presenter-Focused, Zero Audio Noise, Rich Visuals):
+ * 1. Strategic Refuge Selection: Multi-criteria optimization (bypassing low traps for best safe haven)
+ * 2. Multi-Corridor Exploration: Animated vehicle flow particles along parallel routes
+ * 3. Highway Capacities & Congestion: Visual traffic pacing (2400 v/h free flow vs 900 v/h choke)
+ * 4. Roadblock Failures & Flood Breaches: Animated shockwave ripples & severed barrier drops
+ * 5. Screen Whiteout: Holographic technical canvas isolating topological graph G = (V, E)
+ * 6. Smooth Geometric Morph: Curvy physical highways flatten into abstract straight edges
+ * 7. Visual Algorithm Execution:
+ *    - Dijkstra / A* Radar Wavefront & Priority Queue Relaxation
+ *    - Edmonds-Karp Parallel Augmenting Flow Surge
+ *    - Max-Flow Min-Cut Theorem Laser Slicer & Saturated Choke Points
+ *    - Kruskal Minimum Spanning Tree (MST) Backbone
+ * 8. Winning Route Illumination & Contra-Flow Enforcement
+ * 9. Physical Road Warp: Abstract lines smoothly bend back to real-world highway curves
  */
 
 class PresentationDirector {
@@ -23,31 +27,36 @@ class PresentationDirector {
     this.totalSteps = 9;
     this.isPlaying = false;
     this.autoTimer = null;
-    
+    this.particleTimer = null;
+    this.algoAnimationTimer = null;
+    this.morphAnimationFrame = null;
+
     // Playback Speed (1x = 5000ms, 0.5x = 8000ms, 2x = 2500ms)
     this.speedMultiplier = 1.0;
     this.baseStepDurationMs = 5000;
 
-    // Camera Framing Mode: "corridor" (default, focused & clear) vs "statewide" (full Kerala)
+    // Camera Framing Mode: "corridor" (default, spacious) vs "statewide" (full Kerala)
     this.cameraMode = "corridor";
 
-    // Audio Voiceover (Web Speech API)
-    this.isAudioEnabled = false;
-    this.speechSynth = typeof window !== "undefined" && window.speechSynthesis ? window.speechSynthesis : null;
-
-    // Active Algorithm Tab in Step 7 & 8: 'dijkstra', 'maxflow', 'mincut', 'mst'
+    // Active Algorithm Tab in Step 7: 'dijkstra', 'maxflow', 'mincut', 'mst'
     this.activeAlgoTab = "dijkstra";
-    this.algoAnimationTimer = null;
-    this.morphAnimationFrame = null;
 
     // Cache computed graph coordinates & structures
     this.nodePositions = {};
     this.edgePaths = {};
     this.optimalPath = null;
+    this.bypassedInfo = null;
     this.candidatePaths = [];
     this.predictedBlockedEdges = new Set();
     this.maxFlowResult = null;
     this.mstResult = null;
+
+    // Spacious Topological Graph & Candidate Subgraph
+    this.candidateShelters = [];
+    this.candidateNodeIds = new Set();
+    this.candidateEdgeIds = new Set();
+    this.topologicalPositions = {};
+    this.topologicalEdgePaths = {};
 
     // DOM Elements
     if (typeof document !== "undefined") {
@@ -57,13 +66,16 @@ class PresentationDirector {
       this.badgesContainer = document.getElementById("morph-dom-badges");
       this.tooltip = document.getElementById("morph-tooltip");
       
-      // HUD Elements
+      // HUD Slide Card Elements
       this.hudStepBadge = document.getElementById("hud-step-badge");
       this.hudDotsTrack = document.getElementById("hud-dots-track");
-      this.hudNarratorTitle = document.getElementById("hud-narrator-title");
-      this.hudNarratorText = document.getElementById("hud-narrator-text");
-      this.hudNarratorFormula = document.getElementById("hud-narrator-formula");
+      this.hudSlideTitle = document.getElementById("hud-narrator-title");
+      this.hudSlidePunchline = document.getElementById("hud-narrator-text");
+      this.hudSlidePills = document.getElementById("hud-slide-pills");
+      this.hudSlideSubnote = document.getElementById("hud-narrator-formula");
       this.hudAlgoRuntimeBadge = document.getElementById("hud-algo-runtime-badge");
+
+      // Tabs & Matrix
       this.hudAlgoTabs = document.getElementById("hud-algo-tabs");
       this.hudCalcMatrix = document.getElementById("hud-calc-matrix");
       this.hudAlgoStepper = document.getElementById("hud-algo-stepper");
@@ -81,11 +93,6 @@ class PresentationDirector {
       // Camera view toggle
       this.btnViewCorridor = document.getElementById("btn-view-corridor");
       this.btnViewStatewide = document.getElementById("btn-view-statewide");
-
-      // Audio narration button
-      this.btnAudio = document.getElementById("hud-btn-audio");
-      this.audioIcon = document.getElementById("audio-icon");
-      this.audioText = document.getElementById("audio-text");
 
       // Speed buttons
       this.speedBtns = document.querySelectorAll(".speed-btn");
@@ -106,9 +113,6 @@ class PresentationDirector {
     // Camera view switcher
     this.btnViewCorridor?.addEventListener("click", () => this.setCameraMode("corridor"));
     this.btnViewStatewide?.addEventListener("click", () => this.setCameraMode("statewide"));
-
-    // Audio narration toggle
-    this.btnAudio?.addEventListener("click", () => this.toggleAudioNarration());
 
     // Speed buttons
     this.speedBtns.forEach(btn => {
@@ -145,7 +149,6 @@ class PresentationDirector {
         this.nextStep();
       } else if (e.code === "ArrowLeft") {
         e.preventDefault();
-        this.prevStep();
       } else if (e.code === "Escape") {
         e.preventDefault();
         this.stopPresentation();
@@ -177,12 +180,23 @@ class PresentationDirector {
     this.originId = originId || this.state.selectedOrigin || "kuttanad";
     this.shelterId = shelterId || (this.state.selectedShelter !== "auto" ? this.state.selectedShelter : "shelter_alappuzha");
 
-    // Pre-calculate Dijkstra, Predicted Blocks, Max Flow, and MST beforehand
+    // Pre-calculate Dijkstra, multi-criteria suitability, Max Flow, and MST
     this.computeAlgorithmsData();
 
-    // Default to Corridor View for instant clarity, avoiding node-clumping
+    // 1. Enter Fullscreen Theater Mode
+    if (typeof document !== "undefined") {
+      document.body.classList.add("presentation-fullscreen-mode");
+      if (document.documentElement.requestFullscreen && !document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
+    }
+
+    // Default to Corridor View for instant clarity and spaciousness
     this.cameraMode = "corridor";
     this.updateCameraUI();
+
+    // Map container now takes full viewport; invalidate and fit candidate bounds
+    this.map.invalidateSize();
     this.applyCameraBounds();
 
     // Show overlay
@@ -194,13 +208,22 @@ class PresentationDirector {
     this.buildDotsTrack();
     this.updateCoordinates();
     this.renderStep(this.currentStep, true);
+
+    // Re-verify bounds and coordinates once browser reflow completes
+    setTimeout(() => {
+      this.map.invalidateSize();
+      this.applyCameraBounds();
+      this.updateCoordinates();
+      this.renderStep(this.currentStep, false);
+    }, 150);
+
     this.startAutoTimer();
   }
 
   stopPresentation() {
     this.clearAutoTimer();
     this.clearAlgoAnimation();
-    this.stopAudioNarration();
+    this.stopParticleSimulation();
 
     if (this.morphAnimationFrame) {
       cancelAnimationFrame(this.morphAnimationFrame);
@@ -213,6 +236,18 @@ class PresentationDirector {
     this.svg.innerHTML = "";
     this.badgesContainer.innerHTML = "";
     this.hideTooltip();
+
+    // Exit Fullscreen Mode
+    if (typeof document !== "undefined") {
+      document.body.classList.remove("presentation-fullscreen-mode");
+      if (document.fullscreenElement && document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+
+    setTimeout(() => {
+      this.map.invalidateSize();
+    }, 150);
     
     // Call finish callback to ensure map is in normal optimal route state
     if (this.onFinish) this.onFinish();
@@ -239,25 +274,11 @@ class PresentationDirector {
 
   applyCameraBounds() {
     if (this.cameraMode === "corridor") {
-      // Collect bounding coordinates of the route, alternative paths, and key corridor nodes
-      const corridorNodes = new Set();
-      if (this.optimalPath?.pathNodes) {
-        this.optimalPath.pathNodes.forEach(id => corridorNodes.add(id));
-      }
-      this.candidatePaths.forEach(path => path.forEach(id => corridorNodes.add(id)));
-      corridorNodes.add(this.originId);
-      corridorNodes.add(this.shelterId);
+      const targetNodeIds = (this.candidateNodeIds && this.candidateNodeIds.size > 0)
+        ? this.candidateNodeIds
+        : new Set([this.originId, this.shelterId]);
 
-      // Add immediate 1-hop adjacent nodes for context
-      const adjIds = Array.from(corridorNodes);
-      adjIds.forEach(id => {
-        KERALA_GRAPH_DATA.edges.forEach(e => {
-          if (e.u === id) corridorNodes.add(e.v);
-          if (e.v === id) corridorNodes.add(e.u);
-        });
-      });
-
-      const latLngs = Array.from(corridorNodes)
+      const latLngs = Array.from(targetNodeIds)
         .map(id => KERALA_GRAPH_DATA.nodes[id])
         .filter(Boolean)
         .map(n => [n.lat, n.lng]);
@@ -265,20 +286,20 @@ class PresentationDirector {
       if (latLngs.length > 0) {
         const bounds = L.latLngBounds(latLngs);
         this.map.fitBounds(bounds, {
-          paddingTopLeft: [50, 50],
-          paddingBottomRight: [50, 180],
-          maxZoom: 12,
+          paddingTopLeft: [70, 70],
+          paddingBottomRight: [70, 220],
+          maxZoom: 13,
           animate: true
         });
         return;
       }
     }
 
-    // Statewide fallback / Statewide mode: Fit all Kerala nodes
+    // Statewide fallback: Fit all Kerala nodes
     const allLatLngs = Object.values(KERALA_GRAPH_DATA.nodes).map(n => [n.lat, n.lng]);
     this.map.fitBounds(L.latLngBounds(allLatLngs), {
-      paddingTopLeft: [30, 30],
-      paddingBottomRight: [30, 170],
+      paddingTopLeft: [40, 40],
+      paddingBottomRight: [40, 180],
       maxZoom: 9,
       animate: true
     });
@@ -337,7 +358,6 @@ class PresentationDirector {
       if (this.currentStep < this.totalSteps) {
         this.nextStep();
       } else {
-        // Last step reached
         this.isPlaying = false;
         this.updatePlayBtnUI();
       }
@@ -401,76 +421,38 @@ class PresentationDirector {
   }
 
   // =========================================================================
-  // AUDIO SPEECH SYNTHESIS NARRATOR
-  // =========================================================================
-  toggleAudioNarration() {
-    this.isAudioEnabled = !this.isAudioEnabled;
-    if (this.btnAudio) {
-      this.btnAudio.classList.toggle("active", this.isAudioEnabled);
-    }
-    if (this.audioIcon) {
-      this.audioIcon.textContent = this.isAudioEnabled ? "🔊" : "🔇";
-    }
-    if (this.audioText) {
-      this.audioText.textContent = this.isAudioEnabled ? "Voice: On" : "Voice: Off";
-    }
-
-    if (this.isAudioEnabled) {
-      this.speakCurrentStep();
-    } else {
-      this.stopAudioNarration();
-    }
-  }
-
-  speakCurrentStep() {
-    if (!this.isAudioEnabled || !this.speechSynth) return;
-    this.stopAudioNarration();
-
-    // Strip HTML tags for clean utterance
-    const tempDiv = document.createElement("div");
-    tempDiv.innerHTML = this.hudNarratorText.innerHTML;
-    const cleanText = tempDiv.textContent || tempDiv.innerText || "";
-
-    const utterance = new SpeechSynthesisUtterance(cleanText);
-    utterance.rate = 1.05 * this.speedMultiplier;
-    utterance.pitch = 1.0;
-    
-    // Select crisp English voice if available
-    const voices = this.speechSynth.getVoices();
-    const naturalVoice = voices.find(v => v.lang.startsWith("en") && (v.name.includes("Google") || v.name.includes("Natural") || v.name.includes("Samantha") || v.name.includes("Daniel")));
-    if (naturalVoice) utterance.voice = naturalVoice;
-
-    this.speechSynth.speak(utterance);
-  }
-
-  stopAudioNarration() {
-    if (this.speechSynth) {
-      this.speechSynth.cancel();
-    }
-  }
-
-  // =========================================================================
-  // PRE-CALCULATE GRAPH ALGORITHMS (DIJKSTRA, MAX FLOW, MIN CUT, MST)
+  // PRE-CALCULATE GRAPH ALGORITHMS (MULTI-CRITERIA BEST REFUGE SELECTION)
   // =========================================================================
   computeAlgorithmsData() {
-    // 1. Dijkstra calculation from origin to shelter
-    let target = this.shelterId;
-    if (!target || target === "auto") {
-      target = null;
-    }
-    const dijkstraResult = DijkstraRouter.runDijkstra(
+    // 1. Evaluate all shelters to find multi-criteria candidate safe havens and bypassed shelters
+    const allSheltersResult = DijkstraRouter.runDijkstra(
       KERALA_GRAPH_DATA.nodes,
       KERALA_GRAPH_DATA.edges,
       this.originId,
-      target,
+      null, // evaluate all shelters
       { disasterType: this.state.disasterType, severity: this.state.severity, closedEdgeIds: new Set() }
     );
-    this.optimalPath = dijkstraResult.optimalShelterRoute || dijkstraResult.route;
-    if (this.optimalPath && this.optimalPath.destinationId) {
-      this.shelterId = this.optimalPath.destinationId;
-    }
 
-    // 2. Predict blocked edges (roads with low elevation or severe hazard proximity)
+    let dijkstraResult = allSheltersResult;
+    if (this.state.selectedShelter && this.state.selectedShelter !== "auto") {
+      const specificResult = DijkstraRouter.runDijkstra(
+        KERALA_GRAPH_DATA.nodes,
+        KERALA_GRAPH_DATA.edges,
+        this.originId,
+        this.state.selectedShelter,
+        { disasterType: this.state.disasterType, severity: this.state.severity, closedEdgeIds: new Set() }
+      );
+      this.optimalPath = specificResult.route;
+      this.shelterId = this.state.selectedShelter;
+    } else {
+      this.optimalPath = allSheltersResult.optimalShelterRoute;
+      if (this.optimalPath && this.optimalPath.destinationId) {
+        this.shelterId = this.optimalPath.destinationId;
+      }
+    }
+    this.bypassedInfo = allSheltersResult.bypassedInfo || null;
+
+    // Predict blocked edges
     this.predictedBlockedEdges.clear();
     KERALA_GRAPH_DATA.edges.forEach(e => {
       if (e.elevation <= 2.5 || e.hazard_proximity === "hazard_kuttanad" || e.hazard_proximity === "hazard_wayanad" || e.id === "e_alappuzha_kuttanad" || e.id === "e_thamarassery_kalpetta") {
@@ -478,21 +460,83 @@ class PresentationDirector {
       }
     });
 
-    // 3. Find 2-3 candidate alternative paths using DFS
-    this.candidatePaths = this.findCandidatePaths(this.originId, this.shelterId, 3);
+    // 1. Identify Candidate Safe Shelters (Optimal, Runner-up within 1.6x dist, Bypassed)
+    const candidateShelterSet = new Set();
+    if (this.shelterId) candidateShelterSet.add(this.shelterId);
+    if (this.bypassedInfo && this.bypassedInfo.closestShelterId) {
+      candidateShelterSet.add(this.bypassedInfo.closestShelterId);
+    }
+    const optimalKm = this.optimalPath?.totalKm || 40;
+    if (allSheltersResult.allShelterRoutes) {
+      for (const sr of allSheltersResult.allShelterRoutes) {
+        if (!candidateShelterSet.has(sr.destinationId) && sr.totalKm <= optimalKm * 1.6) {
+          candidateShelterSet.add(sr.destinationId);
+          if (candidateShelterSet.size >= 3) break;
+        }
+      }
+    }
+    this.candidateShelters = Array.from(candidateShelterSet);
 
-    // 4. Max Flow & Min Cut using Edmonds-Karp
-    const flowNodes = Object.keys(KERALA_GRAPH_DATA.nodes);
-    const flowEdges = KERALA_GRAPH_DATA.edges.map(e => ({
-      u: e.u,
-      v: e.v,
-      capacity: e.capacity_veh_hr || 1200,
-      name: e.name
-    }));
-    this.maxFlowResult = EdmondsKarpMaxFlow.computeMaxFlow(flowNodes, flowEdges, this.originId, this.shelterId);
+    // 2. Candidate Alternative Paths
+    this.candidatePaths = [];
+    if (this.optimalPath && this.optimalPath.pathNodes) {
+      this.candidatePaths.push(this.optimalPath.pathNodes);
+    }
+    // Paths to other candidate shelters
+    if (allSheltersResult.allShelterRoutes) {
+      allSheltersResult.allShelterRoutes.forEach(sr => {
+        if (candidateShelterSet.has(sr.destinationId) && sr.destinationId !== this.shelterId && sr.pathNodes) {
+          if (!this.candidatePaths.some(p => p.join("-") === sr.pathNodes.join("-"))) {
+            this.candidatePaths.push(sr.pathNodes);
+          }
+        }
+      });
+    }
+    // Multi-corridor parallel bypasses to optimal haven
+    const parallelPaths = this.findCandidatePaths(this.originId, this.shelterId, 3);
+    parallelPaths.forEach(pp => {
+      if (!this.candidatePaths.some(existing => existing.join("-") === pp.join("-"))) {
+        this.candidatePaths.push(pp);
+      }
+    });
 
-    // 5. Kruskal Minimum Spanning Tree for statewide emergency relief backbone
-    this.mstResult = this.computeKruskalMST(flowNodes, KERALA_GRAPH_DATA.edges);
+    // 3. Candidate Nodes Set
+    this.candidateNodeIds = new Set();
+    this.candidateNodeIds.add(this.originId);
+    this.candidateShelters.forEach(id => this.candidateNodeIds.add(id));
+    this.candidatePaths.forEach(path => path.forEach(id => this.candidateNodeIds.add(id)));
+
+    // 4. Candidate Edges Set
+    this.candidateEdgeIds = new Set();
+    KERALA_GRAPH_DATA.edges.forEach(e => {
+      if (this.candidateNodeIds.has(e.u) && this.candidateNodeIds.has(e.v)) {
+        this.candidateEdgeIds.add(e.id);
+      }
+    });
+
+    // Max Flow & Min Cut on Candidate Subgraph
+    const flowNodes = Array.from(this.candidateNodeIds);
+    const flowEdges = KERALA_GRAPH_DATA.edges
+      .filter(e => this.candidateNodeIds.has(e.u) && this.candidateNodeIds.has(e.v))
+      .map(e => ({
+        u: e.u,
+        v: e.v,
+        capacity: e.capacity_veh_hr || 1200,
+        name: e.name
+      }));
+
+    this.maxFlowResult = EdmondsKarpMaxFlow.computeMaxFlow(
+      flowNodes.length >= 2 ? flowNodes : Object.keys(KERALA_GRAPH_DATA.nodes),
+      flowEdges.length >= 1 ? flowEdges : KERALA_GRAPH_DATA.edges,
+      this.originId,
+      this.shelterId
+    );
+
+    // Kruskal MST on Candidate Subgraph
+    this.mstResult = this.computeKruskalMST(
+      flowNodes.length >= 2 ? flowNodes : Object.keys(KERALA_GRAPH_DATA.nodes),
+      KERALA_GRAPH_DATA.edges.filter(e => this.candidateNodeIds.has(e.u) && this.candidateNodeIds.has(e.v))
+    );
   }
 
   findCandidatePaths(start, end, maxCount = 3) {
@@ -503,12 +547,13 @@ class PresentationDirector {
       if (adj[e.v]) adj[e.v].push(e.u);
     });
 
+    const maxHops = Math.max(5, (this.optimalPath?.pathNodes?.length || 4) + 2);
     const paths = [];
     const visited = new Set([start]);
 
     const dfs = (curr, currentPath) => {
       if (paths.length >= maxCount) return;
-      if (currentPath.length >= 10) return;
+      if (currentPath.length >= maxHops) return;
       if (curr === end) {
         paths.push([...currentPath]);
         return;
@@ -605,6 +650,134 @@ class PresentationDirector {
         };
       }
     });
+
+    // Generate spacious topological layout for mathematical graph stages
+    this.computeTopologicalLayout();
+  }
+
+  // =========================================================================
+  // SPACIOUS TOPOLOGICAL GRAPH LAYOUT FOR MATHEMATICAL BLUEPRINT (PHASES 6-8)
+  // =========================================================================
+  computeTopologicalLayout() {
+    this.topologicalPositions = {};
+    this.topologicalEdgePaths = {};
+
+    const W = (this.svg && this.svg.clientWidth) ? this.svg.clientWidth : (window.innerWidth || 1600);
+    const H = (this.svg && this.svg.clientHeight) ? this.svg.clientHeight : (window.innerHeight || 900);
+
+    const xStart = 160;
+    const xEnd = Math.max(xStart + 360, W - 220);
+    const yTop = 130;
+    const yBottom = Math.max(yTop + 200, H - 360);
+
+    const candidateList = Array.from(this.candidateNodeIds || []);
+    if (candidateList.length === 0) return;
+
+    // Build candidate adjacency map
+    const candAdj = {};
+    candidateList.forEach(id => candAdj[id] = []);
+    KERALA_GRAPH_DATA.edges.forEach(e => {
+      if (this.candidateNodeIds.has(e.u) && this.candidateNodeIds.has(e.v)) {
+        candAdj[e.u]?.push(e.v);
+        candAdj[e.v]?.push(e.u);
+      }
+    });
+
+    // BFS hop distance from originId
+    const hops = {};
+    hops[this.originId] = 0;
+    const queue = [this.originId];
+    while (queue.length > 0) {
+      const u = queue.shift();
+      const curH = hops[u];
+      (candAdj[u] || []).forEach(v => {
+        if (hops[v] === undefined) {
+          hops[v] = curH + 1;
+          queue.push(v);
+        }
+      });
+    }
+
+    // Default any disconnected candidate node to hop 1
+    candidateList.forEach(id => {
+      if (hops[id] === undefined) hops[id] = 1;
+    });
+
+    let maxHop = 0;
+    candidateList.forEach(id => {
+      if (hops[id] > maxHop) maxHop = hops[id];
+    });
+    if (maxHop < 2) maxHop = 2;
+
+    // Group into horizontal layers (columns)
+    const layers = {};
+    for (let h = 0; h <= maxHop; h++) layers[h] = [];
+
+    candidateList.forEach(id => {
+      const isShelter = this.candidateShelters.includes(id) || id === this.shelterId;
+      let assignedLayer = hops[id];
+      // Align all candidate safe havens to the rightmost layer
+      if (isShelter) {
+        assignedLayer = maxHop;
+      }
+      if (assignedLayer > maxHop) assignedLayer = maxHop;
+      if (!layers[assignedLayer]) layers[assignedLayer] = [];
+      layers[assignedLayer].push(id);
+    });
+
+    // Compute spacious coordinates for each layer
+    for (let l = 0; l <= maxHop; l++) {
+      const nodesInLayer = layers[l] || [];
+      if (nodesInLayer.length === 0) continue;
+
+      const layerX = xStart + (l / maxHop) * (xEnd - xStart);
+      const K = nodesInLayer.length;
+
+      // Sort nodes to preserve relative latitude and prevent criss-crossing lines
+      nodesInLayer.sort((a, b) => {
+        const latA = KERALA_GRAPH_DATA.nodes[a]?.lat || 0;
+        const latB = KERALA_GRAPH_DATA.nodes[b]?.lat || 0;
+        return latB - latA;
+      });
+
+      if (K === 1) {
+        const id = nodesInLayer[0];
+        const layerY = (yTop + yBottom) / 2;
+        this.topologicalPositions[id] = {
+          x: Math.round(layerX),
+          y: Math.round(layerY),
+          node: KERALA_GRAPH_DATA.nodes[id]
+        };
+      } else {
+        const stepY = (yBottom - yTop) / (K - 1);
+        nodesInLayer.forEach((id, idx) => {
+          const layerY = yTop + idx * stepY;
+          this.topologicalPositions[id] = {
+            x: Math.round(layerX),
+            y: Math.round(layerY),
+            node: KERALA_GRAPH_DATA.nodes[id]
+          };
+        });
+      }
+    }
+
+    // Build straight edges connecting spacious topological nodes
+    KERALA_GRAPH_DATA.edges.forEach(edge => {
+      if (this.candidateNodeIds.has(edge.u) && this.candidateNodeIds.has(edge.v)) {
+        const uPt = this.topologicalPositions[edge.u];
+        const vPt = this.topologicalPositions[edge.v];
+        if (uPt && vPt) {
+          const midPt = { x: (uPt.x + vPt.x) / 2, y: (uPt.y + vPt.y) / 2 };
+          this.topologicalEdgePaths[edge.id] = {
+            uPt,
+            vPt,
+            midPt,
+            edge,
+            straightPath: `M ${uPt.x} ${uPt.y} L ${vPt.x} ${vPt.y}`
+          };
+        }
+      }
+    });
   }
 
   // =========================================================================
@@ -613,6 +786,7 @@ class PresentationDirector {
   renderStep(step, isStepTransition = true) {
     this.updateCoordinates();
     this.clearAlgoAnimation();
+    this.stopParticleSimulation();
     this.svg.innerHTML = "";
     this.badgesContainer.innerHTML = "";
     this.hideTooltip();
@@ -622,8 +796,8 @@ class PresentationDirector {
     const isWhiteCanvas = step >= 5 && step <= 8;
     this.whiteout.classList.toggle("white-active", isWhiteCanvas);
 
-    // Hide sub-tabs by default unless in Step 7 or 8
-    if (this.hudAlgoTabs) this.hudAlgoTabs.style.display = (step === 7 || step === 8) ? "flex" : "none";
+    // Hide sub-tabs by default unless in Step 7
+    if (this.hudAlgoTabs) this.hudAlgoTabs.style.display = (step === 7) ? "flex" : "none";
     if (this.hudAlgoStepper) this.hudAlgoStepper.style.display = (step === 7) ? "flex" : "none";
 
     switch (step) {
@@ -655,40 +829,60 @@ class PresentationDirector {
         this.renderStep9_WarpBackToMap(isStepTransition);
         break;
     }
-
-    if (isStepTransition && this.isAudioEnabled) {
-      this.speakCurrentStep();
-    }
   }
 
   // =========================================================================
-  // PHASE 1: SET POINT OF ORIGIN AND DESTINATION
+  // PHASE 1: SET POINT OF ORIGIN AND DESTINATION (MULTI-CRITERIA SELECTION)
   // =========================================================================
   renderStep1_OriginDestination() {
     const originNode = KERALA_GRAPH_DATA.nodes[this.originId] || { name: "Origin", elevation: 2 };
-    const shelterNode = KERALA_GRAPH_DATA.nodes[this.shelterId] || { name: "Refuge", elevation: 25 };
+    const shelterNode = KERALA_GRAPH_DATA.nodes[this.shelterId] || { name: "Safe Haven", elevation: 45 };
     const elevationDiff = Math.abs(shelterNode.elevation - originNode.elevation);
 
-    this.hudNarratorTitle.innerHTML = `📍 Step 1: Establishing Origin & Target Refuge`;
-    this.hudNarratorText.innerHTML = `
-      The emergency planner designates the threatened starting point at <strong>${originNode.name}</strong> (+${originNode.elevation}m) and the target sanctuary at <strong>${shelterNode.name}</strong> (+${shelterNode.elevation}m). Evacuation requires an elevation climb of <strong>+${elevationDiff}m</strong> away from low-lying hazard zones.
+    this.hudSlideTitle.innerHTML = `<span>📍 Phase 1: Strategic Sanctuary Selection</span>`;
+    this.hudAlgoRuntimeBadge.textContent = "Multi-Criteria Optimization";
+    this.hudSlidePunchline.textContent = `Evaluating vehicle congestion, flood hazards & elevation to select the safest high-ground refuge over closer vulnerable traps.`;
+    
+    // Dynamic KPI Parameter Pills
+    let pillsHtml = `
+      <span class="slide-pill primary">📍 Threat Origin: ${originNode.name} (+${originNode.elevation}m)</span>
+      <span class="slide-pill success">🏆 Primary Haven: ${shelterNode.name} (+${shelterNode.elevation}m)</span>
+      <span class="slide-pill primary">⛰️ Elevation Climb: +${elevationDiff}m</span>
     `;
-    this.hudNarratorFormula.textContent = `Graph Vertices: S = "${this.originId}" (Origin), T = "${this.shelterId}" (Sink Refuge)`;
+
+    if (this.bypassedInfo) {
+      pillsHtml += `<span class="slide-pill warning">⚠️ Bypassed: ${this.bypassedInfo.closestShelterName} (+${this.bypassedInfo.closestElevation}m) [Flood Trap]</span>`;
+    }
+
+    if (this.candidateShelters && this.candidateShelters.length > 1) {
+      const altId = this.candidateShelters.find(id => id !== this.shelterId && (!this.bypassedInfo || id !== this.bypassedInfo.closestShelterId));
+      if (altId && KERALA_GRAPH_DATA.nodes[altId]) {
+        pillsHtml += `<span class="slide-pill primary">🏛️ Backup Haven: ${KERALA_GRAPH_DATA.nodes[altId].name} (+${KERALA_GRAPH_DATA.nodes[altId].elevation}m)</span>`;
+      }
+    }
+
+    this.hudSlidePills.innerHTML = pillsHtml;
+    this.hudSlideSubnote.textContent = `Criteria: min f(TravelTime, CongestionDelay, FloodHazard, ElevationSafety, ChokePoints)`;
     this.hudCalcMatrix.style.display = "none";
 
     this.drawAllEdges("curvy", false);
-    this.drawAllNodes(false, [this.originId, this.shelterId]);
+    this.drawAllNodes(false, [this.originId, this.shelterId, ...(this.candidateShelters || [])]);
   }
 
   // =========================================================================
-  // PHASE 2: SHOW AVAILABLE ROUTES ANIMATION
+  // PHASE 2: SHOW AVAILABLE ROUTES WITH ANIMATED VEHICLE FLOW PARTICLES
   // =========================================================================
   renderStep2_AvailableRoutes() {
-    this.hudNarratorTitle.innerHTML = `⚡ Step 2: Discovering Available Corridors`;
-    this.hudNarratorText.innerHTML = `
-      Exploration algorithms (Breadth-First & Depth-First Search) scan the road network, discovering <strong>${this.candidatePaths.length} candidate highway corridors</strong> connecting the threatened sector to regional high-ground sanctuaries.
+    this.hudSlideTitle.innerHTML = `<span>⚡ Phase 2: Parallel Corridor Discovery</span>`;
+    this.hudAlgoRuntimeBadge.textContent = "Graph BFS / DFS Traversal";
+    this.hudSlidePunchline.textContent = `Exploration algorithms identify ${this.candidatePaths.length} multi-path highway corridors connecting the threatened sector to safety.`;
+
+    this.hudSlidePills.innerHTML = `
+      <span class="slide-pill primary">⚡ ${this.candidatePaths.length} Parallel Corridors</span>
+      <span class="slide-pill success">🛣️ 4-Lane Highway Bypasses</span>
+      <span class="slide-pill amber">🚗 Multi-Route Flow Distribution</span>
     `;
-    this.hudNarratorFormula.textContent = `Corridor Discovery: ${this.candidatePaths.length} multi-path options across ${KERALA_GRAPH_DATA.edges.length} state highway links`;
+    this.hudSlideSubnote.textContent = `Search Space: Discovered ${this.candidatePaths.length} disjoint paths across ${KERALA_GRAPH_DATA.edges.length} state highway links`;
     this.hudCalcMatrix.style.display = "none";
 
     this.drawAllEdges("curvy", false);
@@ -710,18 +904,25 @@ class PresentationDirector {
       }
     });
 
+    // Start vehicle flow particles animation
+    this.startParticleSimulation(this.candidatePaths, "curvy", 1.0);
     this.drawAllNodes(false, [this.originId, this.shelterId]);
   }
 
   // =========================================================================
-  // PHASE 3: SHOW ROAD CAPACITIES
+  // PHASE 3: ROAD CAPACITIES & VEHICLE CONGESTION PARAMETERS
   // =========================================================================
   renderStep3_RoadCapacities() {
-    this.hudNarratorTitle.innerHTML = `🚗 Step 3: Road Capacities Evaluation`;
-    this.hudNarratorText.innerHTML = `
-      Each highway segment is assigned its maximum vehicular evacuation throughput (vehicles per hour) based on carriageway lanes, bridge bottlenecks, and speed limits during disaster emergencies.
+    this.hudSlideTitle.innerHTML = `<span>🚗 Phase 3: Road Capacities & Congestion Parameters</span>`;
+    this.hudAlgoRuntimeBadge.textContent = "Queuing & Throughput Model";
+    this.hudSlidePunchline.textContent = `Assessing vehicular throughput: High-capacity 4-lane corridors (2400 v/h) prevent catastrophic gridlock compared to narrow bottlenecks.`;
+
+    this.hudSlidePills.innerHTML = `
+      <span class="slide-pill success">🟢 Fast Bypass: 2,400 veh/hr (Low Congestion)</span>
+      <span class="slide-pill amber">🟡 Moderate: 1,500-1,800 veh/hr</span>
+      <span class="slide-pill warning">🔴 Choke Bridge: 900-1,200 veh/hr</span>
     `;
-    this.hudNarratorFormula.textContent = `Edge Capacity c(u, v) ∈ [900, 2400] vehicles/hour`;
+    this.hudSlideSubnote.textContent = `Delay Model: CongestionMultiplier = 1.0 + max(0, (2200 - c_e) / 1400) × 0.65`;
     this.hudCalcMatrix.style.display = "none";
 
     this.drawAllEdges("curvy", false);
@@ -740,17 +941,25 @@ class PresentationDirector {
       chip.innerHTML = `🚗 <strong>${edge.capacity_veh_hr || 1200}</strong> <span style="font-size:9px;opacity:0.8;">veh/h</span>`;
       this.badgesContainer.appendChild(chip);
     });
+
+    // Paced particle simulation showing fast vs congested traffic
+    this.startParticleSimulation(this.candidatePaths, "curvy", 0.7);
   }
 
   // =========================================================================
-  // PHASE 4: PREDICT ROAD BLOCKS
+  // PHASE 4: PREDICT ROAD BLOCKS & FLOOD BREACHES (ANIMATED SHOCKWAVES)
   // =========================================================================
   renderStep4_PredictRoadBlocks() {
-    this.hudNarratorTitle.innerHTML = `⚠️ Step 4: Predicting Roadblocks & Flood Breaches`;
-    this.hudNarratorText.innerHTML = `
-      Simulated monsoon flood surge breaches low-elevation coastal avenues (&lt;3.0m) and riverine causeways. The system flags predicted roadblock failures in hazard zones, severing these edges ($W_e = \\infty$) from routing calculations.
+    this.hudSlideTitle.innerHTML = `<span>⚠️ Phase 4: Predicted Roadblocks & Flood Breaches</span>`;
+    this.hudAlgoRuntimeBadge.textContent = "Hydro-Topographic Severance";
+    this.hudSlidePunchline.textContent = `Simulated monsoon surge breaches low-elevation causeways (<3m). The system severs flooded links (Cost = ∞), rerouting traffic.`;
+
+    this.hudSlidePills.innerHTML = `
+      <span class="slide-pill warning">🛑 Severed Corridors: W_e = ∞</span>
+      <span class="slide-pill warning">🌊 Flood Inundation Depressions</span>
+      <span class="slide-pill success">🛡️ Automatic Reroute Triggered</span>
     `;
-    this.hudNarratorFormula.textContent = `Severed Edges: W_e = ∞ (Excluded from Dijkstra & Flow residual graph)`;
+    this.hudSlideSubnote.textContent = `Failure Exclusion: Residual Graph G' = G \\ {Blocked Edges} for Dijkstra & Flow Engines`;
     this.hudCalcMatrix.style.display = "none";
 
     // Draw edges; predicted blocked edges turn crimson dashed
@@ -763,31 +972,44 @@ class PresentationDirector {
       this.svg.appendChild(pathElem);
     });
 
-    this.drawAllNodes(false);
-
-    // Place Roadblock warning badges
+    // Draw animated shockwave ripple circles on severed edges
     this.predictedBlockedEdges.forEach(edgeId => {
       const edgeData = this.edgePaths[edgeId];
       if (edgeData) {
+        // Shockwave ripple circle in SVG
+        const ripple = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        ripple.setAttribute("cx", edgeData.midPt.x);
+        ripple.setAttribute("cy", edgeData.midPt.y);
+        ripple.setAttribute("class", "flood-ripple");
+        this.svg.appendChild(ripple);
+
+        // Warning chip
         const chip = document.createElement("div");
         chip.className = "roadblock-chip";
         chip.style.left = `${edgeData.midPt.x}px`;
         chip.style.top = `${edgeData.midPt.y}px`;
-        chip.innerHTML = `⛔ <span>FLOOD BREACH (+${edgeData.edge.elevation}m)</span>`;
+        chip.innerHTML = `🛑 <span>FLOOD SEVERED (+${edgeData.edge.elevation}m)</span>`;
         this.badgesContainer.appendChild(chip);
       }
     });
+
+    this.drawAllNodes(false);
   }
 
   // =========================================================================
-  // PHASE 5: SCREEN WHITEOUT (KEEP ONLY ROAD ROUTES)
+  // PHASE 5: SCREEN WHITEOUT (TOPOLOGICAL ISOLATION)
   // =========================================================================
   renderStep5_WhiteoutRoutesOnly() {
-    this.hudNarratorTitle.innerHTML = `⬜ Step 5: Screen Whiteout — Isolating Topological Corridors`;
-    this.hudNarratorText.innerHTML = `
-      The physical satellite and street tiles fade into a pristine white technical canvas. Geographic clutter is eliminated, isolating strictly the active interconnected corridors and junctions for mathematical analysis.
+    this.hudSlideTitle.innerHTML = `<span>⬜ Phase 5: Technical Canvas — Topological Isolation</span>`;
+    this.hudAlgoRuntimeBadge.textContent = "Mathematical Abstraction";
+    this.hudSlidePunchline.textContent = `Physical street tiles dissolve into a clean blueprint canvas, isolating strictly the interconnected graph topology G = (V, E).`;
+
+    this.hudSlidePills.innerHTML = `
+      <span class="slide-pill primary">📐 Topology G = (V, E)</span>
+      <span class="slide-pill success">🔬 Zero Visual Noise</span>
+      <span class="slide-pill primary">🌐 67 Vertices • 77 Edges</span>
     `;
-    this.hudNarratorFormula.textContent = `Canvas State: Background Cleared • Preserving Graph Topology G = (V, E)`;
+    this.hudSlideSubnote.textContent = `Graph Model: Eliminating geographic clutter to perform deterministic mathematical optimization`;
     this.hudCalcMatrix.style.display = "none";
 
     this.drawAllEdges("curvy", true);
@@ -798,59 +1020,131 @@ class PresentationDirector {
   // PHASE 6: ROUTES TURN INTO STRAIGHT EDGES, PLACES TURN INTO NODES
   // =========================================================================
   renderStep6_StraightEdgesAndNodes(animateMorph = true) {
-    this.hudNarratorTitle.innerHTML = `📐 Step 6: Morphing Geometry to Graph Theory`;
-    this.hudNarratorText.innerHTML = `
-      Watch the transformation: curvy geographic roads straighten into direct mathematical edges $E$, while complex physical intersections morph into standardized mathematical graph vertices $V$.
+    this.hudSlideTitle.innerHTML = `<span>📐 Phase 6: Morphing Geometry to Graph Theory</span>`;
+    this.hudAlgoRuntimeBadge.textContent = "Geometric Path Interpolation";
+    this.hudSlidePunchline.textContent = `Watch physical curvy highways snap into direct mathematical edges, while physical junctions transform into formal graph vertices.`;
+
+    this.hudSlidePills.innerHTML = `
+      <span class="slide-pill primary">📏 Straight Vector Edges (E)</span>
+      <span class="slide-pill success">⭕ Formal Vertices (V)</span>
+      <span class="slide-pill amber">⚖️ Weights: Dist × Congestion × Risk</span>
     `;
-    this.hudNarratorFormula.textContent = `Geometric Morph: Curvy Highways → Abstract Edges | Intersections → Vertices (V, E, W)`;
+    this.hudSlideSubnote.textContent = `Transformation: Curvy GIS Polylines → Linear Vector Edges with (d, c, r) weights`;
     this.hudCalcMatrix.style.display = "none";
 
     if (animateMorph) {
       this.runCurvyToStraightAnimation();
     } else {
-      this.drawAllEdges("straight", true);
-      this.drawAllNodes(true, [this.originId, this.shelterId], true);
+      this.drawAllEdges("straight", true, true);
+      this.drawAllNodes(true, [this.originId, this.shelterId], true, true);
       this.renderEdgeChipsOnWhite();
     }
   }
 
   runCurvyToStraightAnimation() {
     const startTime = performance.now();
-    const duration = 650; // 650ms smooth morph
+    const duration = 750; // 750ms cinematic morph
 
     const animate = (currentTime) => {
       const elapsed = currentTime - startTime;
       const progress = Math.min(1, elapsed / duration);
-      // Ease in-out cubic
       const ease = progress < 0.5 ? 4 * progress * progress * progress : 1 - Math.pow(-2 * progress + 2, 3) / 2;
 
       this.svg.innerHTML = "";
       
-      // Interpolate paths
-      Object.values(this.edgePaths).forEach(({ uPt, vPt, polylinePoints, edge }) => {
+      // Interpolate candidate edges from geographic curvy to topological straight
+      Object.keys(this.topologicalEdgePaths).forEach(edgeId => {
+        const geoEdge = this.edgePaths[edgeId];
+        const topoEdge = this.topologicalEdgePaths[edgeId];
+        if (!geoEdge || !topoEdge) return;
+
+        const uGeo = geoEdge.uPt;
+        const vGeo = geoEdge.vPt;
+        const uTopo = topoEdge.uPt;
+        const vTopo = topoEdge.vPt;
+
+        // Current interpolated endpoints
+        const curU = { x: uGeo.x + (uTopo.x - uGeo.x) * ease, y: uGeo.y + (uTopo.y - uGeo.y) * ease };
+        const curV = { x: vGeo.x + (vTopo.x - vGeo.x) * ease, y: vGeo.y + (vTopo.y - vGeo.y) * ease };
+
         let d = "";
-        if (polylinePoints.length > 2) {
-          const N = polylinePoints.length;
-          d = polylinePoints.reduce((acc, pt, idx) => {
-            const straightX = uPt.x + (vPt.x - uPt.x) * (idx / (N - 1));
-            const straightY = uPt.y + (vPt.y - uPt.y) * (idx / (N - 1));
+        const polyline = geoEdge.polylinePoints || [uGeo, vGeo];
+        const N = polyline.length;
+
+        if (N > 2) {
+          d = polyline.reduce((acc, pt, idx) => {
+            const straightX = curU.x + (curV.x - curU.x) * (idx / (N - 1));
+            const straightY = curU.y + (curV.y - curU.y) * (idx / (N - 1));
             const curX = pt.x + (straightX - pt.x) * ease;
             const curY = pt.y + (straightY - pt.y) * ease;
             return acc + (idx === 0 ? `M ${curX} ${curY}` : ` L ${curX} ${curY}`);
           }, "");
         } else {
-          d = `M ${uPt.x} ${uPt.y} L ${vPt.x} ${vPt.y}`;
+          d = `M ${curU.x} ${curU.y} L ${curV.x} ${curV.y}`;
         }
 
         const pathElem = document.createElementNS("http://www.w3.org/2000/svg", "path");
         pathElem.setAttribute("d", d);
         pathElem.setAttribute("class", "morph-edge on-white");
-        this.attachEdgeHover(pathElem, edge);
+        this.attachEdgeHover(pathElem, geoEdge.edge);
         this.svg.appendChild(pathElem);
       });
 
-      // Draw nodes expanding
-      this.drawAllNodes(true, [this.originId, this.shelterId], ease > 0.5);
+      // Draw interpolating candidate nodes
+      Object.keys(this.topologicalPositions).forEach(nodeId => {
+        const geoPos = this.nodePositions[nodeId];
+        const topoPos = this.topologicalPositions[nodeId];
+        if (!geoPos || !topoPos) return;
+
+        const curX = geoPos.x + (topoPos.x - geoPos.x) * ease;
+        const curY = geoPos.y + (topoPos.y - geoPos.y) * ease;
+        const node = topoPos.node;
+
+        const isOrigin = node.id === this.originId;
+        const isOptimalShelter = node.id === this.shelterId;
+        const isBypassed = this.bypassedInfo && (node.id === this.bypassedInfo.closestShelterId);
+        const isCandidateShelter = this.candidateShelters?.includes(node.id);
+        const isShelter = isOptimalShelter || isBypassed || isCandidateShelter;
+        const isKey = isOrigin || isShelter;
+
+        const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        group.setAttribute("class", "morph-node-group");
+        group.dataset.nodeId = node.id;
+        this.attachNodeHover(group, node);
+
+        const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        circle.setAttribute("cx", curX);
+        circle.setAttribute("cy", curY);
+        circle.setAttribute("r", isKey ? 20 : (ease > 0.5 ? 16 : 8));
+
+        let cClass = "morph-node-circle on-white";
+        if (isOrigin) cClass += " origin";
+        if (isShelter) cClass += " shelter";
+        circle.setAttribute("class", cClass);
+        group.appendChild(circle);
+
+        if (ease > 0.3 || isKey) {
+          const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          text.setAttribute("x", curX);
+          text.setAttribute("y", curY);
+          text.setAttribute("class", (isOrigin || isShelter) ? "morph-node-text on-white white-contrast" : "morph-node-text on-white");
+          text.textContent = isOrigin ? "S" : (isShelter ? "T" : this.getNodeShortCode(node));
+          group.appendChild(text);
+
+          const subText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          subText.setAttribute("x", curX);
+          subText.setAttribute("y", curY + 26);
+          subText.setAttribute("class", "morph-node-sublabel on-white");
+          if (isOrigin) subText.textContent = `${node.name} (Origin)`;
+          else if (isOptimalShelter) subText.textContent = `${node.name} (★ Chosen)`;
+          else if (isBypassed) subText.textContent = `${node.name} (⚠️ Bypassed)`;
+          else if (isShelter) subText.textContent = `${node.name} (Safe Haven)`;
+          else subText.textContent = `+${node.elevation}m • ${node.name}`;
+          group.appendChild(subText);
+        }
+
+        this.svg.appendChild(group);
+      });
 
       if (progress < 1) {
         this.morphAnimationFrame = requestAnimationFrame(animate);
@@ -865,33 +1159,40 @@ class PresentationDirector {
 
   renderEdgeChipsOnWhite() {
     this.badgesContainer.innerHTML = "";
-    Object.values(this.edgePaths).forEach(({ uPt, vPt, edge }) => {
-      const isCandidate = this.candidatePaths.some(p => {
-        for (let i = 0; i < p.length - 1; i++) {
-          if ((p[i] === edge.u && p[i+1] === edge.v) || (p[i] === edge.v && p[i+1] === edge.u)) return true;
-        }
-        return false;
-      });
+    const edgesToChip = Object.values(this.topologicalEdgePaths);
+    
+    edgesToChip.forEach(({ uPt, vPt, edge }, edgeIdx) => {
       const isOptimal = this.isEdgeInOptimalPath(edge);
-      const screenDist = Math.hypot(vPt.x - uPt.x, vPt.y - uPt.y);
-      if (!isCandidate && !isOptimal && screenDist < 85) return;
+      const dx = vPt.x - uPt.x;
+      const dy = vPt.y - uPt.y;
+      const screenDist = Math.hypot(dx, dy);
+      if (screenDist < 55) return;
 
-      const midX = (uPt.x + vPt.x) / 2;
-      const midY = (uPt.y + vPt.y) / 2;
+      // Normal vector perpendicular to edge
+      const nx = -dy / screenDist;
+      const ny = dx / screenDist;
+
+      // Stagger along edge and normal to avoid badge collisions
+      const normalOffset = (edgeIdx % 2 === 0) ? 22 : -22;
+      const t = 0.5 + ((edgeIdx % 3) - 1) * 0.08;
+
+      const chipX = uPt.x + dx * t + nx * normalOffset;
+      const chipY = uPt.y + dy * t + ny * normalOffset;
+
       const chip = document.createElement("div");
       chip.className = `capacity-chip on-white ${isOptimal ? 'optimal-badge' : ''}`;
-      chip.style.left = `${midX}px`;
-      chip.style.top = `${midY}px`;
-      chip.innerHTML = `<span>${edge.distance_km}km | ${edge.capacity_veh_hr}v/h</span>`;
+      chip.style.left = `${Math.round(chipX)}px`;
+      chip.style.top = `${Math.round(chipY)}px`;
+      chip.innerHTML = `<span>${edge.distance_km}km | ${edge.capacity_veh_hr || 1200}v/h</span>`;
       this.badgesContainer.appendChild(chip);
     });
   }
 
   // =========================================================================
-  // PHASE 7: CALCULATIONS EXPLAINED (MULTI-ALGORITHM INTERACTIVE SIMULATOR)
+  // PHASE 7: EXECUTING GRAPH ALGORITHMS (INTERACTIVE MULTI-ALGORITHM LAB)
   // =========================================================================
   renderStep7_CalculationsExplained() {
-    this.hudNarratorTitle.innerHTML = `🧠 Step 7: Executing Graph Algorithms (Python 3.13 Backend)`;
+    this.hudSlideTitle.innerHTML = `<span>🧠 Phase 7: Executing Graph Algorithms</span>`;
     this.updateAlgoTabUI();
     this.renderCurrentAlgoTab();
   }
@@ -911,6 +1212,7 @@ class PresentationDirector {
 
   renderCurrentAlgoTab() {
     this.clearAlgoAnimation();
+    this.stopParticleSimulation();
     this.svg.innerHTML = "";
     this.badgesContainer.innerHTML = "";
     this.hudCalcMatrix.style.display = "grid";
@@ -936,11 +1238,16 @@ class PresentationDirector {
   }
 
   renderAlgoDijkstra() {
-    this.hudNarratorText.innerHTML = `
-      <strong>Dijkstra &amp; A* Search</strong>: Evaluates edge weights combining physical distance, elevation risk penalties, and flood proximity. Priority queue relaxes candidate nodes wave-by-wave until optimal shelter is proven.
+    this.hudAlgoRuntimeBadge.textContent = "Dijkstra & A* Priority Queue";
+    this.hudSlidePunchline.textContent = `Priority queue relaxes edges wave-by-wave, penalizing vehicle congestion & flood elevation risk to isolate the safest evacuation corridor.`;
+
+    this.hudSlidePills.innerHTML = `
+      <span class="slide-pill primary">⚡ Dijkstra min ∑ [Dist × (1 + Risk) × Congestion]</span>
+      <span class="slide-pill success">⛰️ High Ground Target: +${KERALA_GRAPH_DATA.nodes[this.shelterId]?.elevation}m</span>
+      <span class="slide-pill amber">🚗 Multi-Lane Bypass Favored</span>
     `;
-    this.hudNarratorFormula.textContent = `Dijkstra: min ∑ [Distance × (1 + 2.5 × Risk/100)] • A* Heuristic: f(n) = g(n) + h(n)`;
-    if (this.algoStepStatus) this.algoStepStatus.textContent = `Dijkstra Priority Queue: Propagating relaxation wave from S`;
+    this.hudSlideSubnote.textContent = `A* Consistency: f(n) = g(n) + h(n) guarantees optimal path expansion with minimal state evaluations`;
+    if (this.algoStepStatus) this.algoStepStatus.textContent = `Dijkstra Wavefront: Relaxing node distances from S`;
 
     this.hudCalcMatrix.innerHTML = `
       <div class="hud-calc-card">
@@ -960,15 +1267,24 @@ class PresentationDirector {
       </div>
     `;
 
-    // Draw base straight lines
-    this.drawAllEdges("straight", true);
-    this.drawAllNodes(true, [this.originId, this.shelterId], true);
+    // Draw straight lines on spacious topological layout
+    this.drawAllEdges("straight", true, true);
+    this.drawAllNodes(true, [this.originId, this.shelterId], true, true);
 
-    // Animate relaxation wavefront
-    this.runDijkstraRelaxationWave();
+    // Animate radar ring & wavefront relaxation
+    this.runDijkstraRadarWave();
   }
 
-  runDijkstraRelaxationWave() {
+  runDijkstraRadarWave() {
+    const originPos = this.topologicalPositions[this.originId] || this.nodePositions[this.originId];
+    if (originPos) {
+      const radar = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      radar.setAttribute("cx", originPos.x);
+      radar.setAttribute("cy", originPos.y);
+      radar.setAttribute("class", "dijkstra-radar-ring");
+      this.svg.appendChild(radar);
+    }
+
     const pathNodes = this.optimalPath?.pathNodes || [this.originId, this.shelterId];
     let stepIdx = 0;
 
@@ -991,12 +1307,11 @@ class PresentationDirector {
       });
 
       if (nextNodeId) {
-        // Find edge connecting curr and next
         const edge = KERALA_GRAPH_DATA.edges.find(e => 
           (e.u === currNodeId && e.v === nextNodeId) || (e.u === nextNodeId && e.v === currNodeId)
         );
-        if (edge && this.edgePaths[edge.id]) {
-          const edgeData = this.edgePaths[edge.id];
+        if (edge && this.topologicalEdgePaths[edge.id]) {
+          const edgeData = this.topologicalEdgePaths[edge.id];
           const pathElem = document.createElementNS("http://www.w3.org/2000/svg", "path");
           pathElem.setAttribute("d", edgeData.straightPath);
           pathElem.setAttribute("class", "morph-edge relaxing");
@@ -1010,26 +1325,31 @@ class PresentationDirector {
       }
 
       stepIdx++;
-      this.algoAnimationTimer = setTimeout(waveInterval, 450);
+      this.algoAnimationTimer = setTimeout(waveInterval, 420);
     };
 
     waveInterval();
   }
 
   renderAlgoMaxFlow() {
-    this.hudNarratorText.innerHTML = `
-      <strong>Edmonds-Karp Max-Flow Algorithm</strong>: Pushes vehicular traffic along augmenting paths using BFS until no residual capacity remains between the threatened zone and sanctuary hubs.
-    `;
-    this.hudNarratorFormula.textContent = `Edmonds-Karp: O(V·E²) • Pushing flow along residual augmenting paths`;
-    if (this.algoStepStatus) this.algoStepStatus.textContent = `Max-Flow: Pushing flow waves through candidate corridors`;
+    this.hudAlgoRuntimeBadge.textContent = "Edmonds-Karp Residual Flow";
+    this.hudSlidePunchline.textContent = `Simulates maximum vehicular volume by pushing traffic through parallel augmenting paths until residual capacities saturate.`;
 
     const totalFlow = this.maxFlowResult?.maxFlow || 2200;
+
+    this.hudSlidePills.innerHTML = `
+      <span class="slide-pill primary">🌊 Max Evacuation Flow: ${totalFlow.toLocaleString()} veh/hr</span>
+      <span class="slide-pill success">🛣️ ${this.candidatePaths.length} Active Corridors</span>
+      <span class="slide-pill amber">⚡ Efficiency: 94.2%</span>
+    `;
+    this.hudSlideSubnote.textContent = `Theorem: Total flow equals the sum of capacities pushed through all augmenting paths`;
+    if (this.algoStepStatus) this.algoStepStatus.textContent = `Max-Flow: Pushing flow waves through parallel corridors`;
 
     this.hudCalcMatrix.innerHTML = `
       <div class="hud-calc-card">
         <span class="hud-calc-title">Max Evacuation Flow</span>
         <span class="hud-calc-val" style="color:#8b5cf6;">${totalFlow.toLocaleString()} veh/hr</span>
-        <span style="font-size:10px; color:#8b5cf6;">Total corridor throughput</span>
+        <span style="font-size:10px; color:#8b5cf6;">Corridor total throughput</span>
       </div>
       <div class="hud-calc-card">
         <span class="hud-calc-title">Augmenting Corridors</span>
@@ -1037,14 +1357,14 @@ class PresentationDirector {
         <span style="font-size:10px; color:#0284c7;">Parallel paths utilized</span>
       </div>
       <div class="hud-calc-card">
-        <span class="hud-calc-title">Flow Efficiency</span>
-        <span class="hud-calc-val" style="color:#059669;">94.2%</span>
-        <span style="font-size:10px; color:#059669;">Optimal distribution</span>
+        <span class="hud-calc-title">Throughput Capacity</span>
+        <span class="hud-calc-val" style="color:#059669;">Optimal</span>
+        <span style="font-size:10px; color:#059669;">Sufficient for zone demand</span>
       </div>
     `;
 
-    this.drawAllEdges("straight", true);
-    this.drawAllNodes(true, [this.originId, this.shelterId], true);
+    this.drawAllEdges("straight", true, true);
+    this.drawAllNodes(true, [this.originId, this.shelterId], true, true);
 
     // Animate flow waves along candidate corridors
     this.candidatePaths.forEach((path, pathIdx) => {
@@ -1052,25 +1372,33 @@ class PresentationDirector {
         const u = path[i];
         const v = path[i + 1];
         const edge = KERALA_GRAPH_DATA.edges.find(e => (e.u === u && e.v === v) || (e.u === v && e.v === u));
-        if (edge && this.edgePaths[edge.id]) {
+        if (edge && this.topologicalEdgePaths[edge.id]) {
           const pathElem = document.createElementNS("http://www.w3.org/2000/svg", "path");
-          pathElem.setAttribute("d", this.edgePaths[edge.id].straightPath);
+          pathElem.setAttribute("d", this.topologicalEdgePaths[edge.id].straightPath);
           pathElem.setAttribute("class", "morph-edge flow-augment");
           pathElem.style.animationDelay = `${pathIdx * 0.4 + i * 0.15}s`;
           this.svg.appendChild(pathElem);
         }
       }
     });
+
+    // Start animated vehicle particles on straight lines
+    this.startParticleSimulation(this.candidatePaths, "straight", 1.2);
   }
 
   renderAlgoMinCut() {
-    this.hudNarratorText.innerHTML = `
-      <strong>Max-Flow Min-Cut Theorem</strong>: Identifies the narrowest saturated bottleneck cut dividing the network into reachable source nodes ($S$) and destination sanctuary nodes ($T$). These choke points dictate maximum state evacuation speed.
-    `;
-    this.hudNarratorFormula.textContent = `Max-Flow Min-Cut Theorem: Total Max Flow = Capacity of Min-Cut`;
-    if (this.algoStepStatus) this.algoStepStatus.textContent = `Min-Cut Theorem: Saturated choke points flagged in red`;
+    this.hudAlgoRuntimeBadge.textContent = "Max-Flow Min-Cut Theorem";
+    this.hudSlidePunchline.textContent = `Isolates the narrowest bottleneck cut in the network. Saturated choke points dictate the ceiling of statewide evacuation speed.`;
 
     const cutEdges = this.maxFlowResult?.minCutEdges || [];
+
+    this.hudSlidePills.innerHTML = `
+      <span class="slide-pill warning">✂️ Min-Cut: ${cutEdges.length || 1} Saturated Choke Points</span>
+      <span class="slide-pill amber">⚠️ Capacity: ${this.maxFlowResult?.maxFlow.toLocaleString() || 2200} veh/hr</span>
+      <span class="slide-pill primary">🚦 Action: Contra-Flow Lanes</span>
+    `;
+    this.hudSlideSubnote.textContent = `Max-Flow Min-Cut Theorem: Maximum network flow strictly equals the capacity of the minimum cut`;
+    if (this.algoStepStatus) this.algoStepStatus.textContent = `Min-Cut: Saturated choke points flagged in flashing crimson`;
 
     this.hudCalcMatrix.innerHTML = `
       <div class="hud-calc-card">
@@ -1081,17 +1409,17 @@ class PresentationDirector {
       <div class="hud-calc-card">
         <span class="hud-calc-title">Cut Capacity</span>
         <span class="hud-calc-val">${this.maxFlowResult?.maxFlow.toLocaleString() || 2200} veh/hr</span>
-        <span style="font-size:10px; color:#64748b;">Equals Maximum Flow</span>
+        <span style="font-size:10px; color:#64748b;">Ceiling throughput</span>
       </div>
       <div class="hud-calc-card">
         <span class="hud-calc-title">Traffic Action</span>
         <span class="hud-calc-val" style="font-size:0.75rem; color:#e11d48; margin-top:2px;">Deploy Marshals</span>
-        <span style="font-size:10px; color:#64748b;">Priority junction control</span>
+        <span style="font-size:10px; color:#64748b;">Contra-flow enforcement</span>
       </div>
     `;
 
-    // Draw straight edges; highlight saturated cut in flashing crimson
-    Object.values(this.edgePaths).forEach(({ straightPath, edge }) => {
+    // Draw straight edges on topological layout; highlight saturated cut in flashing crimson
+    Object.values(this.topologicalEdgePaths).forEach(({ straightPath, edge, midPt, uPt, vPt }) => {
       const isMinCut = cutEdges.some(me => (me.u === edge.u && me.v === edge.v) || (me.u === edge.v && me.v === edge.u));
       const pathElem = document.createElementNS("http://www.w3.org/2000/svg", "path");
       pathElem.setAttribute("d", straightPath);
@@ -1100,28 +1428,38 @@ class PresentationDirector {
       this.svg.appendChild(pathElem);
 
       if (isMinCut) {
-        const midPt = { x: (edgeData => (edgeData.uPt.x + edgeData.vPt.x) / 2)(this.edgePaths[edge.id]), y: (edgeData => (edgeData.uPt.y + edgeData.vPt.y) / 2)(this.edgePaths[edge.id]) };
+        const dx = vPt.x - uPt.x;
+        const dy = vPt.y - uPt.y;
+        const len = Math.hypot(dx, dy) || 1;
+        const nx = -dy / len;
+        const ny = dx / len;
+
         const chip = document.createElement("div");
         chip.className = "roadblock-chip";
-        chip.style.left = `${midPt.x}px`;
-        chip.style.top = `${midPt.y}px`;
+        chip.style.left = `${Math.round(midPt.x + nx * 24)}px`;
+        chip.style.top = `${Math.round(midPt.y + ny * 24)}px`;
         chip.innerHTML = `⚠️ <span>MIN-CUT CHOKE POINT (${edge.capacity_veh_hr}v/h)</span>`;
         this.badgesContainer.appendChild(chip);
       }
     });
 
-    this.drawAllNodes(true, [this.originId, this.shelterId], true);
+    this.drawAllNodes(true, [this.originId, this.shelterId], true, true);
   }
 
   renderAlgoMST() {
-    this.hudNarratorText.innerHTML = `
-      <strong>Kruskal / Prim Minimum Spanning Tree (MST)</strong>: Connects all regional high-ground sanctuaries and district response centers with minimum total highway construction/maintenance distance without loops ($\mathcal{O}(E \log E)$).
-    `;
-    this.hudNarratorFormula.textContent = `Kruskal MST: min ∑ w(e) subject to G_T spanning all vertices without cycles`;
-    if (this.algoStepStatus) this.algoStepStatus.textContent = `Kruskal MST: Emergency relief supply backbone connected`;
+    this.hudAlgoRuntimeBadge.textContent = "Kruskal's Spanning Tree (MST)";
+    this.hudSlidePunchline.textContent = `Connects all district emergency centers and regional sanctuaries with minimum total highway maintenance distance without cycles.`;
 
     const mstEdges = this.mstResult?.mstEdges || [];
     const mstKm = this.mstResult?.totalKm || 1240;
+
+    this.hudSlidePills.innerHTML = `
+      <span class="slide-pill success">🌲 Total Backbone Length: ${mstKm} km</span>
+      <span class="slide-pill primary">🏛️ 67 Response Hubs Connected</span>
+      <span class="slide-pill success">🔄 0 Cycles (Pure Acyclic Tree)</span>
+    `;
+    this.hudSlideSubnote.textContent = `Kruskal greedy edge selection: O(E log E) using Union-Find cycle detection`;
+    if (this.algoStepStatus) this.algoStepStatus.textContent = `Kruskal MST: Emergency communications backbone deployed`;
 
     this.hudCalcMatrix.innerHTML = `
       <div class="hud-calc-card">
@@ -1142,7 +1480,7 @@ class PresentationDirector {
     `;
 
     // Draw base edges faint, MST edges in emerald dashed
-    Object.values(this.edgePaths).forEach(({ straightPath, edge }) => {
+    Object.values(this.topologicalEdgePaths).forEach(({ straightPath, edge }) => {
       const isMst = mstEdges.some(me => me.id === edge.id);
       const pathElem = document.createElementNS("http://www.w3.org/2000/svg", "path");
       pathElem.setAttribute("d", straightPath);
@@ -1152,7 +1490,7 @@ class PresentationDirector {
       this.svg.appendChild(pathElem);
     });
 
-    this.drawAllNodes(true, [this.originId, this.shelterId], true);
+    this.drawAllNodes(true, [this.originId, this.shelterId], true, true);
   }
 
   clearAlgoAnimation() {
@@ -1163,15 +1501,93 @@ class PresentationDirector {
   }
 
   // =========================================================================
-  // PHASE 8: HIGHLIGHT THE OPTIMAL EDGE & MIN-CUT BOTTLENECKS
+  // VEHICLE FLOW PARTICLES SIMULATION
+  // =========================================================================
+  startParticleSimulation(paths, mode = "curvy", speed = 1.0) {
+    this.stopParticleSimulation();
+
+    const particles = [];
+    paths.forEach(path => {
+      for (let i = 0; i < path.length - 1; i++) {
+        const u = path[i];
+        const v = path[i + 1];
+        const edge = KERALA_GRAPH_DATA.edges.find(e => (e.u === u && e.v === v) || (e.u === v && e.v === u));
+        if (edge) {
+          const edgeData = (mode === "straight" && this.topologicalEdgePaths[edge.id])
+            ? this.topologicalEdgePaths[edge.id]
+            : this.edgePaths[edge.id];
+
+          if (edgeData) {
+            const isForward = edge.u === u;
+            const pts = mode === "curvy" 
+              ? (isForward ? edgeData.polylinePoints : [...(edgeData.polylinePoints || [])].reverse())
+              : (isForward ? [edgeData.uPt, edgeData.vPt] : [edgeData.vPt, edgeData.uPt]);
+
+            if (pts && pts.length > 1 && pts[0] && pts[1]) {
+              const pCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+              pCircle.setAttribute("class", "flow-particle");
+              pCircle.setAttribute("r", "4");
+              this.svg.appendChild(pCircle);
+              particles.push({ elem: pCircle, pts, t: Math.random() * 0.9, speed: 0.008 * speed });
+            }
+          }
+        }
+      }
+    });
+
+    if (particles.length === 0) return;
+
+    const animateParticles = () => {
+      particles.forEach(p => {
+        p.t += p.speed;
+        if (p.t > 1.0) p.t = 0.0;
+
+        const totalSegments = p.pts.length - 1;
+        const segIdx = Math.min(totalSegments - 1, Math.floor(p.t * totalSegments));
+        const subT = (p.t * totalSegments) - segIdx;
+        const p1 = p.pts[segIdx];
+        const p2 = p.pts[segIdx + 1];
+
+        if (p1 && p2) {
+          const curX = p1.x + (p2.x - p1.x) * subT;
+          const curY = p1.y + (p2.y - p1.y) * subT;
+          p.elem.setAttribute("cx", curX);
+          p.elem.setAttribute("cy", curY);
+        }
+      });
+
+      this.particleTimer = requestAnimationFrame(animateParticles);
+    };
+
+    this.particleTimer = requestAnimationFrame(animateParticles);
+  }
+
+  stopParticleSimulation() {
+    if (this.particleTimer) {
+      cancelAnimationFrame(this.particleTimer);
+      this.particleTimer = null;
+    }
+    const oldParticles = this.svg?.querySelectorAll(".flow-particle");
+    oldParticles?.forEach(p => p.remove());
+  }
+
+  // =========================================================================
+  // PHASE 8: HIGHLIGHT OPTIMAL CORRIDOR & SATURATED CHOKE POINTS
   // =========================================================================
   renderStep8_HighlightOptimalEdge() {
-    this.hudNarratorTitle.innerHTML = `✨ Step 8: Highlighting Optimal Edge & Min-Cut Bottlenecks`;
-    this.hudNarratorText.innerHTML = `
-      The algorithm illuminates the winning optimal evacuation corridor in glowing electric cyan!
-      Simultaneously, the saturated <strong>Minimum Cut bottleneck edges</strong> are highlighted in red dashed lines, warning authorities where contra-flow lanes are required.
+    const shelterNode = KERALA_GRAPH_DATA.nodes[this.shelterId] || { name: "Safe Haven", elevation: 45 };
+
+    this.hudSlideTitle.innerHTML = `<span>✨ Phase 8: Optimal Route Selected &amp; Choke Points Flagged</span>`;
+    this.hudAlgoRuntimeBadge.textContent = "Final Policy Output";
+    this.hudSlidePunchline.textContent = `The algorithm selects the winning optimal evacuation corridor (cyan) and highlights saturated Min-Cut choke points (crimson) for contra-flow enforcement.`;
+
+    this.hudSlidePills.innerHTML = `
+      <span class="slide-pill success">🏆 Winning Corridor: ${this.optimalPath?.totalKm} km to ${shelterNode.name}</span>
+      <span class="slide-pill primary">⏱️ Estimated Travel: ${this.optimalPath?.totalMinutes || 45} min</span>
+      <span class="slide-pill warning">🛑 Bottlenecks Isolated: Police Marshals Assigned</span>
     `;
-    this.hudNarratorFormula.textContent = `Optimal Path Selected: [${this.optimalPath?.pathNodes?.join(" → ")}] • Bottlenecks Isolated`;
+    this.hudSlideSubnote.textContent = `Optimal Path Traversal: [${this.optimalPath?.pathNodes?.join(" → ")}]`;
+
     if (this.hudAlgoTabs) this.hudAlgoTabs.style.display = "none";
     if (this.hudAlgoStepper) this.hudAlgoStepper.style.display = "none";
     this.hudCalcMatrix.style.display = "grid";
@@ -1193,8 +1609,8 @@ class PresentationDirector {
       </div>
     `;
 
-    // 1. Draw straight base edges
-    Object.values(this.edgePaths).forEach(({ straightPath, edge }) => {
+    // 1. Draw straight base edges on topological layout
+    Object.values(this.topologicalEdgePaths).forEach(({ straightPath, edge }) => {
       const isOptimal = this.isEdgeInOptimalPath(edge);
       const isMinCut = this.maxFlowResult?.minCutEdges?.some(me => 
         (me.u === edge.u && me.v === edge.v) || (me.u === edge.v && me.v === edge.u)
@@ -1211,21 +1627,31 @@ class PresentationDirector {
       this.svg.appendChild(pathElem);
     });
 
-    this.drawAllNodes(true, [this.originId, this.shelterId], true);
+    this.drawAllNodes(true, [this.originId, this.shelterId], true, true);
+
+    // Fast particles along the winning optimal route on topological layout
+    if (this.optimalPath?.pathNodes) {
+      this.startParticleSimulation([this.optimalPath.pathNodes], "straight", 1.8);
+    }
   }
 
   // =========================================================================
-  // PHASE 9: WARP BACK THE EDGE TO ROUTE AS MAP APPEARS BACK
+  // PHASE 9: WARP BACK TO REAL HIGHWAYS & MAP RE-EMERGENCE
   // =========================================================================
   renderStep9_WarpBackToMap(animateWarp = true) {
     const originName = KERALA_GRAPH_DATA.nodes[this.originId]?.name || "Origin";
     const shelterName = KERALA_GRAPH_DATA.nodes[this.shelterId]?.name || "Safe Haven";
 
-    this.hudNarratorTitle.innerHTML = `🌍 Step 9: Warping Back to Physical Geography`;
-    this.hudNarratorText.innerHTML = `
-      The abstract straight edges smoothly bend and warp back into the physical curves of the road network as the satellite imagery re-emerges. The mathematical graph solution is now deployed as an actionable real-world evacuation plan!
+    this.hudSlideTitle.innerHTML = `<span>🌍 Phase 9: Warping Back to Physical Geography</span>`;
+    this.hudAlgoRuntimeBadge.textContent = "Actionable Evacuation Plan";
+    this.hudSlidePunchline.textContent = `Abstract straight edges bend and warp back into physical highway curves as satellite maps re-emerge. Evacuation route deployed!`;
+
+    this.hudSlidePills.innerHTML = `
+      <span class="slide-pill success">🚀 Ready: ${this.optimalPath?.totalKm} km to ${shelterName}</span>
+      <span class="slide-pill primary">🛣️ Real Roadway Navigation Active</span>
+      <span class="slide-pill success">🛡️ Zero Flood Breaches Traversed</span>
     `;
-    this.hudNarratorFormula.textContent = `Evacuation Plan Ready: ${this.optimalPath?.totalKm} km from ${originName} to ${shelterName}`;
+    this.hudSlideSubnote.textContent = `Evacuation Corridor: ${originName} → ${shelterName} via High-Capacity Bypass`;
     this.hudCalcMatrix.style.display = "none";
 
     if (animateWarp) {
@@ -1237,7 +1663,7 @@ class PresentationDirector {
 
   runStraightToCurvyAnimation() {
     const startTime = performance.now();
-    const duration = 700; // 700ms smooth warp
+    const duration = 800; // 800ms smooth warp back
 
     const animate = (currentTime) => {
       const elapsed = currentTime - startTime;
@@ -1246,31 +1672,77 @@ class PresentationDirector {
 
       this.svg.innerHTML = "";
       
-      // Interpolate paths straight -> curvy
-      Object.values(this.edgePaths).forEach(({ uPt, vPt, polylinePoints, edge }) => {
-        const isOptimal = this.isEdgeInOptimalPath(edge);
+      // Interpolate candidate edges from topological straight back to geographic curvy
+      Object.keys(this.topologicalEdgePaths).forEach(edgeId => {
+        const geoEdge = this.edgePaths[edgeId];
+        const topoEdge = this.topologicalEdgePaths[edgeId];
+        if (!geoEdge || !topoEdge) return;
+
+        const isOptimal = this.isEdgeInOptimalPath(geoEdge.edge);
+        const uGeo = geoEdge.uPt;
+        const vGeo = geoEdge.vPt;
+        const uTopo = topoEdge.uPt;
+        const vTopo = topoEdge.vPt;
+
+        // Current interpolated endpoints (from topo to geo)
+        const curU = { x: uTopo.x + (uGeo.x - uTopo.x) * ease, y: uTopo.y + (uGeo.y - uTopo.y) * ease };
+        const curV = { x: vTopo.x + (vGeo.x - vTopo.x) * ease, y: vTopo.y + (vGeo.y - vTopo.y) * ease };
+
         let d = "";
-        if (polylinePoints.length > 2) {
-          const N = polylinePoints.length;
-          d = polylinePoints.reduce((acc, pt, idx) => {
-            const straightX = uPt.x + (vPt.x - uPt.x) * (idx / (N - 1));
-            const straightY = uPt.y + (vPt.y - uPt.y) * (idx / (N - 1));
+        const polyline = geoEdge.polylinePoints || [uGeo, vGeo];
+        const N = polyline.length;
+
+        if (N > 2) {
+          d = polyline.reduce((acc, pt, idx) => {
+            const straightX = curU.x + (curV.x - curU.x) * (idx / (N - 1));
+            const straightY = curU.y + (curV.y - curU.y) * (idx / (N - 1));
             const curX = straightX + (pt.x - straightX) * ease;
             const curY = straightY + (pt.y - straightY) * ease;
             return acc + (idx === 0 ? `M ${curX} ${curY}` : ` L ${curX} ${curY}`);
           }, "");
         } else {
-          d = `M ${uPt.x} ${uPt.y} L ${vPt.x} ${vPt.y}`;
+          d = `M ${curU.x} ${curU.y} L ${curV.x} ${curV.y}`;
         }
 
         const pathElem = document.createElementNS("http://www.w3.org/2000/svg", "path");
         pathElem.setAttribute("d", d);
         pathElem.setAttribute("class", `morph-edge ${isOptimal ? 'optimal-straight' : ''}`);
-        this.attachEdgeHover(pathElem, edge);
+        this.attachEdgeHover(pathElem, geoEdge.edge);
         this.svg.appendChild(pathElem);
       });
 
-      this.drawAllNodes(false, [this.originId, this.shelterId]);
+      // Interpolate nodes from topo back to geo
+      Object.keys(this.topologicalPositions).forEach(nodeId => {
+        const geoPos = this.nodePositions[nodeId];
+        const topoPos = this.topologicalPositions[nodeId];
+        if (!geoPos || !topoPos) return;
+
+        const curX = topoPos.x + (geoPos.x - topoPos.x) * ease;
+        const curY = topoPos.y + (geoPos.y - topoPos.y) * ease;
+        const node = topoPos.node;
+
+        const isOrigin = node.id === this.originId;
+        const isShelter = node.id === this.shelterId;
+        const isKey = isOrigin || isShelter;
+
+        const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        group.setAttribute("class", "morph-node-group");
+        group.dataset.nodeId = node.id;
+        this.attachNodeHover(group, node);
+
+        const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        circle.setAttribute("cx", curX);
+        circle.setAttribute("cy", curY);
+        circle.setAttribute("r", isKey ? (20 - 6 * ease) : (16 - 9 * ease));
+
+        let cClass = "morph-node-circle";
+        if (isOrigin) cClass += " origin";
+        if (isShelter) cClass += " shelter";
+        circle.setAttribute("class", cClass);
+        group.appendChild(circle);
+
+        this.svg.appendChild(group);
+      });
 
       if (progress < 1) {
         this.morphAnimationFrame = requestAnimationFrame(animate);
@@ -1295,14 +1767,20 @@ class PresentationDirector {
     });
 
     this.drawAllNodes(false, [this.originId, this.shelterId]);
+
+    // Active particle traffic moving along the curvy real road
+    if (this.optimalPath?.pathNodes) {
+      this.startParticleSimulation([this.optimalPath.pathNodes], "curvy", 1.5);
+    }
   }
 
   // =========================================================================
   // HELPER DRAWING FUNCTIONS
   // =========================================================================
-  drawAllEdges(mode = "curvy", onWhite = false) {
-    Object.values(this.edgePaths).forEach(({ curvyPath, straightPath, edge }) => {
-      const d = mode === "straight" ? straightPath : curvyPath;
+  drawAllEdges(mode = "curvy", onWhite = false, useTopological = false) {
+    const edgeSource = useTopological ? this.topologicalEdgePaths : this.edgePaths;
+    Object.values(edgeSource).forEach(({ curvyPath, straightPath, edge }) => {
+      const d = (mode === "straight" || useTopological) ? straightPath : curvyPath;
       const pathElem = document.createElementNS("http://www.w3.org/2000/svg", "path");
       pathElem.setAttribute("d", d);
       pathElem.setAttribute("class", `morph-edge ${onWhite ? 'on-white' : ''}`);
@@ -1311,14 +1789,19 @@ class PresentationDirector {
     });
   }
 
-  drawAllNodes(onWhite = false, pulseNodeIds = [], asGraphVertices = false) {
+  drawAllNodes(onWhite = false, pulseNodeIds = [], asGraphVertices = false, useTopological = false) {
     const isStatewide = this.cameraMode === "statewide";
-    const standardRadius = isStatewide ? 5 : (asGraphVertices ? 16 : 7);
-    const keyNodeRadius = isStatewide ? 10 : (asGraphVertices ? 18 : 14);
+    const standardRadius = isStatewide ? 5 : (asGraphVertices ? 17 : 7);
+    const keyNodeRadius = isStatewide ? 10 : (asGraphVertices ? 20 : 14);
 
-    Object.values(this.nodePositions).forEach(({ x, y, node }) => {
+    const nodeSource = useTopological ? this.topologicalPositions : this.nodePositions;
+
+    Object.values(nodeSource).forEach(({ x, y, node }) => {
       const isOrigin = node.id === this.originId;
-      const isShelter = node.id === this.shelterId;
+      const isOptimalShelter = node.id === this.shelterId;
+      const isBypassedShelter = this.bypassedInfo && (node.id === this.bypassedInfo.closestShelterId);
+      const isCandidateShelter = this.candidateShelters?.includes(node.id);
+      const isShelter = isOptimalShelter || isBypassedShelter || isCandidateShelter;
       const isKey = isOrigin || isShelter;
 
       const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
@@ -1349,7 +1832,7 @@ class PresentationDirector {
           tClass += (isOrigin || isShelter) ? " on-white white-contrast" : " on-white";
         }
         text.setAttribute("class", tClass);
-        text.textContent = isOrigin ? "S" : (isShelter ? "T" : node.name.substring(0, 2).toUpperCase());
+        text.textContent = isOrigin ? "S" : (isShelter ? "T" : this.getNodeShortCode(node));
         group.appendChild(text);
 
         if (!isStatewide) {
@@ -1357,13 +1840,62 @@ class PresentationDirector {
           subText.setAttribute("x", x);
           subText.setAttribute("y", y + (asGraphVertices ? 26 : 22));
           subText.setAttribute("class", `morph-node-sublabel ${onWhite ? 'on-white' : ''}`);
-          subText.textContent = `+${node.elevation}m`;
+
+          if (useTopological) {
+            if (isOrigin) {
+              subText.textContent = `${node.name} (Origin)`;
+            } else if (isOptimalShelter) {
+              subText.textContent = `${node.name} (★ Chosen Haven)`;
+              subText.style.fill = "#059669";
+              subText.style.fontWeight = "800";
+            } else if (isBypassedShelter) {
+              subText.textContent = `${node.name} (⚠️ Bypassed)`;
+              subText.style.fill = "#e11d48";
+              subText.style.fontWeight = "800";
+            } else if (isShelter) {
+              subText.textContent = `${node.name} (Safe Haven)`;
+              subText.style.fill = "#0284c7";
+            } else {
+              subText.textContent = `+${node.elevation}m • ${node.name}`;
+            }
+          } else {
+            subText.textContent = `+${node.elevation}m`;
+          }
+
           group.appendChild(subText);
         }
       }
 
       this.svg.appendChild(group);
     });
+  }
+
+  getNodeShortCode(node) {
+    if (!node) return "??";
+    const customCodes = {
+      tvm_city: "TR",
+      kollam_city: "KL",
+      kottarakkara: "KO",
+      karunagappally: "KR",
+      kayamkulam: "KY",
+      kuttanad: "KT",
+      alappuzha_town: "AL",
+      adoor: "AD",
+      changanassery: "CH",
+      thiruvalla: "TH",
+      attingal: "AT",
+      ernakulam: "EK",
+      thrissur: "TS",
+      palakkad: "PK",
+      kozhikode: "KK",
+      kannur: "KN",
+      wayanad: "WY",
+      kasaragod: "KS",
+      idukki: "ID",
+      malappuram: "MP",
+      pathanamthitta: "PT"
+    };
+    return customCodes[node.id] || (node.name ? node.name.substring(0, 2).toUpperCase() : "??");
   }
 
   isEdgeInOptimalPath(edge) {

@@ -49,6 +49,10 @@ def evaluate_edge(
         elif elev < 4.0:
             disaster_affinity = 1.6
 
+    # Vehicle Congestion Factor (lower capacity = higher evacuation bottleneck)
+    capacity_veh_hr = edge.get("capacity_veh_hr", 1200)
+    congestion_factor = 1.0 + max(0.0, (2200.0 - capacity_veh_hr) / 1400.0) * 0.65
+
     # Elevation Vulnerability Penalty: Lower ground = higher flood risk
     elevation_penalty = max(0.0, (12.0 - elev) / 12.0)
 
@@ -64,16 +68,18 @@ def evaluate_edge(
 
     risk_score = min(99.0, max(5.0, round(raw_risk, 1)))
 
-    # Combined Cost = Physical Distance * (1 + Risk Penalty)
+    # Combined Cost = Physical Distance * (1 + Risk Penalty) * Congestion Factor
     risk_penalty_factor = (risk_score / 100.0) * 2.5
     dist_km = edge.get("distance_km", 1.0)
-    combined_weight = dist_km * (1.0 + risk_penalty_factor)
+    combined_weight = dist_km * (1.0 + risk_penalty_factor) * congestion_factor
 
     return {
         "weight": combined_weight,
         "riskScore": risk_score,
+        "congestionFactor": round(congestion_factor, 2),
         "isClosed": False,
-        "distance": dist_km
+        "distance": dist_km,
+        "capacity": capacity_veh_hr
     }
 
 def run_dijkstra(
@@ -228,16 +234,64 @@ def run_dijkstra(
             "steps": steps
         }
 
-    # Otherwise collect all reachable shelters
+    # Otherwise collect all reachable shelters and evaluate multi-criteria suitability
     shelter_routes = []
     for nid, node in graph_nodes.items():
         if node.get("type") == "shelter":
             route = reconstruct_path(nid)
             if route:
+                shelter_node = graph_nodes[nid]
+                elev = shelter_node.get("elevation", 10.0)
+                capacity = shelter_node.get("capacity", 2000)
+                
+                # Multi-Criteria Parameters:
+                # 1. Base travel & congestion cost
+                base_cost = route["totalCost"]
+                
+                # 2. Elevation safety bonus: Higher ground = far safer from sea surge & dam overflow
+                # High ground (>25m) gets up to 35% safety bonus; low ground (<3.5m) gets 1.95x danger penalty
+                if elev >= 25.0:
+                    elevation_multiplier = max(0.65, 1.0 - (elev - 10.0) / 120.0)
+                elif elev < 3.5:
+                    elevation_multiplier = 1.95  # Dangerous low-lying flood trap
+                else:
+                    elevation_multiplier = 1.0
+                
+                # 3. Choke points & minimum bottleneck capacity along route
+                route_edges = route.get("pathEdges", [])
+                min_cap = min([e.get("capacity_veh_hr", 1200) for e in route_edges]) if route_edges else 1200
+                choke_penalty = 1.0 + max(0.0, (1400.0 - min_cap) / 1000.0) * 0.4
+                
+                # 4. Large regional shelter capacity reliability bonus
+                cap_bonus = 0.9 if capacity >= 3000 else 1.0
+                
+                # Holistic Suitability Score (lower is better)
+                suitability_score = base_cost * elevation_multiplier * choke_penalty * cap_bonus
+                
+                route["suitabilityScore"] = round(suitability_score, 1)
+                route["shelterElevation"] = elev
+                route["shelterCapacity"] = capacity
+                route["minRouteCapacity"] = min_cap
                 shelter_routes.append(route)
 
-    shelter_routes.sort(key=lambda r: r["totalCost"])
+    # Sort strictly by holistic suitability score (NOT just closest distance!)
+    shelter_routes.sort(key=lambda r: r["suitabilityScore"])
     optimal_route = shelter_routes[0] if shelter_routes else None
+    
+    # Identify if a closer shelter was bypassed because it was less safe
+    bypassed_info = None
+    if shelter_routes:
+        closest_by_distance = sorted(shelter_routes, key=lambda r: r["totalKm"])[0]
+        if optimal_route and closest_by_distance and optimal_route["destinationId"] != closest_by_distance["destinationId"]:
+            bypassed_info = {
+                "closestShelterId": closest_by_distance["destinationId"],
+                "closestShelterName": graph_nodes[closest_by_distance["destinationId"]]["name"],
+                "closestKm": closest_by_distance["totalKm"],
+                "closestElevation": closest_by_distance["shelterElevation"],
+                "selectedKm": optimal_route["totalKm"],
+                "selectedElevation": optimal_route["shelterElevation"],
+                "reason": f"Bypassed {graph_nodes[closest_by_distance['destinationId']]['name']} ({closest_by_distance['totalKm']} km, +{closest_by_distance['shelterElevation']}m) due to flood hazard proximity and road choke points. Selected {graph_nodes[optimal_route['destinationId']]['name']} (+{optimal_route['shelterElevation']}m, high ground) for superior evacuation capacity."
+            }
 
     return {
         "status": "success",
@@ -246,6 +300,7 @@ def run_dijkstra(
         "targetId": optimal_route["destinationId"] if optimal_route else None,
         "route": optimal_route,
         "optimalShelterRoute": optimal_route,
+        "bypassedInfo": bypassed_info,
         "allShelterRoutes": shelter_routes,
         "allDistances": {k: round(v, 2) if math.isfinite(v) else None for k, v in distances.items()},
         "steps": steps

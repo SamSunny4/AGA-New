@@ -47,6 +47,10 @@ class DijkstraRouter {
     }
 
     // Elevation Vulnerability Penalty: Lower ground = much higher flood risk
+    // Vehicle Congestion Factor (lower capacity = higher evacuation bottleneck)
+    const capacityVehHr = edge.capacity_veh_hr || 1200;
+    const congestionFactor = 1.0 + Math.max(0, (2200 - capacityVehHr) / 1400) * 0.65;
+
     const elevationPenalty = Math.max(0, (12.0 - edge.elevation) / 12.0); // 0 (high ground) to 1 (sea level)
 
     // Base flood susceptibility from road characteristics (0 to 1)
@@ -57,16 +61,17 @@ class DijkstraRouter {
     const rawRisk = (baseSusceptibility * 45 + elevationPenalty * 35 + (disasterAffinity > 1.0 ? 20 : 0)) * (severityMultiplier / 1.5);
     const riskScore = Math.min(99.0, Math.max(5.0, Math.round(rawRisk * 10) / 10));
 
-    // Combined Cost = Physical Distance * (1 + Risk Penalty)
-    // Risk penalty scales from 0 to 3.5x distance
+    // Combined Cost = Physical Distance * (1 + Risk Penalty) * Congestion Factor
     const riskPenaltyFactor = (riskScore / 100.0) * 2.5;
-    const combinedWeight = edge.distance_km * (1.0 + riskPenaltyFactor);
+    const combinedWeight = edge.distance_km * (1.0 + riskPenaltyFactor) * congestionFactor;
 
     return {
       weight: combinedWeight,
       riskScore: riskScore,
+      congestionFactor: Math.round(congestionFactor * 100) / 100,
       isClosed: false,
-      distance: edge.distance_km
+      distance: edge.distance_km,
+      capacity: capacityVehHr
     };
   }
 
@@ -271,23 +276,69 @@ class DijkstraRouter {
       };
     }
 
-    // Otherwise find routes to all shelters and pick the best one
+    // Otherwise find routes to all shelters and evaluate multi-criteria suitability
     const shelterRoutes = [];
     Object.values(graphNodes)
       .filter(n => n.type === 'shelter')
       .forEach(shelter => {
         const route = reconstructPath(shelter.id);
         if (route) {
+          const elev = shelter.elevation || 10;
+          const capacity = shelter.capacity || 2000;
+          const baseCost = route.totalCost;
+
+          // 1. Elevation safety bonus: Higher ground (>25m) gets up to 35% discount; low ground (<3.5m) gets 1.95x danger penalty
+          let elevationMultiplier = 1.0;
+          if (elev >= 25.0) {
+            elevationMultiplier = Math.max(0.65, 1.0 - (elev - 10.0) / 120.0);
+          } else if (elev < 3.5) {
+            elevationMultiplier = 1.95; // Dangerous flood basin
+          }
+
+          // 2. Choke points & road capacity bottlenecks
+          const routeEdges = route.pathEdges || [];
+          const minCap = routeEdges.length > 0 ? Math.min(...routeEdges.map(e => e.capacity_veh_hr || 1200)) : 1200;
+          const chokePenalty = 1.0 + Math.max(0, (1400 - minCap) / 1000) * 0.4;
+
+          // 3. High-capacity refuge reliability bonus
+          const capBonus = capacity >= 3000 ? 0.9 : 1.0;
+
+          // Holistic Suitability Score (lower is better)
+          const suitabilityScore = baseCost * elevationMultiplier * chokePenalty * capBonus;
+
+          route.suitabilityScore = Math.round(suitabilityScore * 10) / 10;
+          route.shelterElevation = elev;
+          route.shelterCapacity = capacity;
+          route.minRouteCapacity = minCap;
           shelterRoutes.push(route);
         }
       });
 
-    // Sort shelters by combined cost (safest & fastest)
-    shelterRoutes.sort((a, b) => a.totalCost - b.totalCost);
+    // Sort strictly by holistic suitability score (NOT just closest distance!)
+    shelterRoutes.sort((a, b) => a.suitabilityScore - b.suitabilityScore);
+    const optimalRoute = shelterRoutes.length > 0 ? shelterRoutes[0] : null;
+
+    // Identify if a closer shelter was bypassed because it was less safe
+    let bypassedInfo = null;
+    if (shelterRoutes.length > 0) {
+      const closestByDistance = [...shelterRoutes].sort((a, b) => a.totalKm - b.totalKm)[0];
+      if (optimalRoute && closestByDistance && optimalRoute.destinationId !== closestByDistance.destinationId) {
+        bypassedInfo = {
+          closestShelterId: closestByDistance.destinationId,
+          closestShelterName: graphNodes[closestByDistance.destinationId]?.name,
+          closestKm: closestByDistance.totalKm,
+          closestElevation: closestByDistance.shelterElevation,
+          selectedKm: optimalRoute.totalKm,
+          selectedElevation: optimalRoute.shelterElevation,
+          reason: `Bypassed ${graphNodes[closestByDistance.destinationId]?.name} (${closestByDistance.totalKm} km, +${closestByDistance.shelterElevation}m) due to flood hazard proximity and road choke points. Selected ${graphNodes[optimalRoute.destinationId]?.name} (+${optimalRoute.shelterElevation}m, high ground) for superior evacuation safety and capacity.`
+        };
+      }
+    }
 
     return {
       sourceId,
-      optimalShelterRoute: shelterRoutes.length > 0 ? shelterRoutes[0] : null,
+      optimalShelterRoute: optimalRoute,
+      bypassedInfo: bypassedInfo,
       allShelterRoutes: shelterRoutes,
       allDistances: distances,
       steps
