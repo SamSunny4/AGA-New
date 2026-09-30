@@ -72,37 +72,23 @@ def _dijkstra_shortest_path(nodes: Dict[str, Any], edges: List[Dict[str, Any]], 
 
     return round(dist[target_id], 2), path_nodes, polyline_coords
 
-def solve_tsp_2opt(cost_matrix: List[List[float]], start_idx: int = 0) -> Tuple[List[int], float, float, int]:
+def solve_tsp_2opt(cost_matrix: List[List[float]], start_idx: int = 0, initial_tour: Optional[List[int]] = None) -> Tuple[List[int], List[int], float, float, float, float, int]:
     """
-    Solve TSP on an N x N distance matrix using Nearest Neighbor initialization + 2-Opt local search.
-    Returns (tour, initial_dist, optimal_dist, iterations).
+    Solve TSP on an N x N distance matrix using 2-Opt local search.
+    Returns (original_tour, optimized_tour, initial_dist, optimal_dist, imp_dist, imp_pct, iterations).
     """
     N = len(cost_matrix)
     if N <= 1:
-        return [0, 0], 0.0, 0.0, 0
+        return [0, 0], [0, 0], 0.0, 0.0, 0.0, 0.0, 0
     if N == 2:
-        d = cost_matrix[0][1] + cost_matrix[1][0]
-        return [0, 1, 0], d, d, 0
+        d = round(cost_matrix[0][1] + cost_matrix[1][0], 2)
+        return [0, 1, 0], [0, 1, 0], d, d, 0.0, 0.0, 0
 
-    # 1. Nearest Neighbor Heuristic Tour
-    visited = [False] * N
-    tour = [start_idx]
-    visited[start_idx] = True
-
-    curr = start_idx
-    for _ in range(N - 1):
-        next_node = None
-        min_cost = float("inf")
-        for j in range(N):
-            if not visited[j] and cost_matrix[curr][j] < min_cost:
-                min_cost = cost_matrix[curr][j]
-                next_node = j
-        if next_node is not None:
-            tour.append(next_node)
-            visited[next_node] = True
-            curr = next_node
-
-    tour.append(start_idx) # close the loop
+    if initial_tour and len(initial_tour) == N + 1:
+        tour = list(initial_tour)
+    else:
+        tour = [start_idx] + [i for i in range(N) if i != start_idx] + [start_idx]
+    original_tour = list(tour)
 
     def tour_length(t: List[int]) -> float:
         total = 0.0
@@ -110,12 +96,12 @@ def solve_tsp_2opt(cost_matrix: List[List[float]], start_idx: int = 0) -> Tuple[
             total += cost_matrix[t[i]][t[i + 1]]
         return total
 
-    initial_length = tour_length(tour)
+    initial_length = round(tour_length(tour), 2)
     best_length = initial_length
     improved = True
     iterations = 0
 
-    # 2. 2-Opt Local Search (Edge Swapping)
+    # 2-Opt Local Search (Edge Inversions)
     while improved and iterations < 100:
         improved = False
         iterations += 1
@@ -128,31 +114,33 @@ def solve_tsp_2opt(cost_matrix: List[List[float]], start_idx: int = 0) -> Tuple[
                 new_dist = cost_matrix[a][c] + cost_matrix[b][d]
 
                 if new_dist < current_dist - 1e-4:
-                    # Reverse segment between i and j
                     tour[i:j + 1] = reversed(tour[i:j + 1])
-                    best_length = tour_length(tour)
+                    best_length = round(tour_length(tour), 2)
                     improved = True
                     break
             if improved:
                 break
 
-    return tour, round(initial_length, 2), round(best_length, 2), iterations
+    imp_dist = max(0.0, round(initial_length - best_length, 2))
+    imp_pct = round((imp_dist / initial_length) * 100, 1) if initial_length > 0 else 0.0
 
-def solve_tsp_optimal(cost_matrix: List[List[float]], start_idx: int = 0) -> Tuple[List[int], float, float, int, bool]:
+    return original_tour, tour, initial_length, best_length, imp_dist, imp_pct, iterations
+
+def solve_tsp_optimal(cost_matrix: List[List[float]], start_idx: int = 0, initial_tour: Optional[List[int]] = None) -> Tuple[List[int], List[int], float, float, float, float, int, bool]:
     """
     Solves TSP with a guarantee of finding the absolute shortest possible Hamiltonian cycle.
     For N <= 10 (which covers all disaster regions), uses DFS Branch & Bound with 2-Opt upper bounding.
-    Returns (best_tour, initial_dist, optimal_dist, iterations, is_exact_optimal).
+    Returns (orig_tour, best_tour, initial_dist, optimal_dist, imp_dist, imp_pct, iterations, is_exact_optimal).
     """
     N = len(cost_matrix)
     if N <= 1:
-        return [0, 0], 0.0, 0.0, 0, True
+        return [0, 0], [0, 0], 0.0, 0.0, 0.0, 0.0, 0, True
     if N == 2:
         d = round((cost_matrix[0][1] + cost_matrix[1][0]), 2)
-        return [0, 1, 0], d, d, 0, True
+        return [0, 1, 0], [0, 1, 0], d, d, 0.0, 0.0, 0, True
 
-    # 1. Obtain upper bound via Nearest Neighbor + 2-Opt
-    tour_2opt, init_d, best_2opt_d, iters = solve_tsp_2opt(cost_matrix, start_idx)
+    # 1. Obtain upper bound via 2-Opt
+    orig_tour, tour_2opt, init_d, best_2opt_d, imp_d, imp_pct, iters = solve_tsp_2opt(cost_matrix, start_idx, initial_tour)
     best_tour = list(tour_2opt)
     min_dist = best_2opt_d
     is_exact = True
@@ -186,7 +174,11 @@ def solve_tsp_optimal(cost_matrix: List[List[float]], start_idx: int = 0) -> Tup
     else:
         is_exact = False
 
-    return best_tour, init_d, round(min_dist, 2), iters, is_exact
+    optimal_dist = round(min_dist, 2)
+    final_imp_dist = max(0.0, round(init_d - optimal_dist, 2))
+    final_imp_pct = round((final_imp_dist / init_d) * 100, 1) if init_d > 0 else 0.0
+
+    return orig_tour, best_tour, init_d, optimal_dist, final_imp_dist, final_imp_pct, iters, is_exact
 
 # Regional Disaster Zone Waypoint Presets
 DISASTER_ZONE_TARGETS = {
@@ -335,10 +327,12 @@ def compute_disaster_region_tsp(
             path_cache[(v_id, u_id)] = (dist_km, list(reversed(path_nodes)), list(reversed(polyline)))
 
     # Solve TSP with guaranteed shortest route (Branch & Bound for N <= 10)
-    tour_indices, initial_dist, optimal_dist, iterations, is_exact = solve_tsp_optimal(cost_matrix, start_idx=0)
+    # Solve TSP
+    orig_indices, tour_indices, initial_dist, optimal_dist, imp_dist, imp_pct, iterations, is_exact = solve_tsp_optimal(cost_matrix, start_idx=0)
     
     # Map tour indices back to node IDs
     ordered_node_ids = [tour_nodes[idx] for idx in tour_indices]
+    orig_node_ids = [tour_nodes[idx] for idx in orig_indices]
 
     # Build detailed legs
     legs = []
@@ -364,15 +358,16 @@ def compute_disaster_region_tsp(
         if polyline:
             all_polyline.extend(polyline)
 
-    # Estimate total mission duration: average speed 42 km/h during disaster + 12 min per rescue stop
+    # Estimate total mission duration: average speed 38 km/h during disaster + 12 min per rescue stop
     stop_count = max(0, N - 1)
-    driving_minutes = (total_km / 42.0) * 60.0
+    driving_minutes = (total_km / 38.0) * 60.0
     operation_minutes = stop_count * 12.0
     total_minutes = round(driving_minutes + operation_minutes)
 
     # Build rescue stops metadata
     rescue_stops = []
     total_survivors = 0
+    running_dist = 0.0
     for order_idx, nid in enumerate(ordered_node_ids):
         node = nodes.get(nid, {})
         is_base = (nid == start_id and (order_idx == 0 or order_idx == len(ordered_node_ids) - 1))
@@ -380,9 +375,13 @@ def compute_disaster_region_tsp(
         survivors = info.get("survivors", 0) if not is_base else 0
         total_survivors += survivors
 
+        leg_dist = legs[order_idx - 1]["distanceKm"] if order_idx > 0 and order_idx - 1 < len(legs) else 0.0
+        running_dist += leg_dist
+
         rescue_stops.append({
             "step": order_idx + 1,
             "nodeId": nid,
+            "id": nid,
             "name": node.get("name", nid),
             "lat": node.get("lat", 0.0),
             "lng": node.get("lng", 0.0),
@@ -390,12 +389,10 @@ def compute_disaster_region_tsp(
             "isBase": is_base,
             "priority": info.get("priority", "Base Command" if is_base else "Standard"),
             "survivors": survivors,
-            "desc": info.get("desc", "Safe haven staging command" if is_base else "Distress outpost")
+            "desc": info.get("desc", "Safe haven staging command" if is_base else "Distress outpost"),
+            "legDistance": round(leg_dist, 1),
+            "cumulativeDistance": round(running_dist, 1)
         })
-
-    reduction_pct = 0.0
-    if initial_dist > 0:
-        reduction_pct = round(((initial_dist - optimal_dist) / initial_dist) * 100, 1)
 
     return {
         "hazardZoneId": hazard_zone_id,
@@ -407,12 +404,24 @@ def compute_disaster_region_tsp(
         "startNodeName": nodes[start_id]["name"] if start_id in nodes else start_id,
         "candidateNodes": candidate_list,
         "tourNodeIds": ordered_node_ids,
+        "originalTour": orig_node_ids,
+        "optimizedTour": ordered_node_ids,
+        "originalDistance": initial_dist,
+        "optimizedDistance": optimal_dist,
+        "improvementDistance": imp_dist,
+        "improvementPercent": imp_pct,
         "legs": legs,
-        "totalDistanceKm": round(total_km, 2),
+        "totalDistanceKm": round(total_km, 1),
         "totalDurationMin": total_minutes,
+        "estimatedTravelTime": total_minutes,
+        "estimatedTimeMin": total_minutes,
+        "totalStops": stop_count,
         "stopCount": stop_count,
+        "stopsCount": stop_count,
         "totalSurvivorsRelieved": total_survivors,
+        "stops": rescue_stops,
         "rescueStops": rescue_stops,
+        "tour": rescue_stops,
         "fullPolyline": all_polyline,
         "matrixTable": {
             "nodeIds": tour_nodes,
@@ -422,9 +431,14 @@ def compute_disaster_region_tsp(
         "optimization": {
             "algorithm": "Branch & Bound (Proven Shortest Tour)" if is_exact else "2-Opt Local Search",
             "isExactOptimal": is_exact,
+            "originalDistanceKm": initial_dist,
             "initialDistanceKm": initial_dist,
             "optimalDistanceKm": optimal_dist,
-            "reductionPercent": reduction_pct,
+            "improvementDistanceKm": imp_dist,
+            "reductionPercent": imp_pct,
+            "improvementPercent": imp_pct,
             "twoOptIterations": iterations
-        }
+        },
+        "improvementPercent": imp_pct,
+        "nnDistanceKm": initial_dist
     }

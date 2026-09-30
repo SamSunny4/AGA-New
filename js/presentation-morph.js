@@ -1577,10 +1577,10 @@ class PresentationDirector {
       );
     }
 
-    const totalKm = tspResult?.totalDistanceKm || 58.4;
-    const estMin = tspResult?.totalDurationMin || 85;
-    const stopsCount = tspResult?.stopCount || 6;
-    const savedPct = tspResult?.optimization?.reductionPercent || 18.5;
+    const totalKm = tspResult?.optimizedDistance ?? tspResult?.totalDistanceKm ?? 0.0;
+    const estMin = tspResult?.estimatedTravelTime ?? tspResult?.totalDurationMin ?? 0;
+    const stopsCount = tspResult?.totalStops ?? tspResult?.stopCount ?? 0;
+    const savedPct = tspResult?.improvementPercent ?? tspResult?.optimization?.reductionPercent ?? 0.0;
 
     this.hudSlidePills.innerHTML = `
       <span class="slide-pill primary">🚑 Rescue Circuit: ${totalKm} km (${stopsCount} Hubs)</span>
@@ -1604,7 +1604,7 @@ class PresentationDirector {
       <div class="hud-calc-card">
         <span class="hud-calc-title">2-Opt Improvement</span>
         <span class="hud-calc-val" style="color:#059669;">${savedPct}%</span>
-        <span style="font-size:10px; color:#059669;">Over nearest neighbor</span>
+        <span style="font-size:10px; color:#059669;">Over initial sequence</span>
       </div>
     `;
 

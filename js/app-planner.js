@@ -892,11 +892,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (!routeData || !routeData.reachable) {
       renderRoute(routeData);
+      if (state.showTspRoute) {
+        renderTspRescueRoute(state.selectedTspZone, state.selectedTspStartNode, false);
+      }
       return;
     }
 
     // Render immediately using graph-path (fast, instant feedback)
     renderRoute(routeData);
+
+    if (state.showTspRoute) {
+      renderTspRescueRoute(state.selectedTspZone, state.selectedTspStartNode, false);
+    }
 
     // Get origin coordinates
     const originNode = KERALA_GRAPH_DATA.nodes[state.selectedOrigin];
@@ -1059,19 +1066,67 @@ document.addEventListener("DOMContentLoaded", () => {
   function populateTspStartNodeDropdown(hazardZoneId, preferredStartId = null) {
     if (!tspStartNodeSelect || typeof TravellingSalesmanRouter === "undefined") return;
     const candidates = TravellingSalesmanRouter.getRegionCandidateNodes(hazardZoneId, KERALA_GRAPH_DATA.nodes);
+    const defaultBaseId = (TravellingSalesmanRouter.DISASTER_ZONE_TARGETS[hazardZoneId] || {}).base || (candidates[0] ? candidates[0].id : null);
+
     tspStartNodeSelect.innerHTML = "";
-    
-    candidates.forEach(cand => {
+
+    // 0. Placeholder
+    const placeholderOpt = document.createElement("option");
+    placeholderOpt.value = "";
+    placeholderOpt.disabled = true;
+    placeholderOpt.textContent = "Select Starting Point";
+    tspStartNodeSelect.appendChild(placeholderOpt);
+
+    // 1. Primary Designated Base Camp HQ
+    const primaryBase = candidates.find(c => c.isDefaultBase || c.id === defaultBaseId) || candidates[0];
+    if (primaryBase) {
       const opt = document.createElement("option");
-      opt.value = cand.id;
-      opt.textContent = `${cand.isDefaultBase ? '🚨 ' : '📍 '}${cand.name} ${cand.isDefaultBase ? '(Base Camp HQ)' : ''}`;
-      if (preferredStartId && cand.id === preferredStartId) {
-        opt.selected = true;
-      } else if (!preferredStartId && cand.isDefaultBase) {
-        opt.selected = true;
-      }
+      opt.value = primaryBase.id;
+      opt.textContent = `🚨 ${primaryBase.name} (Primary Base Camp HQ)`;
       tspStartNodeSelect.appendChild(opt);
+    }
+
+    // 2. Other High-Ground Safe Shelters across Kerala
+    const shelterOptGroup = document.createElement("optgroup");
+    shelterOptGroup.label = "── Safe Camp Shelters ──";
+    let shelterCount = 0;
+    Object.keys(KERALA_GRAPH_DATA.nodes).forEach(nid => {
+      if (nid.startsWith("shelter_") && (!primaryBase || nid !== primaryBase.id)) {
+        const node = KERALA_GRAPH_DATA.nodes[nid];
+        const opt = document.createElement("option");
+        opt.value = nid;
+        opt.textContent = `🛡️ ${node.name || nid}`;
+        shelterOptGroup.appendChild(opt);
+        shelterCount++;
+      }
     });
+    if (shelterCount > 0) {
+      tspStartNodeSelect.appendChild(shelterOptGroup);
+    }
+
+    // 3. Regional Distress Outposts
+    const outpostsGroup = document.createElement("optgroup");
+    outpostsGroup.label = "── Regional Distress Outposts ──";
+    let outpostCount = 0;
+    candidates.forEach(cand => {
+      if (!cand.isDefaultBase && (!primaryBase || cand.id !== primaryBase.id)) {
+        const opt = document.createElement("option");
+        opt.value = cand.id;
+        opt.textContent = `📍 ${cand.name} (Distress Outpost)`;
+        outpostsGroup.appendChild(opt);
+        outpostCount++;
+      }
+    });
+    if (outpostCount > 0) {
+      tspStartNodeSelect.appendChild(outpostsGroup);
+    }
+
+    // Determine selected start ID
+    if (preferredStartId && Array.from(tspStartNodeSelect.options).some(o => o.value === preferredStartId)) {
+      tspStartNodeSelect.value = preferredStartId;
+    } else if (primaryBase) {
+      tspStartNodeSelect.value = primaryBase.id;
+    }
 
     state.selectedTspStartNode = tspStartNodeSelect.value;
   }
@@ -1081,6 +1136,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (vehicleAnimFrame) {
       cancelAnimationFrame(vehicleAnimFrame);
       vehicleAnimFrame = null;
+    }
+    if (vehiclePauseTimeout) {
+      clearTimeout(vehiclePauseTimeout);
+      vehiclePauseTimeout = null;
     }
     vehicleMarker = null;
 
@@ -1097,27 +1156,65 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const startId = customStartId || (tspStartNodeSelect ? tspStartNodeSelect.value : null);
+    
+    const options = {
+      closedEdgeIds: state.closedEdges || new Set(),
+      severity: state.severity || "moderate",
+      disasterType: state.disasterType || "flood"
+    };
+
     const result = TravellingSalesmanRouter.computeDisasterRegionTSP(
       KERALA_GRAPH_DATA.nodes,
       KERALA_GRAPH_DATA.edges,
       hazardZoneId,
-      startId
+      startId,
+      options
     );
     activeTspResult = result;
 
-    if (tspTotalDist) tspTotalDist.textContent = `${result.totalDistanceKm} km`;
-    if (tspEstTime) tspEstTime.textContent = `${result.totalDurationMin} min`;
-    if (tspSavedPct) tspSavedPct.textContent = `${result.optimization.reductionPercent}%`;
+    if (!result || !result.rescueStops || result.rescueStops.length < 2) {
+      if (tspTotalDist) tspTotalDist.textContent = "-- km";
+      if (tspEstTime) tspEstTime.textContent = "-- min";
+      if (tspSavedPct) tspSavedPct.textContent = "--%";
+      if (tspSeqList) {
+        tspSeqList.innerHTML = `<div style="padding:12px; font-size:11px; color:#ef4444; font-weight:700; text-align:center;">⚠️ INSUFFICIENT RESCUE STOPS</div>`;
+      }
+      return;
+    }
+
+    // Check if network is cut
+    const isBlocked = result.legs.some(l => l.distanceKm === Infinity || l.distanceKm > 9999);
+    if (isBlocked) {
+      if (tspTotalDist) tspTotalDist.textContent = "BLOCKED";
+      if (tspEstTime) tspEstTime.textContent = "N/A";
+      if (tspSavedPct) tspSavedPct.textContent = "0%";
+      if (tspSeqList) {
+        tspSeqList.innerHTML = `<div style="padding:12px; font-size:11px; color:#ef4444; font-weight:700; text-align:center;">⚠️ NO VALID RESCUE ROUTE (Roads Blocked)</div>`;
+      }
+      return;
+    }
+
+    const optDist = typeof result.optimizedDistance === "number" ? result.optimizedDistance : result.totalDistanceKm;
+    const estDuration = typeof result.estimatedTravelTime === "number" ? result.estimatedTravelTime : result.totalDurationMin;
+    const savedPct = typeof result.improvementPercent === "number" ? result.improvementPercent : (result.optimization?.reductionPercent || 0);
+
+    if (tspTotalDist) tspTotalDist.textContent = `${optDist.toFixed(1)} km`;
+    if (tspEstTime) tspEstTime.textContent = `${estDuration} min`;
+    if (tspSavedPct) {
+      tspSavedPct.textContent = `${savedPct}%`;
+      tspSavedPct.title = savedPct > 0 ? `${savedPct}% improvement over initial sequence` : "0% (Optimal Hamiltonian cycle)";
+    }
 
     if (tspSeqList) {
       tspSeqList.innerHTML = "";
-      result.rescueStops.forEach(stop => {
+      result.rescueStops.forEach((stop, idx) => {
         const item = document.createElement("div");
         item.className = `tsp-seq-item ${stop.isBase ? 'is-base' : ''}`;
+        item.id = `tsp-seq-item-${idx}`;
         item.innerHTML = `
-          <span class="tsp-seq-num">${stop.isBase ? 'HQ' : '#' + stop.step}</span>
+          <span class="tsp-seq-num">${stop.isBase ? (idx === 0 ? 'HQ' : 'RTN') : '#' + stop.step}</span>
           <span class="tsp-seq-name" title="${stop.name}">${stop.name}</span>
-          <span class="tsp-seq-survivors">${stop.isBase ? 'Staging Base' : '👥 ' + stop.survivors}</span>
+          <span class="tsp-seq-survivors">${stop.isBase ? (idx === 0 ? 'Staging Base' : 'Safe Return') : '👥 ' + (stop.survivors !== undefined ? stop.survivors : 'N/A')}</span>
         `;
         item.addEventListener("click", () => {
           map.flyTo([stop.lat, stop.lng], 13, { duration: 0.8 });
@@ -1173,6 +1270,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <div style="font-size:12px; font-weight:700; color:#0f172a; margin-bottom:4px;">${stop.name}</div>
           <div style="font-size:11px; color:#64748b; line-height:1.4; margin-bottom:6px;">${stop.desc}</div>
           ${!isBase ? `<div style="font-size:11px; color:#b45309; font-weight:700;">👥 Survivors Awaiting Evac: ${stop.survivors}</div>` : ''}
+          ${stop.legDistance ? `<div style="font-size:10px; color:#64748b; margin-top:2px;">Leg: ${stop.legDistance} km (Total: ${stop.cumulativeDistance} km)</div>` : ''}
         </div>
       `, { className: "custom-popup" });
 
@@ -1200,14 +1298,24 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  let vehiclePauseTimeout = null;
+
   function animateRescueVehicle() {
-    if (!activeTspResult || !activeTspResult.fullPolyline || activeTspResult.fullPolyline.length < 2) return;
+    if (!activeTspResult || !activeTspResult.legs || activeTspResult.legs.length === 0) return;
     if (vehicleAnimFrame) {
       cancelAnimationFrame(vehicleAnimFrame);
       vehicleAnimFrame = null;
     }
+    if (vehiclePauseTimeout) {
+      clearTimeout(vehiclePauseTimeout);
+      vehiclePauseTimeout = null;
+    }
 
-    const coords = activeTspResult.fullPolyline;
+    const legs = activeTspResult.legs;
+    const startCoord = legs[0].polyline && legs[0].polyline.length > 0
+      ? legs[0].polyline[0]
+      : (activeTspResult.fullPolyline && activeTspResult.fullPolyline.length > 0 ? activeTspResult.fullPolyline[0] : [activeTspResult.rescueStops[0].lat, activeTspResult.rescueStops[0].lng]);
+
     if (!vehicleMarker) {
       const vehicleIcon = L.divIcon({
         className: "",
@@ -1215,37 +1323,94 @@ document.addEventListener("DOMContentLoaded", () => {
         iconSize: [32, 32],
         iconAnchor: [16, 16]
       });
-      vehicleMarker = L.marker(coords[0], { icon: vehicleIcon, zIndexOffset: 2000 }).addTo(tspLayerGroup);
+      vehicleMarker = L.marker(startCoord, { icon: vehicleIcon, zIndexOffset: 2000 }).addTo(tspLayerGroup);
+    } else {
+      vehicleMarker.setLatLng(startCoord);
     }
 
-    const totalSegments = coords.length - 1;
-    const durationMs = Math.min(14000, Math.max(5000, totalSegments * 60));
-    let startTime = null;
+    // Reset sequence list highlighting
+    if (tspSeqList) {
+      const allItems = tspSeqList.querySelectorAll(".tsp-seq-item");
+      allItems.forEach(el => el.classList.remove("is-active", "is-visited"));
+      if (allItems[0]) allItems[0].classList.add("is-visited");
+    }
 
-    function stepAnim(timestamp) {
-      if (!startTime) startTime = timestamp;
-      const elapsed = timestamp - startTime;
-      const progress = Math.min(1, elapsed / durationMs);
-
-      const exactIdx = progress * totalSegments;
-      const idx = Math.min(totalSegments - 1, Math.floor(exactIdx));
-      const subT = exactIdx - idx;
-
-      const p1 = coords[idx];
-      const p2 = coords[idx + 1] || p1;
-      const curLat = p1[0] + (p2[0] - p1[0]) * subT;
-      const curLng = p1[1] + (p2[1] - p1[1]) * subT;
-
-      vehicleMarker.setLatLng([curLat, curLng]);
-
-      if (progress < 1) {
-        vehicleAnimFrame = requestAnimationFrame(stepAnim);
-      } else {
+    function playLeg(idx) {
+      if (idx >= legs.length) {
+        // Complete tour loop
+        if (tspSeqList) {
+          const lastItem = document.getElementById(`tsp-seq-item-${legs.length}`);
+          if (lastItem) lastItem.classList.add("is-visited");
+        }
         vehicleAnimFrame = null;
+        return;
       }
+
+      const leg = legs[idx];
+      const fromNode = KERALA_GRAPH_DATA.nodes[leg.fromId] || { lat: 9.5, lng: 76.5 };
+      const toNode = KERALA_GRAPH_DATA.nodes[leg.toId] || { lat: 9.6, lng: 76.6 };
+      const coords = leg.polyline && leg.polyline.length > 1
+        ? leg.polyline
+        : [[fromNode.lat, fromNode.lng], [toNode.lat, toNode.lng]];
+
+      const totalSegments = coords.length - 1;
+      const legDist = typeof leg.distanceKm === "number" ? leg.distanceKm : 10;
+      // Smooth continuous travel duration for this leg proportional to road distance
+      const durationMs = Math.max(900, Math.min(3200, totalSegments * 35 + legDist * 35));
+
+      // Highlight the active target stop in the TSP sequence
+      const targetItem = document.getElementById(`tsp-seq-item-${idx + 1}`);
+      if (targetItem) {
+        targetItem.classList.add("is-active");
+        targetItem.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+
+      let startTime = null;
+
+      function stepAnim(timestamp) {
+        if (!startTime) startTime = timestamp;
+        const elapsed = timestamp - startTime;
+        const progress = Math.min(1, elapsed / durationMs);
+
+        const exactIdx = progress * totalSegments;
+        const segIdx = Math.min(totalSegments - 1, Math.floor(exactIdx));
+        const subT = exactIdx - segIdx;
+
+        const p1 = coords[segIdx];
+        const p2 = coords[segIdx + 1] || p1;
+        const curLat = p1[0] + (p2[0] - p1[0]) * subT;
+        const curLng = p1[1] + (p2[1] - p1[1]) * subT;
+
+        vehicleMarker.setLatLng([curLat, curLng]);
+
+        if (progress < 1) {
+          vehicleAnimFrame = requestAnimationFrame(stepAnim);
+        } else {
+          // Reached the next scheduled stop in the order
+          vehicleMarker.setLatLng(coords[coords.length - 1]);
+          if (targetItem) {
+            targetItem.classList.remove("is-active");
+            targetItem.classList.add("is-visited");
+          }
+
+          // Pause ONLY at the scheduled rescue destination (no pause at already-visited transit nodes)
+          const isFinalReturn = (idx === legs.length - 1);
+          const pauseMs = isFinalReturn ? 0 : 450;
+
+          if (pauseMs > 0) {
+            vehiclePauseTimeout = setTimeout(() => {
+              playLeg(idx + 1);
+            }, pauseMs);
+          } else {
+            playLeg(idx + 1);
+          }
+        }
+      }
+
+      vehicleAnimFrame = requestAnimationFrame(stepAnim);
     }
 
-    vehicleAnimFrame = requestAnimationFrame(stepAnim);
+    playLeg(0);
   }
 
   function activateTspForHazardZone(zoneId, startId = null) {
@@ -1273,6 +1438,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (tspHazardSelect) {
     tspHazardSelect.addEventListener("change", (e) => {
+      if (!e.target.value) return;
       state.selectedTspZone = e.target.value;
       populateTspStartNodeDropdown(state.selectedTspZone);
       renderTspRescueRoute(state.selectedTspZone, state.selectedTspStartNode, true);
@@ -1281,6 +1447,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (tspStartNodeSelect) {
     tspStartNodeSelect.addEventListener("change", (e) => {
+      if (!e.target.value) return;
       state.selectedTspStartNode = e.target.value;
       renderTspRescueRoute(state.selectedTspZone, state.selectedTspStartNode, false);
       setTimeout(() => {

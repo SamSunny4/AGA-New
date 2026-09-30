@@ -80,7 +80,7 @@ const TravellingSalesmanRouter = (() => {
   /**
    * Internal Dijkstra shortest road distance calculation between two nodes
    */
-  function dijkstraShortestPath(nodes, edges, startId, targetId) {
+  function dijkstraShortestPath(nodes, edges, startId, targetId, closedEdgeIds = new Set()) {
     if (startId === targetId) {
       return { distKm: 0.0, pathNodes: [startId], polyline: [] };
     }
@@ -88,7 +88,8 @@ const TravellingSalesmanRouter = (() => {
     const adj = {};
     Object.keys(nodes).forEach(nid => adj[nid] = []);
     edges.forEach(e => {
-      const dist = e.distance_km || 5.0;
+      if (closedEdgeIds && (closedEdgeIds.has(e.id) || e.is_closed === true)) return;
+      const dist = typeof e.distance_km === "number" ? e.distance_km : 5.0;
       adj[e.u]?.push({ v: e.v, weight: dist, edge: e });
       adj[e.v]?.push({ v: e.u, weight: dist, edge: e });
     });
@@ -99,11 +100,10 @@ const TravellingSalesmanRouter = (() => {
     Object.keys(nodes).forEach(nid => dist[nid] = Infinity);
     dist[startId] = 0.0;
 
-    // Simple priority queue using array
+    // Priority queue
     const q = [startId];
 
     while (q.length > 0) {
-      // Find node with minimum dist in q
       let minIdx = 0;
       for (let i = 1; i < q.length; i++) {
         if (dist[q[i]] < dist[q[minIdx]]) minIdx = i;
@@ -125,7 +125,7 @@ const TravellingSalesmanRouter = (() => {
     }
 
     if (dist[targetId] === Infinity) {
-      // Fallback Euclidean calculation
+      // Fallback Euclidean calculation if disconnected
       const n1 = nodes[startId] || { lat: 9.5, lng: 76.5 };
       const n2 = nodes[targetId] || { lat: 9.6, lng: 76.6 };
       const latDiff = (n1.lat - n2.lat) * 111.0;
@@ -171,36 +171,49 @@ const TravellingSalesmanRouter = (() => {
   /**
    * 2-Opt TSP Algorithm Solver
    */
-  function solveTSP2Opt(costMatrix, startIdx = 0) {
+  function solveTSP2Opt(costMatrix, startIdx = 0, initialTour = null) {
     const N = costMatrix.length;
-    if (N <= 1) return { tour: [0, 0], initialDist: 0.0, optimalDist: 0.0, iterations: 0 };
+    if (N <= 1) {
+      return {
+        originalTour: [0, 0],
+        optimizedTour: [0, 0],
+        tour: [0, 0],
+        originalDistance: 0.0,
+        optimizedDistance: 0.0,
+        initialDist: 0.0,
+        optimalDist: 0.0,
+        improvementDistance: 0.0,
+        improvementPercent: 0.0,
+        iterations: 0
+      };
+    }
     if (N === 2) {
       const d = Math.round((costMatrix[0][1] + costMatrix[1][0]) * 10) / 10;
-      return { tour: [0, 1, 0], initialDist: d, optimalDist: d, iterations: 0 };
+      return {
+        originalTour: [0, 1, 0],
+        optimizedTour: [0, 1, 0],
+        tour: [0, 1, 0],
+        originalDistance: d,
+        optimizedDistance: d,
+        initialDist: d,
+        optimalDist: d,
+        improvementDistance: 0.0,
+        improvementPercent: 0.0,
+        iterations: 0
+      };
     }
 
-    // 1. Nearest Neighbor Initialization
-    const visited = new Array(N).fill(false);
-    const tour = [startIdx];
-    visited[startIdx] = true;
-
-    let curr = startIdx;
-    for (let step = 0; step < N - 1; step++) {
-      let nextNode = -1;
-      let minCost = Infinity;
-      for (let j = 0; j < N; j++) {
-        if (!visited[j] && costMatrix[curr][j] < minCost) {
-          minCost = costMatrix[curr][j];
-          nextNode = j;
-        }
+    // Initial tour: user-specified initialTour or sequential tour [startIdx, 1, 2, ..., startIdx]
+    let tour;
+    if (Array.isArray(initialTour) && initialTour.length === N + 1) {
+      tour = [...initialTour];
+    } else {
+      tour = [startIdx];
+      for (let i = 0; i < N; i++) {
+        if (i !== startIdx) tour.push(i);
       }
-      if (nextNode !== -1) {
-        tour.push(nextNode);
-        visited[nextNode] = true;
-        curr = nextNode;
-      }
+      tour.push(startIdx);
     }
-    tour.push(startIdx); // Complete the closed cycle
 
     function tourLength(t) {
       let sum = 0;
@@ -210,13 +223,14 @@ const TravellingSalesmanRouter = (() => {
       return sum;
     }
 
-    const initialDist = tourLength(tour);
-    let bestDist = initialDist;
+    const originalDist = Math.round(tourLength(tour) * 10) / 10;
+    const origTourCopy = [...tour];
+    let bestDist = originalDist;
     let improved = true;
     let iterations = 0;
 
-    // 2. 2-Opt Local Search (Edge Swapping)
-    while (improved && iterations < 80) {
+    // 2-Opt Local Search (Edge Inversion Heuristic)
+    while (improved && iterations < 100) {
       improved = false;
       iterations++;
       for (let i = 1; i < tour.length - 2; i++) {
@@ -230,7 +244,7 @@ const TravellingSalesmanRouter = (() => {
           const newCost = costMatrix[a][c] + costMatrix[b][d];
 
           if (newCost < currentCost - 1e-4) {
-            // Reverse segment from i to j
+            // Reverse segment between i and j
             let left = i;
             let right = j;
             while (left < right) {
@@ -240,7 +254,7 @@ const TravellingSalesmanRouter = (() => {
               left++;
               right--;
             }
-            bestDist = tourLength(tour);
+            bestDist = Math.round(tourLength(tour) * 10) / 10;
             improved = true;
             break;
           }
@@ -249,10 +263,22 @@ const TravellingSalesmanRouter = (() => {
       }
     }
 
+    const optimizedDist = Math.round(tourLength(tour) * 10) / 10;
+    const improvementDist = Math.max(0, Math.round((originalDist - optimizedDist) * 10) / 10);
+    const improvementPct = originalDist > 0
+      ? Math.round((improvementDist / originalDist) * 1000) / 10
+      : 0.0;
+
     return {
+      originalTour: origTourCopy,
+      optimizedTour: tour,
       tour,
-      initialDist: Math.round(initialDist * 10) / 10,
-      optimalDist: Math.round(bestDist * 10) / 10,
+      originalDistance: originalDist,
+      optimizedDistance: optimizedDist,
+      initialDist: originalDist,
+      optimalDist: optimizedDist,
+      improvementDistance: improvementDist,
+      improvementPercent: improvementPct,
       iterations
     };
   }
@@ -260,18 +286,44 @@ const TravellingSalesmanRouter = (() => {
   /**
    * Proven Shortest Route TSP Solver (Exact Branch & Bound for N <= 10)
    */
-  function solveTSPOptimal(costMatrix, startIdx = 0) {
+  function solveTSPOptimal(costMatrix, startIdx = 0, initialTour = null) {
     const N = costMatrix.length;
-    if (N <= 1) return { tour: [0, 0], initialDist: 0.0, optimalDist: 0.0, iterations: 0, isExactOptimal: true };
+    if (N <= 1) {
+      return {
+        originalTour: [0, 0],
+        optimizedTour: [0, 0],
+        tour: [0, 0],
+        originalDistance: 0.0,
+        optimizedDistance: 0.0,
+        initialDist: 0.0,
+        optimalDist: 0.0,
+        improvementDistance: 0.0,
+        improvementPercent: 0.0,
+        iterations: 0,
+        isExactOptimal: true
+      };
+    }
     if (N === 2) {
       const d = Math.round((costMatrix[0][1] + costMatrix[1][0]) * 10) / 10;
-      return { tour: [0, 1, 0], initialDist: d, optimalDist: d, iterations: 0, isExactOptimal: true };
+      return {
+        originalTour: [0, 1, 0],
+        optimizedTour: [0, 1, 0],
+        tour: [0, 1, 0],
+        originalDistance: d,
+        optimizedDistance: d,
+        initialDist: d,
+        optimalDist: d,
+        improvementDistance: 0.0,
+        improvementPercent: 0.0,
+        iterations: 0,
+        isExactOptimal: true
+      };
     }
 
     // 1. Get 2-Opt heuristic upper bound
-    const heuristic = solveTSP2Opt(costMatrix, startIdx);
-    let bestDist = heuristic.optimalDist;
-    let bestTour = [...heuristic.tour];
+    const heuristic = solveTSP2Opt(costMatrix, startIdx, initialTour);
+    let bestDist = heuristic.optimizedDistance;
+    let bestTour = [...heuristic.optimizedTour];
     let isExact = true;
 
     // 2. For N <= 10, run DFS Branch & Bound to guarantee absolute shortest possible tour
@@ -308,10 +360,22 @@ const TravellingSalesmanRouter = (() => {
       isExact = false;
     }
 
+    const optimalDist = Math.round(bestDist * 10) / 10;
+    const improvementDist = Math.max(0, Math.round((heuristic.originalDistance - optimalDist) * 10) / 10);
+    const improvementPct = heuristic.originalDistance > 0
+      ? Math.round((improvementDist / heuristic.originalDistance) * 1000) / 10
+      : 0.0;
+
     return {
+      originalTour: heuristic.originalTour,
+      optimizedTour: bestTour,
       tour: bestTour,
-      initialDist: heuristic.initialDist,
-      optimalDist: Math.round(bestDist * 10) / 10,
+      originalDistance: heuristic.originalDistance,
+      optimizedDistance: optimalDist,
+      initialDist: heuristic.originalDistance,
+      optimalDist: optimalDist,
+      improvementDistance: improvementDist,
+      improvementPercent: improvementPct,
       iterations: heuristic.iterations,
       isExactOptimal: isExact
     };
@@ -330,7 +394,7 @@ const TravellingSalesmanRouter = (() => {
     const candidates = [];
 
     if (nodes[defaultBase]) {
-      candidates.append ? null : candidates.push({
+      candidates.push({
         id: defaultBase,
         name: nodes[defaultBase].name || defaultBase,
         isDefaultBase: true,
@@ -358,7 +422,7 @@ const TravellingSalesmanRouter = (() => {
   /**
    * Main Dispatcher: Computes Proven Shortest Disaster Region TSP Tour
    */
-  function computeDisasterRegionTSP(nodes, edges, hazardZoneId = "hazard_kuttanad", baseNodeId = null) {
+  function computeDisasterRegionTSP(nodes, edges, hazardZoneId = "hazard_kuttanad", baseNodeId = null, options = {}) {
     if (typeof nodes === "string") {
       hazardZoneId = nodes;
       nodes = (typeof KERALA_GRAPH_DATA !== "undefined" && KERALA_GRAPH_DATA.nodes) || {};
@@ -367,6 +431,9 @@ const TravellingSalesmanRouter = (() => {
       nodes = KERALA_GRAPH_DATA.nodes;
       edges = KERALA_GRAPH_DATA.edges;
     }
+
+    const closedEdgeIds = options.closedEdgeIds || new Set();
+    const severity = options.severity || "moderate";
 
     const preset = DISASTER_ZONE_TARGETS[hazardZoneId] || DISASTER_ZONE_TARGETS["hazard_kuttanad"];
     const defaultBase = preset.base;
@@ -399,7 +466,7 @@ const TravellingSalesmanRouter = (() => {
       for (let j = i + 1; j < N; j++) {
         const uId = tourNodes[i];
         const vId = tourNodes[j];
-        const res = dijkstraShortestPath(nodes, edges, uId, vId);
+        const res = dijkstraShortestPath(nodes, edges, uId, vId, closedEdgeIds);
         costMatrix[i][j] = res.distKm;
         costMatrix[j][i] = res.distKm;
 
@@ -412,8 +479,9 @@ const TravellingSalesmanRouter = (() => {
       }
     }
 
-    // Solve TSP using exact optimal Branch & Bound (for N <= 10)
-    const { tour, initialDist, optimalDist, iterations, isExactOptimal } = solveTSPOptimal(costMatrix, 0);
+    // Solve TSP using 2-Opt and exact optimal Branch & Bound (for N <= 10)
+    const tspSolution = solveTSPOptimal(costMatrix, 0);
+    const { tour, originalDistance, optimizedDistance, improvementDistance, improvementPercent, iterations, isExactOptimal } = tspSolution;
 
     const orderedNodeIds = tour.map(idx => tourNodes[idx]);
 
@@ -449,9 +517,10 @@ const TravellingSalesmanRouter = (() => {
       }
     }
 
-    // Timing calculation: 42 km/h average disaster driving speed + 12 min emergency relief per stop
+    // Dynamic travel time calculation: speed adapted to disaster severity + 12 min per stop
+    const avgSpeed = severity === "severe" ? 25.0 : (severity === "moderate" ? 35.0 : 42.0);
     const stopCount = Math.max(0, N - 1);
-    const drivingMins = (totalKm / 42.0) * 60.0;
+    const drivingMins = (totalKm / avgSpeed) * 60.0;
     const reliefMins = stopCount * 12.0;
     const totalMinutes = Math.round(drivingMins + reliefMins);
 
@@ -486,10 +555,6 @@ const TravellingSalesmanRouter = (() => {
       };
     });
 
-    const reductionPct = initialDist > 0 
-      ? Math.round(((initialDist - optimalDist) / initialDist) * 1000) / 10 
-      : 0.0;
-
     return {
       hazardZoneId,
       hazardZoneName: preset.name,
@@ -500,13 +565,22 @@ const TravellingSalesmanRouter = (() => {
       startNodeName: nodes[startId]?.name || startId,
       candidateNodes: candidateList,
       tourNodeIds: orderedNodeIds,
+      originalTour: tspSolution.originalTour.map(idx => tourNodes[idx]),
+      optimizedTour: orderedNodeIds,
+      originalDistance,
+      optimizedDistance,
+      improvementDistance,
+      improvementPercent,
       legs,
       totalDistanceKm: Math.round(totalKm * 10) / 10,
       totalDurationMin: totalMinutes,
+      estimatedTravelTime: totalMinutes,
       estimatedTimeMin: totalMinutes,
+      totalStops: stopCount,
       stopCount,
       stopsCount: stopCount,
       totalSurvivorsRelieved: totalSurvivors,
+      stops: rescueStops,
       rescueStops,
       tour: rescueStops,
       fullPolyline,
@@ -518,13 +592,16 @@ const TravellingSalesmanRouter = (() => {
       optimization: {
         algorithm: isExactOptimal ? "Branch & Bound (Proven Shortest Tour)" : "2-Opt Local Search",
         isExactOptimal,
-        initialDistanceKm: initialDist,
-        optimalDistanceKm: optimalDist,
-        reductionPercent: reductionPct,
+        originalDistanceKm: originalDistance,
+        initialDistanceKm: originalDistance,
+        optimalDistanceKm: optimizedDistance,
+        improvementDistanceKm: improvementDistance,
+        reductionPercent: improvementPercent,
+        improvementPercent,
         twoOptIterations: iterations
       },
-      improvementPercent: reductionPct,
-      nnDistanceKm: initialDist
+      improvementPercent,
+      nnDistanceKm: originalDistance
     };
   }
 
