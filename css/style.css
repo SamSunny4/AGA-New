@@ -820,15 +820,30 @@ html, body {
   justify-content: space-between;
   font-size: 0.72rem;
   color: #1e293b;
-  padding: 2px 4px;
+  padding: 3px 6px;
   border-radius: 4px;
   background: #f8fafc;
+  transition: all 0.25s ease;
+  border: 1px solid transparent;
 }
 
 .tsp-seq-item.is-base {
   background: #ecfdf5;
   color: #047857;
   font-weight: 700;
+}
+
+.tsp-seq-item.is-active {
+  background: #fef3c7 !important;
+  color: #92400e !important;
+  border-color: #f59e0b !important;
+  font-weight: 700;
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.45);
+}
+
+.tsp-seq-item.is-visited {
+  background: #f0fdf4;
+  color: #15803d;
 }
 
 .tsp-seq-num {
