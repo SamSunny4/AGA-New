@@ -1026,3 +1026,217 @@ body.presentation-fullscreen-mode #presentation-overlay {
 #presentation-overlay.mode-statewide .morph-node-sublabel {
   display: none;
 }
+
+/* ==========================================================================
+   ENHANCED FLOW & MIN-CUT VISUALIZATION STYLES (STEP 7)
+   ========================================================================== */
+
+/* Flow Volume Chips on Active Corridors */
+.flow-stat-chip {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  background: rgba(15, 23, 42, 0.94);
+  color: #ffffff;
+  border: 1.5px solid #8b5cf6;
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
+  box-shadow: 0 4px 14px rgba(139, 92, 246, 0.35);
+  font-family: var(--font-sans);
+  pointer-events: none;
+  z-index: 15;
+  backdrop-filter: blur(6px);
+  animation: popIn 0.25s ease-out;
+  min-width: 110px;
+  text-align: center;
+}
+
+.flow-stat-chip.saturated {
+  border-color: #ef4444;
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.45);
+}
+
+.flow-stat-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 3px;
+  line-height: 1.2;
+}
+
+.flow-stat-chip .flow-val {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #c084fc;
+}
+
+.flow-stat-chip.saturated .flow-val {
+  color: #fca5a5;
+}
+
+.flow-stat-chip .flow-unit {
+  font-size: 0.62rem;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.flow-stat-bar-track {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 9999px;
+  margin: 3px 0 2px 0;
+  overflow: hidden;
+}
+
+.flow-stat-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #8b5cf6, #06b6d4);
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+}
+
+.flow-stat-chip.saturated .flow-stat-bar-fill {
+  background: linear-gradient(90deg, #f59e0b, #ef4444);
+}
+
+.flow-stat-meta {
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: #e2e8f0;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+/* Min-Cut Choke Point Cards */
+.mincut-choke-card {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  background: rgba(15, 23, 42, 0.96);
+  border: 2px solid #ef4444;
+  border-radius: var(--radius-md);
+  padding: 6px 10px;
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.5);
+  font-family: var(--font-sans);
+  pointer-events: none;
+  z-index: 25;
+  animation: pulse-mincut-card 1.8s infinite ease-in-out;
+  min-width: 170px;
+  backdrop-filter: blur(8px);
+}
+
+@keyframes pulse-mincut-card {
+  0%, 100% { box-shadow: 0 4px 14px rgba(239, 68, 68, 0.4); transform: translate(-50%, -50%) scale(1); }
+  50% { box-shadow: 0 8px 24px rgba(239, 68, 68, 0.7); transform: translate(-50%, -50%) scale(1.03); }
+}
+
+.choke-card-badge {
+  font-size: 0.62rem;
+  font-weight: 800;
+  color: #f87171;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-bottom: 2px;
+}
+
+.choke-card-name {
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+.choke-card-stats {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 3px;
+  font-size: 0.68rem;
+  color: #cbd5e1;
+}
+
+.choke-card-stats strong {
+  color: #fca5a5;
+  font-family: var(--font-mono);
+}
+
+.choke-tag-saturated {
+  background: #ef4444;
+  color: #ffffff;
+  padding: 1px 5px;
+  border-radius: 9999px;
+  font-size: 0.58rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.choke-card-action {
+  margin-top: 4px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #fde047;
+  background: rgba(234, 179, 8, 0.15);
+  border: 1px solid rgba(234, 179, 8, 0.3);
+  padding: 2px 4px;
+  border-radius: 3px;
+  text-align: center;
+}
+
+/* Partition Badges (Source S vs Sink T) */
+.partition-badge {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  font-size: 0.62rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  pointer-events: none;
+  z-index: 12;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.partition-badge.source-s {
+  background: #fff1f2;
+  color: #e11d48;
+  border: 1px solid #fecdd3;
+}
+
+.partition-badge.sink-t {
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+
+/* Endpoint Node Flow Labels */
+.node-flow-tag {
+  position: absolute;
+  transform: translate(-50%, 14px);
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  pointer-events: none;
+  z-index: 20;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.node-flow-tag.origin-outflow {
+  background: #7c3aed;
+  color: #ffffff;
+  border: 1px solid #a78bfa;
+}
+
+.node-flow-tag.shelter-inflow {
+  background: #059669;
+  color: #ffffff;
+  border: 1px solid #34d399;
+}
+

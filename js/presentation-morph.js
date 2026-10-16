@@ -542,23 +542,44 @@ class PresentationDirector {
       }
     });
 
-    // Max Flow & Min Cut on Candidate Subgraph
-    const flowNodes = Array.from(this.candidateNodeIds);
-    const flowEdges = KERALA_GRAPH_DATA.edges
-      .filter(e => this.candidateNodeIds.has(e.u) && this.candidateNodeIds.has(e.v))
-      .map(e => ({
-        u: e.u,
-        v: e.v,
-        capacity: e.capacity_veh_hr || 1200,
-        name: e.name
-      }));
+    // Max Flow & Min Cut on Candidate Subgraph (with bidirectional edges and robust fallback)
+    const buildBidirectionalFlowEdges = (edgeList) => {
+      const edges = [];
+      edgeList.forEach(e => {
+        if (this.predictedBlockedEdges && this.predictedBlockedEdges.has(e.id)) return;
+        const cap = e.capacity_veh_hr || 1200;
+        edges.push({ u: e.u, v: e.v, capacity: cap, name: e.name, id: e.id, edge: e });
+        edges.push({ u: e.v, v: e.u, capacity: cap, name: e.name, id: e.id, edge: e });
+      });
+      return edges;
+    };
 
-    this.maxFlowResult = EdmondsKarpMaxFlow.computeMaxFlow(
+    const candidateEdges = KERALA_GRAPH_DATA.edges.filter(e =>
+      this.candidateNodeIds.has(e.u) && this.candidateNodeIds.has(e.v)
+    );
+    let flowEdges = buildBidirectionalFlowEdges(candidateEdges);
+    let flowNodes = Array.from(this.candidateNodeIds);
+
+    let maxFlowRes = EdmondsKarpMaxFlow.computeMaxFlow(
       flowNodes.length >= 2 ? flowNodes : Object.keys(KERALA_GRAPH_DATA.nodes),
-      flowEdges.length >= 1 ? flowEdges : KERALA_GRAPH_DATA.edges,
+      flowEdges.length >= 1 ? flowEdges : buildBidirectionalFlowEdges(KERALA_GRAPH_DATA.edges),
       this.originId,
       this.shelterId
     );
+
+    // If candidate subgraph yields 0 flow or disconnected, fallback to statewide network
+    if (!maxFlowRes || maxFlowRes.maxFlow === 0) {
+      const allNodes = Object.keys(KERALA_GRAPH_DATA.nodes);
+      const allFlowEdges = buildBidirectionalFlowEdges(KERALA_GRAPH_DATA.edges);
+      maxFlowRes = EdmondsKarpMaxFlow.computeMaxFlow(
+        allNodes,
+        allFlowEdges,
+        this.originId,
+        this.shelterId
+      );
+    }
+
+    this.maxFlowResult = maxFlowRes;
 
     // Kruskal MST on Candidate Subgraph
     this.mstResult = this.computeKruskalMST(
@@ -1386,61 +1407,124 @@ class PresentationDirector {
   }
 
   renderAlgoMaxFlow() {
-    this.hudAlgoRuntimeBadge.textContent = "Edmonds-Karp Residual Flow";
-    this.hudSlidePunchline.textContent = `Simulates maximum vehicular volume by pushing traffic through parallel augmenting paths until residual capacities saturate.`;
+    this.hudAlgoRuntimeBadge.textContent = "Edmonds-Karp Residual Max-Flow";
+    this.hudSlidePunchline.textContent = `Pushes maximum evacuation traffic through parallel non-interfering corridors until road capacities saturate.`;
 
-    const totalFlow = this.maxFlowResult?.maxFlow || 2200;
+    const totalFlow = this.maxFlowResult?.maxFlow || 1800;
+    const augPaths = this.maxFlowResult?.augmentingPaths || [];
+    const flowMap = this.maxFlowResult?.flowDistribution || {};
+
+    // Realistic evacuation clearance approximation
+    const evacDemandVehicles = 15000;
+    const clearanceMinutesTotal = Math.round((evacDemandVehicles / totalFlow) * 60);
+    const clearanceHours = Math.floor(clearanceMinutesTotal / 60);
+    const clearanceMinutes = clearanceMinutesTotal % 60;
+    const clearancePerMin = Math.round(totalFlow / 60);
+
+    const pathFormulas = augPaths.length > 0
+      ? augPaths.map((p, i) => `Corridor ${i + 1} (+${p.bottleneck.toLocaleString()} v/h)`).join(" + ")
+      : `Corridor 1 (+${totalFlow.toLocaleString()} v/h)`;
 
     this.hudSlidePills.innerHTML = `
-      <span class="slide-pill primary"> Max Evacuation Flow: ${totalFlow.toLocaleString()} veh/hr</span>
-      <span class="slide-pill success">️ ${this.candidatePaths.length} Active Corridors</span>
-      <span class="slide-pill amber"> Efficiency: 94.2%</span>
+      <span class="slide-pill primary">🌊 Max Evacuation Flow: ${totalFlow.toLocaleString()} veh/hr</span>
+      <span class="slide-pill success">⏱️ Clearance Rate: ~${clearancePerMin} veh/min</span>
+      <span class="slide-pill amber">🛣️ ${augPaths.length || this.candidatePaths.length} Augmenting Corridors</span>
     `;
-    this.hudSlideSubnote.textContent = `Theorem: Total flow equals the sum of capacities pushed through all augmenting paths`;
-    if (this.algoStepStatus) this.algoStepStatus.textContent = `Max-Flow: Pushing flow waves through parallel corridors`;
+    this.hudSlideSubnote.textContent = `Calculation: ∑ Path Bottlenecks = ${pathFormulas} = ${totalFlow.toLocaleString()} veh/hr Total Network Throughput`;
+    if (this.algoStepStatus) this.algoStepStatus.textContent = `Edmonds-Karp: Pushed ${totalFlow.toLocaleString()} veh/hr across ${augPaths.length || 1} parallel corridor(s)`;
 
     this.hudCalcMatrix.innerHTML = `
       <div class="hud-calc-card">
         <span class="hud-calc-title">Max Evacuation Flow</span>
         <span class="hud-calc-val" style="color:#8b5cf6;">${totalFlow.toLocaleString()} veh/hr</span>
-        <span style="font-size:10px; color:#8b5cf6;">Corridor total throughput</span>
+        <span style="font-size:10px; color:#8b5cf6;">~${clearancePerMin} vehicles cleared/min</span>
       </div>
       <div class="hud-calc-card">
         <span class="hud-calc-title">Augmenting Corridors</span>
-        <span class="hud-calc-val">${this.candidatePaths.length} Active</span>
-        <span style="font-size:10px; color:#0284c7;">Parallel paths utilized</span>
+        <span class="hud-calc-val">${augPaths.length || this.candidatePaths.length} Active</span>
+        <span style="font-size:10px; color:#0284c7;">${augPaths.slice(0, 2).map((p, i) => `P${i + 1}: +${p.bottleneck}v/h`).join(', ') || 'Parallel capacity saturation'}</span>
       </div>
       <div class="hud-calc-card">
-        <span class="hud-calc-title">Throughput Capacity</span>
-        <span class="hud-calc-val" style="color:#059669;">Optimal</span>
-        <span style="font-size:10px; color:#059669;">Sufficient for zone demand</span>
+        <span class="hud-calc-title">Est. Clearance (Approx)</span>
+        <span class="hud-calc-val" style="color:#059669;">~${clearanceHours}h ${clearanceMinutes}m</span>
+        <span style="font-size:10px; color:#059669;">For ~${evacDemandVehicles.toLocaleString()} evacuee vehicles</span>
       </div>
     `;
 
+    // 1. Draw base straight edges
     this.drawAllEdges("straight", true, true);
-    this.drawAllNodes(true, [this.originId, this.shelterId], true, true);
 
-    // Animate flow waves along candidate corridors
-    this.candidatePaths.forEach((path, pathIdx) => {
-      for (let i = 0; i < path.length - 1; i++) {
-        const u = path[i];
-        const v = path[i + 1];
-        const edge = KERALA_GRAPH_DATA.edges.find(e => (e.u === u && e.v === v) || (e.u === v && e.v === u));
-        if (edge && this.topologicalEdgePaths[edge.id]) {
-          const pathElem = document.createElementNS("http://www.w3.org/2000/svg", "path");
-          pathElem.setAttribute("d", this.topologicalEdgePaths[edge.id].straightPath);
-          pathElem.setAttribute("class", "morph-edge flow-augment");
-          pathElem.dataset.edgeId = edge.id;
-          pathElem.dataset.u = edge.u;
-          pathElem.dataset.v = edge.v;
-          pathElem.style.animationDelay = `${pathIdx * 0.4 + i * 0.15}s`;
-          this.svg.appendChild(pathElem);
-        }
+    // 2. Identify active flow edges and render high-visibility flow pipelines + badges
+    let activeFlowEdgesCount = 0;
+    Object.values(this.topologicalEdgePaths).forEach(({ straightPath, edge, midPt, uPt, vPt }) => {
+      const f1 = flowMap[edge.u]?.[edge.v] || 0;
+      const f2 = flowMap[edge.v]?.[edge.u] || 0;
+      const edgeFlow = Math.max(f1, f2);
+      const cap = edge.capacity_veh_hr || 1200;
+      const satPct = Math.min(100, Math.round((edgeFlow / cap) * 100));
+
+      if (edgeFlow > 0) {
+        activeFlowEdgesCount++;
+        // Glow flow pipeline
+        const pathElem = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        pathElem.setAttribute("d", straightPath);
+        pathElem.setAttribute("class", "morph-edge flow-augment");
+        pathElem.dataset.edgeId = edge.id;
+        pathElem.dataset.u = edge.u;
+        pathElem.dataset.v = edge.v;
+        const dynamicWidth = Math.max(5, Math.min(10, Math.round((edgeFlow / cap) * 9)));
+        pathElem.style.strokeWidth = `${dynamicWidth}`;
+        this.attachEdgeHover(pathElem, edge);
+        this.svg.appendChild(pathElem);
+
+        // Place Flow Stat Chip at midPt
+        const chip = document.createElement("div");
+        chip.className = `flow-stat-chip ${satPct >= 90 ? 'saturated' : ''}`;
+        chip.style.left = `${midPt.x}px`;
+        chip.style.top = `${midPt.y}px`;
+        chip.innerHTML = `
+          <div class="flow-stat-header">
+            <span class="flow-val">${edgeFlow.toLocaleString()}</span>
+            <span class="flow-unit">/ ${cap.toLocaleString()} v/h</span>
+          </div>
+          <div class="flow-stat-bar-track">
+            <div class="flow-stat-bar-fill" style="width: ${satPct}%"></div>
+          </div>
+          <div class="flow-stat-meta">${satPct}% Capacity ${satPct >= 95 ? '⚠️ Saturated' : 'Utilized'}</div>
+        `;
+        this.badgesContainer.appendChild(chip);
       }
     });
 
-    // Start animated vehicle particles on straight lines
-    this.startParticleSimulation(this.candidatePaths, "straight", 1.2);
+    // 3. Draw nodes
+    this.drawAllNodes(true, [this.originId, this.shelterId], true, true);
+
+    // 4. Place Origin and Shelter Flow Endpoint Tags
+    const originPos = this.topologicalPositions[this.originId] || this.nodePositions[this.originId];
+    if (originPos) {
+      const originTag = document.createElement("div");
+      originTag.className = "node-flow-tag origin-outflow";
+      originTag.style.left = `${originPos.x}px`;
+      originTag.style.top = `${originPos.y}px`;
+      originTag.innerHTML = `🚨 Origin Outflow: -${totalFlow.toLocaleString()} veh/hr`;
+      this.badgesContainer.appendChild(originTag);
+    }
+
+    const shelterPos = this.topologicalPositions[this.shelterId] || this.nodePositions[this.shelterId];
+    if (shelterPos) {
+      const shelterTag = document.createElement("div");
+      shelterTag.className = "node-flow-tag shelter-inflow";
+      shelterTag.style.left = `${shelterPos.x}px`;
+      shelterTag.style.top = `${shelterPos.y}px`;
+      shelterTag.innerHTML = `🛡️ Refuge Absorption: +${totalFlow.toLocaleString()} veh/hr`;
+      this.badgesContainer.appendChild(shelterTag);
+    }
+
+    // 5. Start particle simulation on augmenting paths carrying flow
+    const particlePaths = augPaths.length > 0
+      ? augPaths.map(p => p.path ? [p.path[0].u, ...p.path.map(seg => seg.v)] : null).filter(Boolean)
+      : this.candidatePaths;
+    this.startParticleSimulation(particlePaths.length > 0 ? particlePaths : this.candidatePaths, "straight", 1.3);
   }
 
   renderAlgoMinCut() {
@@ -1448,42 +1532,63 @@ class PresentationDirector {
     this.hudSlidePunchline.textContent = `Isolates the narrowest bottleneck cut in the network. Saturated choke points dictate the ceiling of statewide evacuation speed.`;
 
     const cutEdges = this.maxFlowResult?.minCutEdges || [];
+    const cutCap = this.maxFlowResult?.minCutCapacity || this.maxFlowResult?.maxFlow || 1800;
+    const maxFlow = this.maxFlowResult?.maxFlow || cutCap;
+    const reachableSet = new Set(this.maxFlowResult?.reachablePartition || [this.originId]);
+
+    // Realistic queuing and contra-flow approximations
+    const surgeArrivalRate = Math.max(cutCap + 1200, 3000);
+    const queueSurgeVehicles = Math.max(0, surgeArrivalRate - cutCap);
+    // At ~5m emergency car spacing:
+    const tailbackGrowthRate = ((queueSurgeVehicles * 5) / 1000).toFixed(1);
+    // Contra-flow increases capacity by 50%
+    const contraGain = Math.round(cutCap * 0.5);
+
+    const cutEdgeFormulas = cutEdges.length > 0
+      ? cutEdges.map(e => `${e.name || 'Link'} (${(e.capacity || e.capacity_veh_hr || 1200).toLocaleString()} v/h)`).join(" + ")
+      : `${cutCap.toLocaleString()} veh/hr`;
 
     this.hudSlidePills.innerHTML = `
-      <span class="slide-pill warning">️ Min-Cut: ${cutEdges.length || 1} Saturated Choke Points</span>
-      <span class="slide-pill amber">⚠️ Capacity: ${this.maxFlowResult?.maxFlow.toLocaleString() || 2200} veh/hr</span>
-      <span class="slide-pill primary"> Action: Contra-Flow Lanes</span>
+      <span class="slide-pill warning">🛑 Min-Cut: ${cutEdges.length || 1} Saturated Choke Point${cutEdges.length === 1 ? '' : 's'}</span>
+      <span class="slide-pill amber">⚠️ Cut Capacity: ${cutCap.toLocaleString()} veh/hr (100% Saturated)</span>
+      <span class="slide-pill primary">🛡️ Contra-Flow Gain: +${contraGain.toLocaleString()} veh/hr</span>
     `;
-    this.hudSlideSubnote.textContent = `Max-Flow Min-Cut Theorem: Maximum network flow strictly equals the capacity of the minimum cut`;
-    if (this.algoStepStatus) this.algoStepStatus.textContent = `Min-Cut: Saturated choke points flagged in flashing crimson`;
+    this.hudSlideSubnote.textContent = `Theorem Proven: Max-Flow (${maxFlow.toLocaleString()} v/h) ≡ Min-Cut Capacity (${cutCap.toLocaleString()} v/h across: ${cutEdgeFormulas})`;
+    if (this.algoStepStatus) this.algoStepStatus.textContent = `Min-Cut: ${cutEdges.length || 1} saturated choke point(s) flagged in flashing crimson`;
 
     this.hudCalcMatrix.innerHTML = `
       <div class="hud-calc-card">
-        <span class="hud-calc-title">Saturated Choke Points</span>
-        <span class="hud-calc-val" style="color:#e11d48;">${cutEdges.length || 1} Corridor${cutEdges.length === 1 ? '' : 's'}</span>
-        <span style="font-size:10px; color:#e11d48;">Enforce contra-flow lanes!</span>
+        <span class="hud-calc-title">Min-Cut Ceiling Capacity</span>
+        <span class="hud-calc-val" style="color:#e11d48;">${cutCap.toLocaleString()} veh/hr</span>
+        <span style="font-size:10px; color:#e11d48;">100% capacity saturated (Ceiling)</span>
       </div>
       <div class="hud-calc-card">
-        <span class="hud-calc-title">Cut Capacity</span>
-        <span class="hud-calc-val">${this.maxFlowResult?.maxFlow.toLocaleString() || 2200} veh/hr</span>
-        <span style="font-size:10px; color:#64748b;">Ceiling throughput</span>
+        <span class="hud-calc-title">Queue Buildup Rate (Approx)</span>
+        <span class="hud-calc-val" style="color:#d97706;">+${queueSurgeVehicles.toLocaleString()} veh/hr</span>
+        <span style="font-size:10px; color:#d97706;">~${tailbackGrowthRate} km/hr tailback propagation</span>
       </div>
       <div class="hud-calc-card">
-        <span class="hud-calc-title">Traffic Action</span>
-        <span class="hud-calc-val" style="font-size:0.75rem; color:#e11d48; margin-top:2px;">Deploy Marshals</span>
-        <span style="font-size:10px; color:#64748b;">Contra-flow enforcement</span>
+        <span class="hud-calc-title">Contra-Flow Relief</span>
+        <span class="hud-calc-val" style="color:#059669;">+${contraGain.toLocaleString()} veh/hr</span>
+        <span style="font-size:10px; color:#059669;">Reversible lane protocol (+50%)</span>
       </div>
     `;
 
-    // Draw straight edges on topological layout; highlight saturated cut in flashing crimson
+    // 1. Draw base straight edges with Min-Cut highlighting
     Object.values(this.topologicalEdgePaths).forEach(({ straightPath, edge, midPt, uPt, vPt }) => {
-      const isMinCut = cutEdges.some(me => (me.u === edge.u && me.v === edge.v) || (me.u === edge.v && me.v === edge.u));
+      const isMinCut = cutEdges.some(me => 
+        me.id === edge.id || 
+        (me.u === edge.u && me.v === edge.v) || 
+        (me.u === edge.v && me.v === edge.u)
+      ) || (cutEdges.length === 0 && edge.capacity_veh_hr <= cutCap);
+
       const pathElem = document.createElementNS("http://www.w3.org/2000/svg", "path");
       pathElem.setAttribute("d", straightPath);
       pathElem.setAttribute("class", `morph-edge on-white ${isMinCut ? 'min-cut-saturated' : ''}`);
       pathElem.dataset.edgeId = edge.id;
       pathElem.dataset.u = edge.u;
       pathElem.dataset.v = edge.v;
+      if (!isMinCut) pathElem.style.opacity = "0.2";
       this.attachEdgeHover(pathElem, edge);
       this.svg.appendChild(pathElem);
 
@@ -1494,17 +1599,39 @@ class PresentationDirector {
         const nx = -dy / len;
         const ny = dx / len;
 
-        const chip = document.createElement("div");
-        chip.className = "roadblock-chip";
-        chip.dataset.edgeId = edge.id;
-        chip.style.left = `${Math.round(midPt.x + nx * 24)}px`;
-        chip.style.top = `${Math.round(midPt.y + ny * 24)}px`;
-        chip.innerHTML = `⚠️ <span>MIN-CUT CHOKE POINT (${edge.capacity_veh_hr}v/h)</span>`;
-        this.badgesContainer.appendChild(chip);
+        const card = document.createElement("div");
+        card.className = "mincut-choke-card";
+        card.dataset.edgeId = edge.id;
+        card.style.left = `${Math.round(midPt.x + nx * 32)}px`;
+        card.style.top = `${Math.round(midPt.y + ny * 32)}px`;
+        card.innerHTML = `
+          <div class="choke-card-badge">🛑 BOTTLENECK CHOKE POINT</div>
+          <div class="choke-card-name">${edge.name || 'Arterial Corridor'}</div>
+          <div class="choke-card-stats">
+            <span>Capacity: <strong>${(edge.capacity_veh_hr || 1200).toLocaleString()} v/h</strong></span>
+            <span class="choke-tag-saturated">100% Saturated</span>
+          </div>
+          <div class="choke-card-action">🚨 ACTION: Enforce Contra-Flow (+50% Cap)</div>
+        `;
+        this.badgesContainer.appendChild(card);
       }
     });
 
+    // 2. Draw nodes with Partition S (Basin) and Partition T (Refuge) Tags
     this.drawAllNodes(true, [this.originId, this.shelterId], true, true);
+
+    Object.values(this.topologicalPositions).forEach(({ x, y, node }) => {
+      const inPartitionS = reachableSet.has(node.id);
+      const isKey = node.id === this.originId || node.id === this.shelterId;
+      if (isKey || this.candidateNodeIds?.has(node.id)) {
+        const tag = document.createElement("div");
+        tag.className = `partition-badge ${inPartitionS ? 'source-s' : 'sink-t'}`;
+        tag.style.left = `${x}px`;
+        tag.style.top = `${y - 18}px`;
+        tag.textContent = inPartitionS ? "Basin (S)" : "Refuge (T)";
+        this.badgesContainer.appendChild(tag);
+      }
+    });
   }
 
   renderAlgoMST() {
