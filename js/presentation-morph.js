@@ -1245,7 +1245,8 @@ class PresentationDirector {
   }
 
   setAlgoTab(algoKey) {
-    this.activeAlgoTab = algoKey;
+    const validTabs = ["dijkstra", "maxflow", "mincut", "mst"];
+    this.activeAlgoTab = validTabs.includes(algoKey) ? algoKey : "dijkstra";
     this.updateAlgoTabUI();
     this.renderCurrentAlgoTab();
   }
@@ -1277,8 +1278,8 @@ class PresentationDirector {
       case "mst":
         this.renderAlgoMST();
         break;
-      case "tsp":
-        this.renderAlgoTSP();
+      default:
+        this.renderAlgoDijkstra();
         break;
     }
   }
@@ -1556,85 +1557,7 @@ class PresentationDirector {
     this.drawAllNodes(true, [this.originId, this.shelterId], true, true);
   }
 
-  renderAlgoTSP() {
-    this.hudAlgoRuntimeBadge.textContent = "Travelling Salesman (2-Opt TSP)";
-    this.hudSlidePunchline.textContent = `Solves the optimal multi-stop rescue vehicle circuit visiting all distress outposts in the disaster region with minimum fuel, risk, and travel time.`;
 
-    let zoneId = "hazard_kuttanad";
-    if (this.originId === "kalpetta" || this.originId === "thamarassery") zoneId = "hazard_wayanad";
-    else if (this.originId === "aluva_town" || this.originId === "kalamassery" || this.originId === "angamaly") zoneId = "hazard_periyar";
-    else if (this.originId === "munnar" || this.originId === "adimali") zoneId = "hazard_idukki";
-    else if (this.originId === "adoor" || this.originId === "kayamkulam") zoneId = "hazard_pamba";
-    else if (this.originId === "fort_kochi" || this.originId === "marine_drive") zoneId = "hazard_sea_erosion";
-
-    let tspResult = null;
-    if (typeof TravellingSalesmanRouter !== "undefined") {
-      tspResult = TravellingSalesmanRouter.computeDisasterRegionTSP(
-        KERALA_GRAPH_DATA.nodes,
-        KERALA_GRAPH_DATA.edges,
-        zoneId,
-        this.shelterId
-      );
-    }
-
-    const totalKm = tspResult?.optimizedDistance ?? tspResult?.totalDistanceKm ?? 0.0;
-    const estMin = tspResult?.estimatedTravelTime ?? tspResult?.totalDurationMin ?? 0;
-    const stopsCount = tspResult?.totalStops ?? tspResult?.stopCount ?? 0;
-    const savedPct = tspResult?.improvementPercent ?? tspResult?.optimization?.reductionPercent ?? 0.0;
-
-    this.hudSlidePills.innerHTML = `
-      <span class="slide-pill primary">🚑 Rescue Circuit: ${totalKm} km (${stopsCount} Hubs)</span>
-      <span class="slide-pill success">⏱️ Total Mission Duration: ${estMin} min</span>
-      <span class="slide-pill amber">⚡ 2-Opt Optimization: +${savedPct}% Faster</span>
-    `;
-    this.hudSlideSubnote.textContent = `TSP Objective: min ∑ d(π(i), π(i+1)) + d(π(n), π(0)) using 2-Opt edge inversion heuristic`;
-    if (this.algoStepStatus) this.algoStepStatus.textContent = `2-Opt TSP: Optimal rescue vehicle mission loop finalized!`;
-
-    this.hudCalcMatrix.innerHTML = `
-      <div class="hud-calc-card">
-        <span class="hud-calc-title">Total Rescue Tour</span>
-        <span class="hud-calc-val" style="color:#d97706;">${totalKm} km</span>
-        <span style="font-size:10px; color:#d97706;">Multi-stop closed circuit</span>
-      </div>
-      <div class="hud-calc-card">
-        <span class="hud-calc-title">Mission Duration</span>
-        <span class="hud-calc-val" style="color:#0284c7;">${estMin} min</span>
-        <span style="font-size:10px; color:#0284c7;">Travel + 12m/stop relief</span>
-      </div>
-      <div class="hud-calc-card">
-        <span class="hud-calc-title">2-Opt Improvement</span>
-        <span class="hud-calc-val" style="color:#059669;">${savedPct}%</span>
-        <span style="font-size:10px; color:#059669;">Over initial sequence</span>
-      </div>
-    `;
-
-    // Draw straight edges on topological canvas
-    this.drawAllEdges("straight", true, true);
-    this.drawAllNodes(true, [this.originId, this.shelterId], true, true);
-
-    // Highlight candidate rescue tour paths
-    const tourNodes = tspResult?.tourNodeIds || this.candidatePaths[0] || [this.originId, this.shelterId];
-    for (let i = 0; i < tourNodes.length - 1; i++) {
-      const u = tourNodes[i];
-      const v = tourNodes[i + 1];
-      const edge = KERALA_GRAPH_DATA.edges.find(e => (e.u === u && e.v === v) || (e.u === v && e.v === u));
-      if (edge && this.topologicalEdgePaths[edge.id]) {
-        const pathElem = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        pathElem.setAttribute("d", this.topologicalEdgePaths[edge.id].straightPath);
-        pathElem.setAttribute("class", "morph-edge flow-augment");
-        pathElem.style.stroke = "#f59e0b";
-        pathElem.style.strokeWidth = "5";
-        pathElem.dataset.edgeId = edge.id;
-        pathElem.dataset.u = edge.u;
-        pathElem.dataset.v = edge.v;
-        this.svg.appendChild(pathElem);
-      }
-    }
-
-    if (tourNodes.length > 1) {
-      this.startParticleSimulation([tourNodes], "straight", 1.4);
-    }
-  }
 
   clearAlgoAnimation() {
     if (this.algoAnimationTimer) {

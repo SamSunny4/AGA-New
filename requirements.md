@@ -6,7 +6,7 @@ This document details the complete **Software Requirements** and **Hardware Requ
 
 ## 1. System Overview & Architecture Scope
 
-Kerala SafeRoute is an interactive, graph-theoretic disaster evacuation decision-support system. It evaluates statewide GIS road networks, hydrological hazards, elevation terrain, and vehicle throughput capacities using graph algorithms (Dijkstra, A*, Edmonds-Karp Max-Flow / Min-Cut, Kruskal/Prim MST, and TSP). 
+Kerala SafeRoute is an interactive, graph-theoretic disaster evacuation decision-support system. It evaluates statewide GIS road networks, hydrological hazards, elevation terrain, and vehicle throughput capacities using graph algorithms (Dijkstra, A*, Edmonds-Karp Max-Flow / Min-Cut, and Kruskal/Prim MST). 
 
 The system operates in a dual-mode hybrid architecture:
 1. **Dedicated Python REST Backend Mode (Recommended):** High-performance server processing complex graph operations via Python 3.8+.
