@@ -1410,44 +1410,41 @@ class PresentationDirector {
     this.hudAlgoRuntimeBadge.textContent = "Edmonds-Karp Residual Max-Flow";
     this.hudSlidePunchline.textContent = `Pushes maximum evacuation traffic through parallel non-interfering corridors until road capacities saturate.`;
 
-    const totalFlow = this.maxFlowResult?.maxFlow || 1800;
-    const augPaths = this.maxFlowResult?.augmentingPaths || [];
-    const flowMap = this.maxFlowResult?.flowDistribution || {};
-
     // Single bottleneck discovery on selected evacuation route
     const bottleInfo = this.getSelectedRouteBottleneck();
     const bottleEdge = bottleInfo?.edge;
     const bottleCap = bottleEdge ? (bottleEdge.capacity_veh_hr || 1200) : (this.maxFlowResult?.minCutCapacity || 1800);
 
-    // Realistic evacuation clearance approximation
+    // MAX EVACUATION FLOW = bottleneck of the selected route
+    const maxEvacFlow = bottleCap;
+    const augPaths = this.maxFlowResult?.augmentingPaths || [];
+    const flowMap = this.maxFlowResult?.flowDistribution || {};
+
+    // Realistic evacuation clearance approximation based on the selected route bottleneck
     const evacDemandVehicles = 15000;
-    const clearanceMinutesTotal = Math.round((evacDemandVehicles / totalFlow) * 60);
+    const clearanceMinutesTotal = Math.round((evacDemandVehicles / maxEvacFlow) * 60);
     const clearanceHours = Math.floor(clearanceMinutesTotal / 60);
     const clearanceMinutes = clearanceMinutesTotal % 60;
-    const clearancePerMin = Math.round(totalFlow / 60);
-
-    const pathFormulas = augPaths.length > 0
-      ? augPaths.map((p, i) => `Corridor ${i + 1} (+${p.bottleneck.toLocaleString()} v/h)`).join(" + ")
-      : `Corridor 1 (+${totalFlow.toLocaleString()} v/h)`;
+    const clearancePerMin = Math.round(maxEvacFlow / 60);
 
     this.hudSlidePills.innerHTML = `
-      <span class="slide-pill primary">🌊 Max Evacuation Flow: ${totalFlow.toLocaleString()} veh/hr</span>
+      <span class="slide-pill primary">🌊 Max Evacuation Flow: ${maxEvacFlow.toLocaleString()} veh/hr</span>
       <span class="slide-pill warning">🛑 Route Bottleneck: ${bottleEdge ? bottleEdge.name : '1 Choke Point'} (${bottleCap.toLocaleString()} v/h)</span>
       <span class="slide-pill success">⏱️ Clearance Rate: ~${clearancePerMin} veh/min</span>
     `;
-    this.hudSlideSubnote.textContent = `Calculation: ∑ Path Bottlenecks = ${pathFormulas} = ${totalFlow.toLocaleString()} veh/hr (Route Bottleneck: ${bottleEdge ? bottleEdge.name : 'Corridor'})`;
-    if (this.algoStepStatus) this.algoStepStatus.textContent = `Edmonds-Karp: Pushed ${totalFlow.toLocaleString()} veh/hr across ${augPaths.length || 1} parallel corridor(s)`;
+    this.hudSlideSubnote.textContent = `Selected Route Max Flow = Bottleneck Capacity (${maxEvacFlow.toLocaleString()} veh/hr via ${bottleEdge ? bottleEdge.name : 'Corridor'})`;
+    if (this.algoStepStatus) this.algoStepStatus.textContent = `Edmonds-Karp: Max Evacuation Flow is ${maxEvacFlow.toLocaleString()} veh/hr (bottleneck of selected route)`;
 
     this.hudCalcMatrix.innerHTML = `
       <div class="hud-calc-card">
         <span class="hud-calc-title">Max Evacuation Flow</span>
-        <span class="hud-calc-val" style="color:#8b5cf6;">${totalFlow.toLocaleString()} veh/hr</span>
-        <span style="font-size:10px; color:#8b5cf6;">~${clearancePerMin} vehicles cleared/min</span>
+        <span class="hud-calc-val" style="color:#8b5cf6;">${maxEvacFlow.toLocaleString()} veh/hr</span>
+        <span style="font-size:10px; color:#8b5cf6;">Bottleneck of Selected Route</span>
       </div>
       <div class="hud-calc-card">
         <span class="hud-calc-title">Route Bottleneck Limit</span>
         <span class="hud-calc-val" style="color:#e11d48;">${bottleCap.toLocaleString()} veh/hr</span>
-        <span style="font-size:10px; color:#e11d48;">${bottleEdge ? (bottleEdge.name || 'Critical Link') : 'Saturated'}</span>
+        <span style="font-size:10px; color:#e11d48;">${bottleEdge ? (bottleEdge.name || 'Critical Link') : '100% Saturated'}</span>
       </div>
       <div class="hud-calc-card">
         <span class="hud-calc-title">Est. Clearance (Approx)</span>
@@ -1517,7 +1514,7 @@ class PresentationDirector {
       originTag.className = "node-flow-tag origin-outflow";
       originTag.style.left = `${originPos.x}px`;
       originTag.style.top = `${originPos.y}px`;
-      originTag.innerHTML = `🚨 Origin Outflow: -${totalFlow.toLocaleString()} veh/hr`;
+      originTag.innerHTML = `🚨 Origin Outflow: -${maxEvacFlow.toLocaleString()} veh/hr`;
       this.badgesContainer.appendChild(originTag);
     }
 
@@ -1527,7 +1524,7 @@ class PresentationDirector {
       shelterTag.className = "node-flow-tag shelter-inflow";
       shelterTag.style.left = `${shelterPos.x}px`;
       shelterTag.style.top = `${shelterPos.y}px`;
-      shelterTag.innerHTML = `🛡️ Refuge Absorption: +${totalFlow.toLocaleString()} veh/hr`;
+      shelterTag.innerHTML = `🛡️ Refuge Absorption: +${maxEvacFlow.toLocaleString()} veh/hr`;
       this.badgesContainer.appendChild(shelterTag);
     }
 
@@ -1813,8 +1810,8 @@ class PresentationDirector {
       </div>
       <div class="hud-calc-card">
         <span class="hud-calc-title">Max Evacuation Flow</span>
-        <span class="hud-calc-val" style="color:#8b5cf6;">${(this.maxFlowResult?.maxFlow || 2200).toLocaleString()} veh/hr</span>
-        <span style="font-size:10px; color:#8b5cf6;">Total Corridor Throughput</span>
+        <span class="hud-calc-val" style="color:#8b5cf6;">${bottleCap.toLocaleString()} veh/hr</span>
+        <span style="font-size:10px; color:#8b5cf6;">Bottleneck of Selected Route</span>
       </div>
       <div class="hud-calc-card">
         <span class="hud-calc-title">Route Bottleneck</span>
