@@ -1414,6 +1414,11 @@ class PresentationDirector {
     const augPaths = this.maxFlowResult?.augmentingPaths || [];
     const flowMap = this.maxFlowResult?.flowDistribution || {};
 
+    // Single bottleneck discovery on selected evacuation route
+    const bottleInfo = this.getSelectedRouteBottleneck();
+    const bottleEdge = bottleInfo?.edge;
+    const bottleCap = bottleEdge ? (bottleEdge.capacity_veh_hr || 1200) : (this.maxFlowResult?.minCutCapacity || 1800);
+
     // Realistic evacuation clearance approximation
     const evacDemandVehicles = 15000;
     const clearanceMinutesTotal = Math.round((evacDemandVehicles / totalFlow) * 60);
@@ -1427,10 +1432,10 @@ class PresentationDirector {
 
     this.hudSlidePills.innerHTML = `
       <span class="slide-pill primary">🌊 Max Evacuation Flow: ${totalFlow.toLocaleString()} veh/hr</span>
+      <span class="slide-pill warning">🛑 Route Bottleneck: ${bottleEdge ? bottleEdge.name : '1 Choke Point'} (${bottleCap.toLocaleString()} v/h)</span>
       <span class="slide-pill success">⏱️ Clearance Rate: ~${clearancePerMin} veh/min</span>
-      <span class="slide-pill amber">🛣️ ${augPaths.length || this.candidatePaths.length} Augmenting Corridors</span>
     `;
-    this.hudSlideSubnote.textContent = `Calculation: ∑ Path Bottlenecks = ${pathFormulas} = ${totalFlow.toLocaleString()} veh/hr Total Network Throughput`;
+    this.hudSlideSubnote.textContent = `Calculation: ∑ Path Bottlenecks = ${pathFormulas} = ${totalFlow.toLocaleString()} veh/hr (Route Bottleneck: ${bottleEdge ? bottleEdge.name : 'Corridor'})`;
     if (this.algoStepStatus) this.algoStepStatus.textContent = `Edmonds-Karp: Pushed ${totalFlow.toLocaleString()} veh/hr across ${augPaths.length || 1} parallel corridor(s)`;
 
     this.hudCalcMatrix.innerHTML = `
@@ -1440,9 +1445,9 @@ class PresentationDirector {
         <span style="font-size:10px; color:#8b5cf6;">~${clearancePerMin} vehicles cleared/min</span>
       </div>
       <div class="hud-calc-card">
-        <span class="hud-calc-title">Augmenting Corridors</span>
-        <span class="hud-calc-val">${augPaths.length || this.candidatePaths.length} Active</span>
-        <span style="font-size:10px; color:#0284c7;">${augPaths.slice(0, 2).map((p, i) => `P${i + 1}: +${p.bottleneck}v/h`).join(', ') || 'Parallel capacity saturation'}</span>
+        <span class="hud-calc-title">Route Bottleneck Limit</span>
+        <span class="hud-calc-val" style="color:#e11d48;">${bottleCap.toLocaleString()} veh/hr</span>
+        <span style="font-size:10px; color:#e11d48;">${bottleEdge ? (bottleEdge.name || 'Critical Link') : 'Saturated'}</span>
       </div>
       <div class="hud-calc-card">
         <span class="hud-calc-title">Est. Clearance (Approx)</span>
@@ -1465,10 +1470,16 @@ class PresentationDirector {
 
       if (edgeFlow > 0) {
         activeFlowEdgesCount++;
+        const isSelectedBottleneck = bottleEdge && (
+          edge.id === bottleEdge.id || 
+          (edge.u === bottleEdge.u && edge.v === bottleEdge.v) || 
+          (edge.u === bottleEdge.v && edge.v === bottleEdge.u)
+        );
+
         // Glow flow pipeline
         const pathElem = document.createElementNS("http://www.w3.org/2000/svg", "path");
         pathElem.setAttribute("d", straightPath);
-        pathElem.setAttribute("class", "morph-edge flow-augment");
+        pathElem.setAttribute("class", `morph-edge flow-augment ${isSelectedBottleneck ? 'min-cut-saturated' : ''}`);
         pathElem.dataset.edgeId = edge.id;
         pathElem.dataset.u = edge.u;
         pathElem.dataset.v = edge.v;
@@ -1479,7 +1490,7 @@ class PresentationDirector {
 
         // Place Flow Stat Chip at midPt
         const chip = document.createElement("div");
-        chip.className = `flow-stat-chip ${satPct >= 90 ? 'saturated' : ''}`;
+        chip.className = `flow-stat-chip ${isSelectedBottleneck ? 'saturated' : (satPct >= 90 ? 'saturated' : '')}`;
         chip.style.left = `${midPt.x}px`;
         chip.style.top = `${midPt.y}px`;
         chip.innerHTML = `
@@ -1490,7 +1501,7 @@ class PresentationDirector {
           <div class="flow-stat-bar-track">
             <div class="flow-stat-bar-fill" style="width: ${satPct}%"></div>
           </div>
-          <div class="flow-stat-meta">${satPct}% Capacity ${satPct >= 95 ? '⚠️ Saturated' : 'Utilized'}</div>
+          <div class="flow-stat-meta">${isSelectedBottleneck ? '🛑 Route Bottleneck (' + cap.toLocaleString() + ' v/h)' : (satPct + '% Capacity ' + (satPct >= 95 ? '⚠️ Saturated' : 'Utilized'))}</div>
         `;
         this.badgesContainer.appendChild(chip);
       }
@@ -1529,41 +1540,35 @@ class PresentationDirector {
 
   renderAlgoMinCut() {
     this.hudAlgoRuntimeBadge.textContent = "Max-Flow Min-Cut Theorem";
-    this.hudSlidePunchline.textContent = `Isolates the narrowest bottleneck cut in the network. Saturated choke points dictate the ceiling of statewide evacuation speed.`;
+    this.hudSlidePunchline.textContent = `Isolates the single critical bottleneck on the selected route. Saturated choke point dictates the ceiling of evacuation speed.`;
 
-    const cutEdges = this.maxFlowResult?.minCutEdges || [];
-    const cutCap = this.maxFlowResult?.minCutCapacity || this.maxFlowResult?.maxFlow || 1800;
-    const maxFlow = this.maxFlowResult?.maxFlow || cutCap;
+    const bottleInfo = this.getSelectedRouteBottleneck();
+    const bottleEdge = bottleInfo?.edge;
+    const bottleCap = bottleEdge ? (bottleEdge.capacity_veh_hr || 1200) : (this.maxFlowResult?.minCutCapacity || 1800);
     const reachableSet = new Set(this.maxFlowResult?.reachablePartition || [this.originId]);
 
-    // Realistic queuing and contra-flow approximations
-    const surgeArrivalRate = Math.max(cutCap + 1200, 3000);
-    const queueSurgeVehicles = Math.max(0, surgeArrivalRate - cutCap);
-    // At ~5m emergency car spacing:
+    // Realistic queuing and contra-flow approximations for this specific bottleneck
+    const surgeArrivalRate = Math.max(bottleCap + 1200, 3000);
+    const queueSurgeVehicles = Math.max(0, surgeArrivalRate - bottleCap);
     const tailbackGrowthRate = ((queueSurgeVehicles * 5) / 1000).toFixed(1);
-    // Contra-flow increases capacity by 50%
-    const contraGain = Math.round(cutCap * 0.5);
-
-    const cutEdgeFormulas = cutEdges.length > 0
-      ? cutEdges.map(e => `${e.name || 'Link'} (${(e.capacity || e.capacity_veh_hr || 1200).toLocaleString()} v/h)`).join(" + ")
-      : `${cutCap.toLocaleString()} veh/hr`;
+    const contraGain = Math.round(bottleCap * 0.5);
 
     this.hudSlidePills.innerHTML = `
-      <span class="slide-pill warning">🛑 Min-Cut: ${cutEdges.length || 1} Saturated Choke Point${cutEdges.length === 1 ? '' : 's'}</span>
-      <span class="slide-pill amber">⚠️ Cut Capacity: ${cutCap.toLocaleString()} veh/hr (100% Saturated)</span>
+      <span class="slide-pill warning">🛑 Route Bottleneck: ${bottleEdge ? (bottleEdge.name || '1 Critical Choke Point') : '1 Choke Point'}</span>
+      <span class="slide-pill amber">⚠️ Bottleneck Capacity: ${bottleCap.toLocaleString()} veh/hr (100% Saturated)</span>
       <span class="slide-pill primary">🛡️ Contra-Flow Gain: +${contraGain.toLocaleString()} veh/hr</span>
     `;
-    this.hudSlideSubnote.textContent = `Theorem Proven: Max-Flow (${maxFlow.toLocaleString()} v/h) ≡ Min-Cut Capacity (${cutCap.toLocaleString()} v/h across: ${cutEdgeFormulas})`;
-    if (this.algoStepStatus) this.algoStepStatus.textContent = `Min-Cut: ${cutEdges.length || 1} saturated choke point(s) flagged in flashing crimson`;
+    this.hudSlideSubnote.textContent = `Selected Route: [${this.optimalPath?.pathNodes?.join(" → ")}] — Single Bottleneck: ${bottleEdge ? bottleEdge.name : 'Arterial Corridor'} (${bottleCap.toLocaleString()} veh/hr). Deploy contra-flow marshals here.`;
+    if (this.algoStepStatus) this.algoStepStatus.textContent = `Min-Cut: Isolated 1 bottleneck for selected route (${bottleEdge?.name || 'Corridor'})`;
 
     this.hudCalcMatrix.innerHTML = `
       <div class="hud-calc-card">
-        <span class="hud-calc-title">Min-Cut Ceiling Capacity</span>
-        <span class="hud-calc-val" style="color:#e11d48;">${cutCap.toLocaleString()} veh/hr</span>
-        <span style="font-size:10px; color:#e11d48;">100% capacity saturated (Ceiling)</span>
+        <span class="hud-calc-title">Selected Route Bottleneck</span>
+        <span class="hud-calc-val" style="color:#e11d48;">${bottleCap.toLocaleString()} veh/hr</span>
+        <span style="font-size:10px; color:#e11d48;">${bottleEdge ? (bottleEdge.name || 'Critical Choke Point') : '100% Saturated'}</span>
       </div>
       <div class="hud-calc-card">
-        <span class="hud-calc-title">Queue Buildup Rate (Approx)</span>
+        <span class="hud-calc-title">Queue Buildup Rate</span>
         <span class="hud-calc-val" style="color:#d97706;">+${queueSurgeVehicles.toLocaleString()} veh/hr</span>
         <span style="font-size:10px; color:#d97706;">~${tailbackGrowthRate} km/hr tailback propagation</span>
       </div>
@@ -1574,25 +1579,37 @@ class PresentationDirector {
       </div>
     `;
 
-    // 1. Draw base straight edges with Min-Cut highlighting
+    // 1. Draw base straight edges: highlight selected route, highlight ONLY the single bottleneck, dim rest
     Object.values(this.topologicalEdgePaths).forEach(({ straightPath, edge, midPt, uPt, vPt }) => {
-      const isMinCut = cutEdges.some(me => 
-        me.id === edge.id || 
-        (me.u === edge.u && me.v === edge.v) || 
-        (me.u === edge.v && me.v === edge.u)
-      ) || (cutEdges.length === 0 && edge.capacity_veh_hr <= cutCap);
+      const isSelectedBottleneck = bottleEdge && (
+        edge.id === bottleEdge.id || 
+        (edge.u === bottleEdge.u && edge.v === bottleEdge.v) || 
+        (edge.u === bottleEdge.v && edge.v === bottleEdge.u)
+      );
+      const isOptimal = this.isEdgeInOptimalPath(edge);
 
       const pathElem = document.createElementNS("http://www.w3.org/2000/svg", "path");
       pathElem.setAttribute("d", straightPath);
-      pathElem.setAttribute("class", `morph-edge on-white ${isMinCut ? 'min-cut-saturated' : ''}`);
+
+      if (isSelectedBottleneck) {
+        pathElem.setAttribute("class", "morph-edge on-white min-cut-saturated");
+        pathElem.style.opacity = "1";
+      } else if (isOptimal) {
+        pathElem.setAttribute("class", "morph-edge on-white optimal-straight");
+        pathElem.style.opacity = "0.85";
+      } else {
+        pathElem.setAttribute("class", "morph-edge on-white");
+        pathElem.style.opacity = "0.18";
+      }
+
       pathElem.dataset.edgeId = edge.id;
       pathElem.dataset.u = edge.u;
       pathElem.dataset.v = edge.v;
-      if (!isMinCut) pathElem.style.opacity = "0.2";
       this.attachEdgeHover(pathElem, edge);
       this.svg.appendChild(pathElem);
 
-      if (isMinCut) {
+      // Render ONLY ONE BOTTLENECK CHOKE CARD FOR THE SELECTED ROUTE
+      if (isSelectedBottleneck) {
         const dx = vPt.x - uPt.x;
         const dy = vPt.y - uPt.y;
         const len = Math.hypot(dx, dy) || 1;
@@ -1605,7 +1622,7 @@ class PresentationDirector {
         card.style.left = `${Math.round(midPt.x + nx * 32)}px`;
         card.style.top = `${Math.round(midPt.y + ny * 32)}px`;
         card.innerHTML = `
-          <div class="choke-card-badge">🛑 BOTTLENECK CHOKE POINT</div>
+          <div class="choke-card-badge">🛑 SELECTED ROUTE BOTTLENECK</div>
           <div class="choke-card-name">${edge.name || 'Arterial Corridor'}</div>
           <div class="choke-card-stats">
             <span>Capacity: <strong>${(edge.capacity_veh_hr || 1200).toLocaleString()} v/h</strong></span>
@@ -1770,16 +1787,20 @@ class PresentationDirector {
   renderStep8_HighlightOptimalEdge() {
     const shelterNode = KERALA_GRAPH_DATA.nodes[this.shelterId] || { name: "Safe Haven", elevation: 45 };
 
-    this.hudSlideTitle.innerHTML = `<span> Phase 8: Optimal Route Selected &amp; Choke Points Flagged</span>`;
+    const bottleInfo = this.getSelectedRouteBottleneck();
+    const bottleEdge = bottleInfo?.edge;
+    const bottleCap = bottleEdge ? (bottleEdge.capacity_veh_hr || 1200) : 1800;
+
+    this.hudSlideTitle.innerHTML = `<span> Phase 8: Optimal Route Selected &amp; Choke Point Flagged</span>`;
     this.hudAlgoRuntimeBadge.textContent = "Final Policy Output";
-    this.hudSlidePunchline.textContent = `The algorithm selects the winning optimal evacuation corridor (cyan) and highlights saturated Min-Cut choke points (crimson) for contra-flow enforcement.`;
+    this.hudSlidePunchline.textContent = `The algorithm selects the winning optimal evacuation corridor (cyan) and highlights its single critical bottleneck (crimson) for contra-flow enforcement.`;
 
     this.hudSlidePills.innerHTML = `
       <span class="slide-pill success"> Winning Corridor: ${this.optimalPath?.totalKm} km to ${shelterNode.name}</span>
       <span class="slide-pill primary">⏱️ Estimated Travel: ${this.optimalPath?.totalMinutes || 45} min</span>
-      <span class="slide-pill warning"> Bottlenecks Isolated: Police Marshals Assigned</span>
+      <span class="slide-pill warning">🛑 Route Bottleneck: ${bottleEdge ? bottleEdge.name : '1 Choke Point'} (${bottleCap.toLocaleString()} v/h)</span>
     `;
-    this.hudSlideSubnote.textContent = `Optimal Path Traversal: [${this.optimalPath?.pathNodes?.join(" → ")}]`;
+    this.hudSlideSubnote.textContent = `Optimal Path Traversal: [${this.optimalPath?.pathNodes?.join(" → ")}] — Bottleneck: ${bottleEdge ? bottleEdge.name : 'Corridor'}`;
 
     if (this.hudAlgoTabs) this.hudAlgoTabs.style.display = "none";
     if (this.hudAlgoStepper) this.hudAlgoStepper.style.display = "none";
@@ -1796,22 +1817,24 @@ class PresentationDirector {
         <span style="font-size:10px; color:#8b5cf6;">Total Corridor Throughput</span>
       </div>
       <div class="hud-calc-card">
-        <span class="hud-calc-title">Saturated Min-Cut</span>
-        <span class="hud-calc-val" style="color:#e11d48;">${(this.maxFlowResult?.minCutEdges || []).length || 1} Choke Point${(this.maxFlowResult?.minCutEdges || []).length === 1 ? '' : 's'}</span>
-        <span style="font-size:10px; color:#e11d48;">Deploy Contra-Flow Marshals</span>
+        <span class="hud-calc-title">Route Bottleneck</span>
+        <span class="hud-calc-val" style="color:#e11d48;">1 Critical Choke</span>
+        <span style="font-size:10px; color:#e11d48;">${bottleCap.toLocaleString()} v/h (${bottleEdge ? (bottleEdge.name || 'Bottleneck') : 'Choke'})</span>
       </div>
     `;
 
     // 1. Draw straight base edges on topological layout
     Object.values(this.topologicalEdgePaths).forEach(({ straightPath, edge }) => {
-      const isOptimal = this.isEdgeInOptimalPath(edge);
-      const isMinCut = this.maxFlowResult?.minCutEdges?.some(me => 
-        (me.u === edge.u && me.v === edge.v) || (me.u === edge.v && me.v === edge.u)
+      const isSelectedBottleneck = bottleEdge && (
+        edge.id === bottleEdge.id || 
+        (edge.u === bottleEdge.u && edge.v === bottleEdge.v) || 
+        (edge.u === bottleEdge.v && edge.v === bottleEdge.u)
       );
+      const isOptimal = this.isEdgeInOptimalPath(edge);
 
       let edgeClass = "morph-edge on-white";
-      if (isOptimal) edgeClass += " optimal-straight";
-      else if (isMinCut) edgeClass += " min-cut-saturated";
+      if (isSelectedBottleneck) edgeClass += " min-cut-saturated";
+      else if (isOptimal) edgeClass += " optimal-straight";
 
       const pathElem = document.createElementNS("http://www.w3.org/2000/svg", "path");
       pathElem.setAttribute("d", straightPath);
@@ -2412,6 +2435,49 @@ class PresentationDirector {
     return this.optimalPath.pathEdges.some(pe => 
       (pe.u === edge.u && pe.v === edge.v) || (pe.u === edge.v && pe.v === edge.u)
     );
+  }
+
+  // =========================================================================
+  // SINGLE BOTTLENECK DISCOVERY FOR THE SELECTED EVACUATION ROUTE
+  // =========================================================================
+  getSelectedRouteBottleneck() {
+    // 1. Gather all edges along the selected/optimal route from topological layout
+    const optimalEdgeItems = [];
+    Object.values(this.topologicalEdgePaths).forEach(item => {
+      if (this.isEdgeInOptimalPath(item.edge)) {
+        optimalEdgeItems.push(item);
+      }
+    });
+
+    if (optimalEdgeItems.length === 0) {
+      if (this.optimalPath?.pathEdges?.length > 0) {
+        const sorted = [...this.optimalPath.pathEdges].sort(
+          (a, b) => (a.capacity_veh_hr || 1200) - (b.capacity_veh_hr || 1200)
+        );
+        return { edge: sorted[0], item: null, straightPath: null, midPt: null, uPt: null, vPt: null };
+      }
+      return null;
+    }
+
+    // 2. Check if any edge on the selected route belongs to the computed Min-Cut
+    const cutEdges = this.maxFlowResult?.minCutEdges || [];
+    const minCutOnSelected = optimalEdgeItems.filter(({ edge }) =>
+      cutEdges.some(me =>
+        me.id === edge.id ||
+        (me.u === edge.u && me.v === edge.v) ||
+        (me.u === edge.v && me.v === edge.u)
+      )
+    );
+
+    if (minCutOnSelected.length > 0) {
+      // If multiple cut edges are on selected route, pick the one with the lowest capacity
+      minCutOnSelected.sort((a, b) => (a.edge.capacity_veh_hr || 1200) - (b.edge.capacity_veh_hr || 1200));
+      return minCutOnSelected[0];
+    }
+
+    // 3. Otherwise, the definitive bottleneck of the selected route is its corridor with lowest capacity
+    optimalEdgeItems.sort((a, b) => (a.edge.capacity_veh_hr || 1200) - (b.edge.capacity_veh_hr || 1200));
+    return optimalEdgeItems[0];
   }
 
   // =========================================================================
