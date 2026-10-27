@@ -249,36 +249,35 @@ SDG 9
 \tocline{4}{SYSTEM DESIGN AND METHODOLOGY}{9}
 \tocline{4.1}{SYSTEM ARCHITECTURE}{9}
 \tocline{4.2}{DATASET ACQUISITION AND ROAD NETWORK TOPOLOGY}{10}
-\tocline{4.3}{OPENSTREETMAP INTEGRATION AND REAL ROAD GEOMETRIES}{11}
-\tocline{4.4}{HISTORICAL DISASTER DATA AND SPATIAL HAZARD MODELING}{12}
-\tocline{4.5}{MULTI-CRITERIA DIJKSTRA WEIGHT FORMULATION}{13}
-\tocline{4.6}{MULTI-CRITERIA SHELTER SELECTION AND BASIN BYPASS}{15}
-\tocline{4.7}{MAXIMUM FLOW AND BOTTLENECK MIN-CUT THEOREM}{16}
-\tocline{4.8}{MINIMUM SPANNING TREE FOR RELIEF LOGISTICS}{17}
-\tocline{4.9}{TOOLS AND TECHNOLOGIES}{18}
+\tocline{4.3}{OPENSTREETMAP INTEGRATION AND REAL ROAD GEOMETRIES}{13}
+\tocline{4.4}{HISTORICAL DISASTER DATA AND SPATIAL HAZARD MODELING}{14}
+\tocline{4.5}{MULTI-CRITERIA DIJKSTRA WEIGHT FORMULATION}{15}
+\tocline{4.6}{MULTI-CRITERIA SHELTER SELECTION AND BASIN BYPASS}{17}
+\tocline{4.7}{MAXIMUM FLOW AND BOTTLENECK MIN-CUT THEOREM}{19}
+\tocline{4.8}{MINIMUM SPANNING TREE FOR RELIEF LOGISTICS}{20}
+\tocline{4.9}{TOOLS AND TECHNOLOGIES}{21}
 \vspace{0.08in}
-\tocline{5}{IMPLEMENTATION}{19}
-\tocline{5.1}{DATASET ACQUISITION AND SPATIAL NETWORK CONSTRUCTION}{19}
-\tocline{5.2}{OSRM POLYLINE INGESTION AND DOWNSAMPLING PIPELINE}{20}
-\tocline{5.3}{PYTHON BACKEND REST API SERVER}{21}
-\tocline{5.4}{ALGORITHMIC IMPLEMENTATION: DIJKSTRA, MAX-FLOW, AND MST}{22}
-\tocline{5.5}{INTERACTIVE TACTICAL GIS FRONTEND AND 9-PHASE MORPHING}{24}
-\tocline{5.6}{CORE SOURCE CODE IMPLEMENTATION}{25}
+\tocline{5}{IMPLEMENTATION}{22}
+\tocline{5.1}{DATASET ACQUISITION AND SPATIAL NETWORK CONSTRUCTION}{22}
+\tocline{5.2}{OSRM POLYLINE INGESTION AND DOWNSAMPLING PIPELINE}{23}
+\tocline{5.3}{PYTHON BACKEND REST API SERVER}{24}
+\tocline{5.4}{ALGORITHMIC IMPLEMENTATION: DIJKSTRA, MAX-FLOW, AND MST}{25}
+\tocline{5.5}{INTERACTIVE TACTICAL GIS FRONTEND AND 9-PHASE MORPHING}{28}
 \vspace{0.08in}
-\tocline{6}{RESULTS AND DISCUSSION}{29}
-\tocline{6.1}{EXPERIMENTAL SETUP AND VERIFICATION TEST CASES}{29}
-\tocline{6.2}{EVALUATION OF DIJKSTRA ROUTING AND FLOOD BASIN BYPASS}{30}
-\tocline{6.3}{THROUGHPUT AND BOTTLENECK ANALYSIS USING MAX-FLOW MIN-CUT}{32}
-\tocline{6.4}{SPANNING TREE OPTIMIZATION FOR RELIEF LOGISTICS}{33}
-\tocline{6.5}{SYSTEM PERFORMANCE AND RUNTIME LATENCY}{34}
+\tocline{6}{RESULTS AND DISCUSSION}{31}
+\tocline{6.1}{EXPERIMENTAL SETUP AND VERIFICATION TEST CASES}{31}
+\tocline{6.2}{EVALUATION OF DIJKSTRA ROUTING AND FLOOD BASIN BYPASS}{32}
+\tocline{6.3}{THROUGHPUT AND BOTTLENECK ANALYSIS USING MAX-FLOW MIN-CUT}{35}
+\tocline{6.4}{SPANNING TREE OPTIMIZATION FOR RELIEF LOGISTICS}{37}
+\tocline{6.5}{SYSTEM PERFORMANCE AND RUNTIME LATENCY}{38}
 \vspace{0.08in}
-\tocline{7}{CONCLUSION AND FUTURE WORK}{36}
-\tocline{7.1}{CONCLUSION}{36}
-\tocline{7.2}{FUTURE WORK}{37}
+\tocline{7}{CONCLUSION AND FUTURE WORK}{40}
+\tocline{7.1}{CONCLUSION}{40}
+\tocline{7.2}{FUTURE WORK}{41}
 \vspace{0.08in}
-\tocline{8}{SUSTAINABLE DEVELOPMENT GOALS (SDGs)}{38}
+\tocline{8}{SUSTAINABLE DEVELOPMENT GOALS (SDGs)}{42}
 \vspace{0.08in}
-\tocline{}{REFERENCES}{40}
+\tocline{}{REFERENCES}{44}
 \clearpage
 
 % ==================== CHAPTER 1 ====================
@@ -511,6 +510,17 @@ Each edge $e = (u, v) \in E$ is defined by:
 \end{equation}
 where $d_e$ is the driving distance in kilometers, $C_e$ is vehicle capacity in vehicles per hour, $h_e$ is average road elevation in meters, $B_e \in [0.05, 0.95]$ is baseline flood susceptibility, and $\text{hazard}$ indicates association with a flood or landslide basin.
 
+Figure~\ref{fig:statewide_grid} presents the overall statewide evacuation grid rendered within the tactical command interface.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{fig_statewide_grid.png}
+\caption{PlanEsc Tactical Evacuation Command Center and Statewide 14-District GIS Network on OpenStreetMap.}
+\label{fig:statewide_grid}
+\end{figure}
+
+As depicted in Figure~\ref{fig:statewide_grid}, the operator dashboard displays all designated high-ground sanctuaries across the state marked with green cross badges, interconnected by weighted arterial road corridors. The left control panel enables incident commanders to inject dynamic environmental conditions, including monsoonal flood surges, red alert precipitation levels, and localized road blockades (e.g., Wayanad Churam landslides or Periyar river breaches). The map legend provides real-time status indicators for open weighted corridors, submerged roadways, designated safe havens, and delineated flood inundation basins.
+
 \section{OPENSTREETMAP INTEGRATION AND REAL ROAD GEOMETRIES}
 
 A core innovation of Kerala SafeRoute is the rejection of synthetic straight-line Cartesian edges. In real-world geographical road networks, highways follow natural river valleys, coastal contours, and mountainous switchbacks. Assuming Euclidean straight lines introduces severe distance errors of 25\% to 60\%, especially on ghat corridors like the Thamarassery Churam.
@@ -684,7 +694,17 @@ If the geographically closest shelter $s_{\text{closest}} = \arg\min_s \sum_{e \
 \begin{equation}
     \text{Alert: Bypassed } s_{\text{closest}} \text{ (elevation } +h_{\text{closest}}\,\text{m}) \text{ due to flood hazard proximity and choke points.}
 \end{equation}
-Evacuees are routed along high-capacity arteries to $s^*$, eliminating the trap hazard.
+
+Figure~\ref{fig:basin_bypass_map} illustrates this multi-criteria sanctuary selection and flood basin bypass behavior in action.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{fig_basin_bypass_map.png}
+\caption{Geospatial Inundation Mapping and Safe Sanctuary Selection in the Kuttanad--Thiruvalla Delta Basin.}
+\label{fig:basin_bypass_map}
+\end{figure}
+
+As shown in Figure~\ref{fig:basin_bypass_map}, when the threat origin is placed at Thiruvalla (blue node) within the Pamba river basin, conventional shortest-path navigation routes evacuees westward along the AC Canal road (indicated by the orange corridor) toward the Alappuzha SD College camp. However, this route cuts directly across the deeply submerged Kuttanad delta bowl (demarcated by the blue-shaded flood polygon at $-1.5$\,m elevation). SafeRoute recognizes that the Alappuzha refuge is vulnerable to becoming isolated. Therefore, the engine penalizes this route and dynamically selects the CMS College Safe Hub in Kottayam (indicated by the blue path running north along MC Road through Changanassery), gaining $+23$\,m of elevation climb and guiding citizens along high-ground arteries.
 
 \section{MAXIMUM FLOW AND BOTTLENECK MIN-CUT THEOREM}
 
@@ -982,6 +1002,17 @@ The frontend presentation tier delivers a dual-capability environment:
     \end{itemize}
 \end{enumerate}
 
+Figure~\ref{fig:phase6_morph} illustrates the Phase 6 topological morphing transformation.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{fig_phase6_morph.png}
+\caption{Phase 6: Morphing Physical Curvy Highways into Topological Vector Graph Edges ($G = (V, E)$).}
+\label{fig:phase6_morph}
+\end{figure}
+
+As shown in Figure~\ref{fig:phase6_morph}, Phase 6 transforms physical GIS coordinates into an abstract mathematical layout. Nodes are arrayed horizontally from the threat origin $S$ (Thiruvalla MC Road Junction) on the left, through intermediate transit interchanges (Changanassery \texttt{CH}, Kottayam \texttt{KO}, Pathanamthitta \texttt{PA}, and Adoor \texttt{AD}), to candidate high-ground havens $T$ on the right. Edge badges dynamically indicate physical distance and vehicular volume capacity ($1,500$--$2,400$\,veh/hr), enabling emergency planners to evaluate the transport topology free from cartographic visual clutter.
+
 \clearpage
 
 % ==================== CHAPTER 6 ====================
@@ -1028,6 +1059,28 @@ Commercial navigation engines recommend Alappuzha SD College because it is geogr
 \end{enumerate}
 Consequently, SafeRoute assigns Alappuzha SD College a punitive suitability score of $219.2$, safely bypassing it in favor of Kottarakkara Jubilee Camp ($\Phi = 54.7$). The system directs evacuees along the higher-ground corridor, gaining $+36$\,m of elevation clearance and avoiding flood entrapment.
 
+Figure~\ref{fig:phase7_dijkstra} displays the live algorithmic execution of Dijkstra wavefront relaxation during Phase 7.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{fig_phase7_dijkstra.png}
+\caption{Phase 7 (Algorithm Lab): Multi-Criteria Dijkstra Priority Queue Wavefront Relaxation.}
+\label{fig:phase7_dijkstra}
+\end{figure}
+
+As depicted in Figure~\ref{fig:phase7_dijkstra}, the priority queue relaxation algorithm traces the safest evacuation trajectory from origin $S$ (\texttt{thiruvalla}) to \texttt{changanassery} ($8.7$\,km, $+11.5$\,m), continuing along MC Road to \texttt{kottayam\_city} ($18.8$\,km, $+15$\,m), and ascending to the designated high-ground refuge at CMS College Kottayam ($+35$\,m). The HUD summary card confirms that the optimal path spans a total distance of $28.4$\,km with an estimated evacuation time of $45$\,minutes and an exceptionally low composite risk score of $17/100$, confirming minimal hazard exposure.
+
+Following algorithm completion, Figure~\ref{fig:phase9_warp} shows Phase 9 re-warping the abstract path back onto the physical OpenStreetMap cartography.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.62\textwidth]{fig_phase9_warp.png}
+\caption{Phase 9: Seamless Warping of the Mathematical Path back to Real Curving Highway Polylines on OpenStreetMap.}
+\label{fig:phase9_warp}
+\end{figure}
+
+As shown in Figure~\ref{fig:phase9_warp}, the straight vector graph edges bend and snap back into the actual winding physical alignment of the Main Central Road (SH 1), ready for turn-by-turn navigation by emergency responders and civilian drivers.
+
 \section{THROUGHPUT AND BOTTLENECK ANALYSIS USING MAX-FLOW MIN-CUT}
 
 Under mass evacuation in Scenario A, the vehicle throughput from Kayamkulam to the Kottarakkara haven was analyzed using the Edmonds-Karp engine. 
@@ -1055,10 +1108,16 @@ Table~\ref{tab:maxflow_results} summarizes the flow augmentation across parallel
 \subsection{Min-Cut Bottleneck Isolation}
 Upon residual saturation, the minimum cut algorithm isolates the single-lane bridge link \texttt{e\_adoor\_kottarakkara} (Enathu Bridge approach) and the coastal junction \texttt{e\_karunagappally\_kollam}. These two corridors form the definitive ceiling ($2,200$\,veh/hr) on total evacuation throughput. 
 
-The system automatically generates the following command directive:
-\begin{quote}
-    \textbf{EOC Operational Directive:} \textit{``Enforce contra-flow lane reversal on Enathu Bridge link (\texttt{e\_adoor\_kottarakkara}) and deploy police marshals at Karunagappally junction. Expanding this cut section by $600$\,veh/hr raises statewide corridor throughput to $2,800$\,veh/hr.''}
-\end{quote}
+Figure~\ref{fig:phase7_mincut} demonstrates this Max-Flow Min-Cut bottleneck isolation in the Algorithm Lab.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{fig_phase7_mincut.png}
+\caption{Phase 7 (Algorithm Lab): Edmonds-Karp Residual Flow and Min-Cut Bottleneck Cut Isolation.}
+\label{fig:phase7_mincut}
+\end{figure}
+
+As shown in Figure~\ref{fig:phase7_mincut}, the terminal access ramp to the CMS College haven (\texttt{e\_kottayam\_shelter}) has an upper physical throughput of $1,600$\,veh/hr. Because upstream multi-lane arteries deliver higher vehicle volumes, this corridor reaches 100\% saturation, generating an estimated queue buildup rate of $+1,400$\,veh/hr ($\approx 7.0$\,km/hr tailback propagation). SafeRoute isolates this critical cut edge in flashing crimson and issues the actionable recommendation: \emph{``ACTION: Enforce Contra-Flow (+50\% Capacity, +800 veh/hr)'',} providing civil defense marshals with concrete guidance to reverse inbound lanes and alleviate vehicular choking.
 
 \section{SPANNING TREE OPTIMIZATION FOR RELIEF LOGISTICS}
 
