@@ -1,0 +1,1240 @@
+\documentclass[12pt,oneside]{report}
+\usepackage[letterpaper,margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{mathptmx}
+\usepackage{newtxtext}
+\usepackage{newtxmath}
+\usepackage{array,booktabs,enumitem,float,graphicx,listings,xcolor}
+\usepackage{titlesec}
+\usepackage{tocloft}
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=false,
+    pdfborder={0 0 0}
+}
+
+% Code listing styling
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codeblue}{rgb}{0,0,0.8}
+\definecolor{backcolor}{rgb}{0.98,0.98,0.98}
+
+\lstdefinestyle{cleanstyle}{
+    backgroundcolor=\color{backcolor},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{codeblue}\bfseries,
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codegray},
+    basicstyle=\ttfamily\scriptsize,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=t,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2,
+    frame=single
+}
+\lstset{style=cleanstyle}
+\usepackage{setspace}
+\usepackage{tabularx}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.3\baselineskip}
+\setstretch{1.12}
+\renewcommand{\contentsname}{CONTENTS}
+\renewcommand{\chaptername}{CHAPTER}
+\makeatletter
+\renewcommand{\@makechapterhead}[1]{%
+  \vspace*{25pt}%
+  {\parindent \z@ \centering \normalfont
+    \ifnum \c@secnumdepth >\m@ne
+      \Large\bfseries \@chapapp\space \thechapter\par\nobreak
+      \vskip 14pt
+    \fi
+    \interlinepenalty\@M
+    \Large\bfseries #1\par\nobreak
+    \vskip 30pt
+  }}
+\renewcommand{\section}{\@startsection{section}{1}{\z@}%
+  {-2.4ex \@plus -1ex \@minus -.2ex}%
+  {0.6ex \@plus .2ex}%
+  {\normalfont\large\bfseries}}
+\renewcommand{\subsection}{\@startsection{subsection}{2}{\z@}%
+  {-1.8ex \@plus -0.8ex \@minus -.2ex}%
+  {0.4ex \@plus .2ex}%
+  {\normalfont\normalsize\bfseries}}
+\makeatother
+\setcounter{secnumdepth}{2}
+\setcounter{tocdepth}{2}
+\setlist[itemize]{topsep=2pt,itemsep=2pt,parsep=0pt,partopsep=0pt}
+\setlist[enumerate]{topsep=2pt,itemsep=2pt,parsep=0pt,partopsep=0pt}
+\pagestyle{plain}
+\renewcommand{\thechapter}{\arabic{chapter}}
+\newcommand{\tocline}[3]{%
+  \begingroup\setlength{\parskip}{0pt}\small
+  \noindent\makebox[\textwidth][l]{#1\hspace{0.8em}#2\dotfill\hspace{0.5em}#3}\par\vspace{0.18em}\endgroup}
+\newcommand{\chapterpage}[1]{\chapter{#1}}
+
+\begin{document}
+\pagenumbering{roman}
+
+% ==================== TITLE PAGE ====================
+\thispagestyle{empty}
+\begin{center}
+{\Large\bfseries CUSTOMER CHURN PREDICTION AND SEGMENTATION FOR A TELECOM COMPANY}\par
+\vspace{0.20in}
+{\large\bfseries A CASE STUDY REPORT}\par
+\vspace{0.20in}
+submitted by\par
+\vspace{0.15in}
+{\large\bfseries SAM SUNNY (MUT24CA064)}\par
+\vspace{0.20in}
+as part of the course\par
+\vspace{0.15in}
+{\large\bfseries PCCST503 -- MACHINE LEARNING}\par
+\vspace{0.30in}
+to\par
+\vspace{0.15in}
+The APJ Abdul Kalam Technological University in partial fulfilment of the\par
+requirements for the award of the Degree\par
+\vspace{0.20in}
+of\par
+\vspace{0.15in}
+{\large\bfseries Bachelor of Technology}\par
+In\par
+{\large\bfseries COMPUTER SCIENCE \& ENGINEERING(ARTIFICIAL INTELLIGENCE)}\par
+
+\begin{figure}[h]
+\begin{center}
+\includegraphics[width=5.5cm]{Mits logo-Master.pdf}
+\end{center}
+\end{figure}
+{\large\bfseries DEPARTMENT OF ARTIFICIAL INTELLIGENCE \& DATA SCIENCE}\par
+{\large\bfseries MUTHOOT INSTITUTE OF TECHNOLOGY \& SCIENCE}\par
+{\large\bfseries KOCHI - 682308}\par
+{\large\bfseries OCTOBER 2026}
+\end{center}
+\clearpage
+
+% ==================== CERTIFICATE ====================
+\thispagestyle{empty}
+\begin{figure}[h]
+\begin{center}
+\includegraphics[width=5.5cm]{Mits logo-Master.pdf}
+\end{center}
+\end{figure}
+\begin{center}
+{\LARGE\bfseries CERTIFICATE}
+\end{center}
+\vspace{0.65in}
+This is to certify that the report entitled ``CUSTOMER CHURN PREDICTION AND SEGMENTATION FOR A TELECOM COMPANY'', submitted by SAM SUNNY (MUT24CA064) to MUTHOOT INSTITUTE OF TECHNOLOGY \& SCIENCE for the award of the degree of Bachelor of Technology in COMPUTER SCIENCE \& ENGINEERING (ARTIFICIAL INTELLIGENCE), is a bonafide record of the course project work carried out by him, as part of the course PCCST503 MACHINE LEARNING, under my supervision and guidance.
+\vspace{2.2in}
+
+LINU PAULOSE\\
+Faculty-in-charge
+
+\vspace{0.65in}
+
+Place: KOCHI\\
+Date: 27/10/2026
+\clearpage
+
+% ==================== ABSTRACT ====================
+\setcounter{page}{2}
+\thispagestyle{plain}
+\begin{center}
+\vspace*{0.1in}
+{\LARGE\bfseries ABSTRACT}
+\end{center}
+\vspace{0.10in}
+
+Customer churn is a major challenge in the telecommunications industry, as retaining existing subscribers is significantly more cost-effective than acquiring new ones. This case study develops an end-to-end machine learning system for churn prediction and customer segmentation using the IBM Telco Customer Churn dataset of 7,043 subscriber records. The data was cleaned by removing non-predictive administrative columns and post-churn leakage fields, setting missing Total Charges for new subscribers (zero tenure) to \$0.00, and converting all categorical variables into numeric format using Label Encoding. Using a stratified 80:20 train-test split, seven supervised classification algorithms were benchmarked : Logistic Regression, K-Nearest Neighbors (KNN), Decision Trees, Support Vector Machines (SVM with RBF kernel), Multi-Layer Perceptrons (MLP), Random Forest (Bagging), and Gradient Boosting (Boosting). Hyperparameters for KNN and MLP were tuned using 5-fold cross-validation on the training set. On the 1,409 test records, ensemble models delivered the strongest overall performance: Gradient Boosting achieved the highest ROC-AUC of 0.8523, while Random Forest achieved the highest test accuracy of 80.77\%. Logistic Regression provided a dependable, balanced baseline with an F1-score of 0.6141, and Decision Trees achieved the highest recall at 63.64\%, capturing the greatest proportion of defecting customers. In addition, unsupervised K-Means clustering ($k=3$) identified three practical customer personas: High-Value Loyalists (15.0\% churn), High-Risk Month-to-Month Subscribers (44.4\% churn), and Budget Essentialists (7.1\% churn). A campaign cost analysis demonstrates that targeting high-risk subscribers reduces marketing expenditures by over 70\% compared to mass outreach.
+\clearpage
+
+% ==================== ARTICULATION MATRIX & SDG ====================
+\thispagestyle{plain}
+\begin{center}
+\vspace{0.05in}
+{\large\bfseries CO -- PO / PSO  ARTICULATION MATRIX}
+\end{center}
+\textbf{CO1:} Apply Machine Learning concepts and basic parameter estimation methods to solve data-driven problems.\\
+\textbf{CO2:} Demonstrate regression and classification algorithms and performance measures to evaluate machine learning models.\\
+\textbf{CO3:} Illustrate the concepts of Neural Networks and Support Vector Machines in Machine learning problems.\\
+\textbf{CO4:} Demonstrate unsupervised learning concepts, ensemble methods and dimensionality reduction techniques to comprehend complex data patterns.
+\begin{center}
+\begin{tabular}{|c|*{11}{c|}c|c|}
+\hline
+\textbf{CO}
+& \textbf{PO1} & \textbf{PO2} & \textbf{PO3}
+& \textbf{PO4} & \textbf{PO5} & \textbf{PO6}
+& \textbf{PO7} & \textbf{PO8} & \textbf{PO9}
+& \textbf{PO10} & \textbf{PO11}
+& \textbf{PSO1} & \textbf{PSO2} \\ \hline
+
+CO1 & 3 & 2 & 2 & -- & -- & -- & -- & -- & -- & -- & 2 & 3 & 2 \\ \hline
+CO2 & 3 & 3 & 3 & 2 & 3 & -- & -- & -- & -- & -- & 2 & 3 & 2 \\ \hline
+CO3 & 2 & 2 & 3 & -- & 3 & -- & -- & -- & -- & -- & 2 & 3 & 2 \\ \hline
+CO4 & 2 & 3 & 2 & 3 & 2 & -- & -- & -- & -- & -- & 2 & 3 & 2 \\ \hline
+\end{tabular}
+\end{center}
+
+\vspace{0.10in}
+\begin{center}
+    {\large\bfseries SUSTAINABLE DEVELOPMENT GOALS (SDG) ADDRESSED}
+\end{center}
+
+\vspace{0.05cm}
+
+\noindent
+\begin{tabularx}{\textwidth}{|c|c|X|}
+\hline
+\textbf{SDG} & \textbf{Target} & \textbf{Justification} \\ \hline
+
+SDG 8
+& Target 8.2
+& Boosts enterprise economic productivity via data-driven proactive churn prevention that minimizes recurring revenue attrition. \\ \hline
+
+SDG 9
+& Target 9.5 \& 9.c
+& Advances industrial analytics infrastructure and supports inclusive access to reliable, affordable digital connectivity. \\ \hline
+
+SDG 12
+& Target 12.6
+& Promotes sustainable resource utilization by replacing broad, wasteful promotions with targeted retention interventions. \\ \hline
+
+\end{tabularx}
+
+\clearpage
+
+% ==================== CONTENTS ====================
+\thispagestyle{plain}
+\begin{center}
+\vspace*{0.15in}
+{\LARGE\bfseries CONTENTS}
+\end{center}
+\vspace{0.25in}
+\tocline{}{ABSTRACT}{ii}
+\tocline{}{CO--PO/PSO ARTICULATION MATRIX}{iii}
+\tocline{}{SUSTAINABLE DEVELOPMENT GOALS (SDG) ADDRESSED}{iii}
+\vspace{0.08in}
+\tocline{1}{INTRODUCTION}{1}
+\tocline{1.1}{PURPOSE OF THE SYSTEM}{1}
+\tocline{1.2}{RELEVANCE AND SCOPE OF THE SYSTEM}{2}
+\vspace{0.08in}
+\tocline{2}{PROBLEM DEFINITION}{3}
+\tocline{2.1}{PROBLEM STATEMENT}{3}
+\tocline{2.2}{OBJECTIVES}{3}
+\vspace{0.08in}
+\tocline{3}{LITERATURE SURVEY}{4}
+\vspace{0.08in}
+\tocline{4}{PROPOSED SYSTEM AND METHODOLOGY}{7}
+\tocline{4.1}{SYSTEM ARCHITECTURE}{7}
+\tocline{4.2}{DATASET AUDIT AND PREPROCESSING}{8}
+\tocline{4.3}{CATEGORICAL ENCODING AND SCALING}{9}
+\tocline{4.4}{COVARIANCE AND FEATURE ANALYSIS}{10}
+\tocline{4.5}{MODEL BUILDING AND BENCHMARKING}{11}
+\tocline{4.6}{EVALUATION METRICS AND COST ASYMMETRY}{13}
+\tocline{4.7}{TOOLS AND TECHNOLOGIES}{14}
+\vspace{0.08in}
+\tocline{5}{IMPLEMENTATION}{15}
+\tocline{5.1}{DATASET ACQUISITION AND INSPECTION}{15}
+\tocline{5.2}{PREPROCESSING AND ENCODING PIPELINE}{15}
+\tocline{5.3}{DATASET COMPARISON: BEFORE AND AFTER PREPROCESSING}{16}
+\tocline{5.4}{COVARIANCE, CORRELATION, AND FEATURE IMPORTANCE}{17}
+\tocline{5.5}{HYPERPARAMETER CROSS-VALIDATION AND MODEL TRAINING}{18}
+\tocline{5.6}{EVALUATION AND CUSTOMER SEGMENTATION PIPELINE}{19}
+\tocline{5.7}{COMPLETE PYTHON IMPLEMENTATION}{20}
+\vspace{0.08in}
+\tocline{6}{RESULTS AND DISCUSSION}{25}
+\tocline{6.1}{RESULTS}{25}
+\tocline{6.2}{DISCUSSION}{31}
+\vspace{0.08in}
+\tocline{7}{CONCLUSION AND FUTURE WORK}{36}
+\vspace{0.08in}
+\tocline{8}{SUSTAINABLE DEVELOPMENT GOALS (SDGs)}{38}
+\clearpage
+
+% ==================== CHAPTER 1 ====================
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+\chapterpage{INTRODUCTION}
+\section{PURPOSE OF THE SYSTEM}
+
+This system uses machine learning to analyze telecom subscriber behavior, estimate churn risk, and support targeted retention. By examining customer demographics, subscribed services, contract types, and billing records, it seeks to identify patterns associated with customer defection and help providers prioritize timely retention offers.
+
+The project combines supervised prediction with unsupervised segmentation. Seven classifiers---Logistic Regression, K-Nearest Neighbors (KNN), Decision Trees, Support Vector Machines (SVM), Multi-Layer Perceptrons (MLP), Random Forest, and Gradient Boosting---are compared on held-out data using standard classification metrics. K-Means clustering is also used to identify customer groups with distinct retention needs.
+
+The system's objectives are to:
+\begin{itemize}
+    \item Audit and preprocess the IBM Telco Customer Churn dataset, addressing missing billing values and removing leakage attributes.
+    \item Encode categorical features and examine relationships among customer characteristics, billing, and churn.
+    \item Compare seven classifiers and tune KNN and MLP with stratified five-fold cross-validation.
+    \item Use K-Means clustering to identify actionable customer segments.
+    \item Illustrate the financial trade-offs of targeted campaigns, including outreach costs and missed churners.
+\end{itemize}
+
+\newpage
+\section{RELEVANCE AND SCOPE OF THE SYSTEM}
+
+\textbf{Relevance}
+
+In telecommunications management, customer retention economics heavily favor proactive churn mitigation over aggressive new subscriber acquisition. Industry empirical studies consistently establish that acquiring a replacement subscriber costs between five to seven times more than retaining an existing subscriber, owing to high advertising expenditures, retail commissions, SIM logistics, and hardware subsidies. Moreover, established subscribers typically exhibit higher customer lifetime value (CLTV), higher monthly billing through service bundle add-ons, and a lower servicing overhead. Consequently, an algorithmic framework that accurately predicts attrition propensity allows telecommunications operators to optimize retention expenditures by focusing financial incentives strictly on vulnerable, high-value accounts.
+
+\textbf{Scope}
+
+The empirical scope of this project encompasses the analysis of all 7,043 customer records provided in the \texttt{Telco\_customer\_churn.xlsx} dataset. The operational pipeline spans:
+\begin{enumerate}
+    \item Data cleaning and audit: Removal of constant metadata, high-cardinality geographical attributes, redundant targets, and post-churn leakage features.
+    \item Imputation: Verification and replacement of 11 whitespace billing entries with \$0.00 based on zero subscriber tenure.
+    \item Categorical encoding: Uniform application of Scikit-Learn's \texttt{LabelEncoder} across all 16 categorical attributes, fitted strictly on the training partition.
+    \item Feature scaling: Standardization of all features using \texttt{StandardScaler} fitted exclusively on training data.
+    \item Supervised modeling: Training and benchmarking seven classification models under a fixed stratified 80:20 train-test split ($\text{seed}=42$).
+    \item Hyperparameter selection: Stratified 5-fold cross-validation on the training partition for KNN and MLP tuning.
+    \item Unsupervised segmentation: Multi-cluster evaluation ($k \in [2, 8]$) via Inertia and Silhouette metrics, followed by detailed behavioral profiling at $k=3$.
+\end{enumerate}
+
+While the resulting models provide high discriminatory power on historical tabular data, the system serves as a decision-support tool. It must be retrained periodically to adapt to evolving subscriber behaviors, competitive pricing revisions, and technological shifts.
+
+\clearpage
+
+% ==================== CHAPTER 2 ====================
+\chapterpage{PROBLEM DEFINITION}
+\section{PROBLEM STATEMENT}
+
+To develop, benchmark, and evaluate a machine learning system that accurately predicts individual customer churn propensity and discovers distinct customer behavioral segments using the IBM Telco Customer Churn dataset, enabling telecommunications providers to reduce subscriber attrition, optimize retention marketing budgets, and establish data-driven customer retention policies.
+
+\section{OBJECTIVES}
+
+The specific research and engineering objectives of this case study are:
+\begin{enumerate}
+    \item \textbf{Data Audit and Leakage Elimination:} To inspect all 33 columns of the \texttt{Telco\_customer\_churn.xlsx} dataset, eliminate non-predictive identifiers and geographical coordinates, drop target leakage attributes (\texttt{Churn Reason}, \texttt{Churn Score}, \texttt{Churn Label}), and physically resolve the 11 blank \texttt{Total Charges} entries to \$0.00 based on zero tenure.
+    \item \textbf{Categorical Encoding:} To apply Label Encoding to transform all categorical features into numeric format, fitting encoders strictly on the training set, and documenting categorical mappings to ensure consistent encoding across training and evaluation splits.
+    \item \textbf{Covariance and Correlation Analysis:} Analyze sample covariance and Pearson correlations among tenure, charges, contracts, payment methods, and churn, distinguishing association from causation.
+    \item \textbf{Supervised Algorithm Benchmarking:} Compare seven classifiers---Logistic Regression, KNN, Decision Trees, RBF-SVM, MLP, Random Forest, and Gradient Boosting---on the same 1,409-record test set using accuracy, precision, recall, specificity, F1-score, ROC-AUC, and confusion matrices.
+    \item \textbf{Cross-Validated Hyperparameter Exploration:} To perform stratified 5-fold cross-validation on the training set to optimize neighbor count ($k \in [1, 31]$) in KNN and evaluate hidden layer neuron configurations in Multi-Layer Perceptrons.
+    \item \textbf{Unsupervised Customer Segmentation:} To segment subscribers via K-Means clustering across candidate counts $k \in [2, 8]$, justifying $k=3$ via Elbow inertia inflection and Silhouette coefficients, profiling customer personas, and providing retention recommendations.
+\end{enumerate}
+
+\clearpage
+
+% ==================== CHAPTER 3 ====================
+\chapterpage{LITERATURE SURVEY}
+
+Customer churn prediction and behavioral segmentation represent core domains of predictive analytics in customer relationship management (CRM) and telecommunications. Existing methodologies span probabilistic classifiers, instance-based algorithms, margin classifiers, neural networks, ensemble tree methods, and unsupervised clustering.
+
+\textbf{Logistic Regression and Probabilistic Classification}
+
+Logistic Regression is a foundational technique in binary classification problems. Rather than predicting unconstrained numerical values, Logistic Regression models the probability of a positive outcome by applying the logistic sigmoid transformation to a linear combination of input features. By maximizing the likelihood of observed outcomes, Logistic Regression produces well-calibrated posterior probabilities bounded strictly between 0 and 1. Logistic Regression remains an established, reliable baseline in telecommunications churn modeling due to its parameter parsimony, numerical stability, and direct coefficient interpretability.
+
+\textbf{Non-Parametric and Instance-Based Classifiers}
+
+K-Nearest Neighbors (KNN) classifies query instances based on the majority label of their $k$ closest neighbors in feature space. As a non-parametric instance-based learner, KNN makes no prior assumptions regarding the functional form of the data distribution, allowing it to capture complex and irregular decision boundaries. However, KNN exhibits higher computational requirements during inference and can be sensitive to feature scaling and high dimensionality. Careful feature standardization and hyperparameter selection are therefore critical for reliable performance.
+
+\textbf{Maximum-Margin Support Vector Machines}
+
+Support Vector Machines (SVM) construct an optimal separating hyperplane that maximizes the geometric margin between opposing classes, aiming to minimize structural risk. For linearly non-separable distributions, SVM incorporates slack variables and employs kernel functions, such as the Radial Basis Function (RBF) kernel, to map input features into higher-dimensional representations where linear separation becomes feasible. RBF-kernel SVMs can achieve strong classification performance on complex datasets, although their operational effectiveness depends on appropriate feature scaling and penalty regularization parameters.
+
+\textbf{Artificial Neural Networks and Multi-Layer Perceptrons}
+
+Feedforward Multi-Layer Perceptrons (MLPs) consist of input, hidden, and output neuron layers interconnected by learnable weights. Non-linear activation functions, such as the Rectified Linear Unit (ReLU), enable MLPs to model complex interactions among customer attributes. Optimization is conducted via backpropagation and adaptive stochastic gradient descent algorithms, such as Adam. In telecommunications churn prediction, MLPs can capture intricate non-linear relationships, though careful tuning and regularization are necessary to avoid overfitting on moderately sized tabular datasets.
+
+\textbf{Ensemble Learning: Bagging and Boosting}
+
+Ensemble learning combines multiple base learners to achieve predictive accuracy superior to any individual constituent model. Bootstrap Aggregating (Bagging) trains independent base classifiers on bootstrap resamples of the training set and averages their outputs, thereby significantly reducing estimator variance without increasing bias. Random Forests extend bagging by introducing random feature subspace selection at each node split of the decision trees, effectively decorrelating the individual trees. 
+
+In contrast, Boosting constructs base learners sequentially. In Gradient Boosting, each successive shallow decision tree fits the residual errors of the preceding ensemble, incrementally refining the decision boundary. In empirical studies across telecommunications churn datasets, Random Forests and Gradient Boosted Decision Trees have consistently demonstrated strong predictive discrimination, robustness to outliers, and the capacity to capture non-linear feature dependencies.
+
+\textbf{Unsupervised Customer Segmentation and Cluster Validation}
+
+Customer segmentation partitions a heterogeneous customer base into homogeneous, mutually exclusive customer cohorts to enable customized marketing interventions. K-Means clustering iteratively partitions observations into $k$ clusters by minimizing within-cluster sum of squared Euclidean distances (inertia). The selection of the optimal cluster count $k$ is commonly guided by the Elbow Method, which identifies the point of diminishing marginal returns in inertia reduction, and Silhouette Analysis, which quantifies within-cluster cohesion relative to nearest-neighbor cluster separation. Integrating unsupervised clustering with supervised churn prediction provides valuable context, allowing marketing executives to evaluate churn rates across distinct behavioral and billing personas.
+
+\textbf{Categorical Feature Encoding}
+
+In applied machine learning on tabular data, categorical variables must be mapped to numeric matrices. Label Encoding assigns a unique integer to each categorical label. This approach preserves dimensional compactness, preventing the substantial feature expansion and matrix sparsity associated with alternative representations. Fitting encoders strictly on training data ensures consistent, reliable transformation across all evaluation partitions.
+
+\clearpage
+
+% ==================== CHAPTER 4 ====================
+\chapterpage{PROPOSED SYSTEM AND METHODOLOGY}
+\section{SYSTEM ARCHITECTURE}
+
+The proposed telecom customer churn prediction and segmentation framework is structured as an end-to-end analytical pipeline comprising five core sequential modules: Data Ingestion and Leakage Audit, Preprocessing and Label Encoding, Covariance and Feature Analysis, Supervised Model Benchmarking and Cross-Validation, and Evaluation and Unsupervised Customer Segmentation. Figure 4.1 illustrates this complete workflow.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{Telecom_Churn_Prediction_Workflow.png}
+    \caption{End-to-end system architecture for churn prediction and customer segmentation.}
+    \label{fig:4.1}
+\end{figure}
+
+The pipeline begins with the raw Excel dataset. In the first phase, non-predictive administrative columns, constants, and target leakage attributes are pruned. Missing values in billing records are audited and imputed based on subscriber tenure. Categorical variables are converted into numerical representations using Scikit-Learn's \texttt{LabelEncoder}, with encoders fitted strictly on the training partition. 
+
+The dataset is partitioned using an 80:20 stratified train-test split, preserving the 26.54\% empirical churn rate across both splits. Feature standardization is applied using \texttt{StandardScaler} fitted strictly on training data. Seven supervised classifiers are benchmarked on the held-out test set, with KNN and MLP hyperparameters tuned via 5-fold cross-validation on the training set. Concurrently, K-Means clustering is evaluated across $k \in [2, 8]$ on standardized training features to extract actionable customer personas.
+
+\newpage
+\section{DATASET AUDIT AND PREPROCESSING}
+
+The study utilizes the IBM Telco Customer Churn dataset (\texttt{Telco\_customer\_churn.xlsx}), comprising 7,043 subscriber records and 33 attributes. A data audit was conducted to identify non-predictive attributes, duplicate entries, constant fields, and potential target leakage variables:
+\begin{enumerate}
+    \item \textbf{Administrative Identifiers and Constants (Dropped):} \texttt{CustomerID} is an identifier with no generalizable predictive utility. The columns \texttt{Count} (constant integer 1), \texttt{Country} (constant string 'United States'), and \texttt{State} (constant string 'California') exhibit zero variance across all 7,043 rows and are dropped.
+    \item \textbf{High-Cardinality Geographic Coordinates (Dropped):} \texttt{City} (1,129 unique cities), \texttt{Zip Code} (1,652 unique codes), \texttt{Lat Long}, \texttt{Latitude}, and \texttt{Longitude} represent granular geographic attributes that induce severe overfitting without adding generalizable behavioral signals.
+    \item \textbf{Target Redundancy and Post-Churn Leakage (Dropped):}
+    \begin{itemize}
+        \item \texttt{Churn Label}: Categorical text ('Yes'/'No') identical to the binary integer target \texttt{Churn Value} (1869 'Yes', 5174 'No'). Dropped as a redundant target representation.
+        \item \texttt{Churn Reason}: A text explanation describing why a subscriber terminated service. This field contains 5,174 null values corresponding to non-churning subscribers and 1,869 text reasons for churners. This represents post-churn leakage, as it is recorded only after defection has occurred. Dropped entirely.
+        \item \texttt{Churn Score}: A proprietary pre-calculated risk score ranging from 5 to 100 (mean 58.70, std 21.53). This feature represents the output of a pre-existing churn model embedded in the raw data. Utilizing it as an input predictor would constitute target leakage. Dropped entirely.
+    \end{itemize}
+    \item \textbf{Customer Lifetime Value (\texttt{CLTV}):} \texttt{CLTV} is a continuous financial metric (range \$2,003 to \$6,500, mean \$4,400.30, std \$1,183.06) representing estimated subscriber value. It is retained in the feature set as an account valuation attribute.
+\end{enumerate}
+
+After audit and pruning, the feature matrix contains 20 predictor attributes and 1 binary target attribute (\texttt{Churn Value}). Table 4.1 summarizes the finalized feature set.
+
+\begin{table}[H]
+\centering
+\small
+\caption{Audit and summary of attributes utilized in modeling.}
+\label{tab:4.1}
+\vspace{0.05in}
+\begin{tabular}{llll}
+\toprule
+\textbf{Category} & \textbf{Attribute Name} & \textbf{Raw Type} & \textbf{Preprocessing / Encoding} \\
+\midrule
+Target & \texttt{Churn Value} & Integer & Binary ground truth ($0 = \text{Retained}, 1 = \text{Churned}$) \\
+Demographics & \texttt{Gender} & Object & Label Encoded ($0 = \text{Female}, 1 = \text{Male}$) \\
+Demographics & \texttt{Senior Citizen} & Object & Label Encoded ($0 = \text{No}, 1 = \text{Yes}$) \\
+Demographics & \texttt{Partner} & Object & Label Encoded ($0 = \text{No}, 1 = \text{Yes}$) \\
+Demographics & \texttt{Dependents} & Object & Label Encoded ($0 = \text{No}, 1 = \text{Yes}$) \\
+Tenure & \texttt{Tenure Months} & Integer & Standardized ($z$-score scaling) \\
+Phone Services & \texttt{Phone Service} & Object & Label Encoded ($0 = \text{No}, 1 = \text{Yes}$) \\
+Phone Services & \texttt{Multiple Lines} & Object & Label Encoded ($0 = \text{No}, 1 = \text{No phone service}, 2 = \text{Yes}$) \\
+Internet Services & \texttt{Internet Service} & Object & Label Encoded ($0 = \text{DSL}, 1 = \text{Fiber optic}, 2 = \text{No}$) \\
+Value-Added & \texttt{Online Security} & Object & Label Encoded ($0 = \text{No}, 1 = \text{No internet}, 2 = \text{Yes}$) \\
+Value-Added & \texttt{Online Backup} & Object & Label Encoded ($0 = \text{No}, 1 = \text{No internet}, 2 = \text{Yes}$) \\
+Value-Added & \texttt{Device Protection} & Object & Label Encoded ($0 = \text{No}, 1 = \text{No internet}, 2 = \text{Yes}$) \\
+Value-Added & \texttt{Tech Support} & Object & Label Encoded ($0 = \text{No}, 1 = \text{No internet}, 2 = \text{Yes}$) \\
+Streaming & \texttt{Streaming TV} & Object & Label Encoded ($0 = \text{No}, 1 = \text{No internet}, 2 = \text{Yes}$) \\
+Streaming & \texttt{Streaming Movies} & Object & Label Encoded ($0 = \text{No}, 1 = \text{No internet}, 2 = \text{Yes}$) \\
+Contractual & \texttt{Contract} & Object & Label Encoded ($0 = \text{Month-to-month}, 1 = \text{1 yr}, 2 = \text{2 yr}$) \\
+Billing & \texttt{Paperless Billing} & Object & Label Encoded ($0 = \text{No}, 1 = \text{Yes}$) \\
+Billing & \texttt{Payment Method} & Object & Label Encoded ($0 = \text{Bank transfer}, 1 = \text{Credit card}, \dots$) \\
+Financial & \texttt{Monthly Charges} & Float & Standardized ($z$-score scaling) \\
+Financial & \texttt{Total Charges} & Float & Blank whitespace imputed to \$0.00; Standardized \\
+Valuation & \texttt{CLTV} & Integer & Standardized ($z$-score scaling) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{CATEGORICAL ENCODING AND SCALING}
+
+\textbf{Physical Imputation of Total Charges}
+
+Inspection of the raw dataset revealed that \texttt{Total Charges} was stored as an object column containing eleven blank space strings (\texttt{' '}). Cross-tabulation against subscriber tenure showed that all eleven records correspond to subscribers with $\texttt{Tenure Months} = 0$. These individuals had newly joined the telecommunications provider and had not completed their first billing cycle. In prior iterations of the analytical code, these values were converted to \texttt{NaN} and imputed with the overall column median of \$1,397.48. This introduced an error by attributing substantial cumulative charges to brand-new accounts. In this revised study, the eleven values are imputed to exactly \$0.00, reflecting the physical reality of zero accrued expenditure.
+
+\textbf{Label Encoding Methodology}
+
+Label Encoding is employed across all 16 categorical features. The encoding assigns a unique integer $c \in \{0, 1, \dots, K-1\}$ to each unique string class in a feature. This approach preserves dimensional compactness without expanding the feature space. To prevent data leakage, each \texttt{LabelEncoder} is fitted strictly on the training partition ($\mathbf{X}_{\text{train}}$), and subsequently applied to transform both training and test partitions ($\mathbf{X}_{\text{test}}$). Unseen categories in test instances are safely mapped to the training mode.
+
+\textbf{Stratified Partitioning and Feature Standardization}
+
+The dataset of 7,043 instances is partitioned into an 80\% training split (5,634 samples) and a 20\% held-out testing split (1,409 samples) using stratified random sampling ($\text{seed}=42$). This ensures that the class proportion of churners (26.54\%) and retained subscribers (73.46\%) is preserved across both partitions.
+
+Features are standardized using Scikit-Learn's \texttt{StandardScaler}. The mean ($\mu$) and standard deviation ($\sigma$) are computed strictly from the training partition:
+\begin{equation}
+    z = \frac{x - \mu}{\sigma}
+\end{equation}
+The test partition is transformed using $\mu$ and $\sigma$ from the training set, ensuring that zero distribution information from the test partition influences model fitting.
+
+\section{COVARIANCE AND FEATURE ANALYSIS}
+
+Feature analysis investigates multivariate co-movements and statistical dependencies among subscriber attributes. Sample covariance quantifies the joint variability of two variables:
+\begin{equation}
+    \text{Cov}(X, Y) = \frac{1}{N - 1} \sum_{i=1}^N (X_i - \bar{X})(Y_i - \bar{Y})
+\end{equation}
+Because covariance depends on the physical measurement scale of the attributes, Pearson's correlation coefficient ($\rho_{X, Y}$) normalizes covariance by the product of their sample standard deviations:
+\begin{equation}
+    \rho_{X, Y} = \frac{\text{Cov}(X, Y)}{\sigma_X \sigma_Y}
+\end{equation}
+Pearson's $\rho$ ranges from $-1.0$ (perfect inverse linear relationship) to $+1.0$ (perfect direct linear relationship). In this study, covariance and correlation calculations are performed strictly on the training partition to maintain leakage prevention. Statistical correlation measures linear association and does not imply direct causal influence; observed relationships may be mediated by confounding subscriber attributes.
+
+\section{MODEL BUILDING AND BENCHMARKING}
+
+Seven supervised classification algorithms spanning diverse learning paradigms are benchmarked for telecom churn prediction:
+
+\textbf{1. Logistic Regression:}
+Logistic Regression models customer churn probability by calculating a weighted linear combination of input features and mapping it to a bounded probability score between 0 and 1 via the standard logistic sigmoid function. Model parameters are optimized using maximum likelihood estimation, producing calibrated probability estimates suitable for operational churn risk scoring.
+
+\textbf{2. K-Nearest Neighbors (KNN):}
+KNN is a non-parametric, instance-based classifier that classifies an unobserved customer based on the majority label among its $k$ nearest neighbors in standardized feature space, with proximity determined using straight-line Euclidean distance across all standardized attributes. The neighbor count $k$ controls model complexity: smaller $k$ values capture localized nuances but are sensitive to data noise, whereas larger $k$ values create smoother decision boundaries.
+
+\textbf{3. Decision Tree Classifier:}
+Decision Trees recursively partition the feature space into rectangular subsets using orthogonal feature split thresholds that maximize class purity. To prevent overfitting on training data, tree depth is constrained to $\text{max\_depth} = 5$.
+
+\textbf{4. Support Vector Machine (SVM with RBF Kernel):}
+SVM identifies the optimal decision hyperplane that maximizes the geometric margin between churners and retained subscribers. To handle non-linear subscriber patterns, a Radial Basis Function (RBF) kernel is applied, which measures distance-based similarity between customer feature vectors and maps them into a higher-dimensional space where non-linear boundaries can be separated. Platt scaling is enabled to produce calibrated posterior probabilities.
+
+\textbf{5. Multi-Layer Perceptron (MLP):}
+The MLP is a feedforward artificial neural network consisting of an input layer, hidden layers with ReLU non-linear activations ($\text{ReLU}(z) = \max(0, z)$), and an output node with sigmoid activation. Network parameters are optimized using backpropagation with the Adam optimizer. Six hidden layer architectures are evaluated: $(10,)$, $(20,)$, $(50,)$, $(20, 10)$, $(50, 25)$, and $(64, 32)$.
+
+\textbf{6. Bagging (Random Forest):}
+Random Forest constructs an ensemble of 100 decorrelated decision trees. Each tree is trained on an independent bootstrap sample of the training data, and a random subset of features is evaluated at each split node to reduce variance.
+
+\textbf{7. Boosting (Gradient Boosted Decision Trees):}
+Gradient Boosting constructs an additive ensemble of 100 shallow decision trees in a sequential manner, where each successive tree is fit to the residual errors of the preceding ensemble with a learning rate of $\eta = 0.1$.
+
+\textbf{8. Unsupervised K-Means Clustering:}
+K-Means partitions the standardized subscriber feature space into $k$ clusters by iteratively assigning observations to the nearest cluster centroid and updating centroid positions. Optimal $k$ selection is evaluated across $k \in \{2, 3, \dots, 8\}$ using the Elbow method (within-cluster sum of squares) and Silhouette Analysis.
+\newpage
+
+\section{EVALUATION METRICS AND COST ASYMMETRY}
+
+Model evaluation on the held-out test set employs standard classification metrics:
+\begin{itemize}
+    \item \textbf{Accuracy:} The proportion of total correct predictions:
+    \begin{equation}
+        \text{Accuracy} = \frac{TP + TN}{TP + TN + FP + FN}
+    \end{equation}
+    \item \textbf{Precision:} The proportion of true churners among all predicted churners:
+    \begin{equation}
+        \text{Precision} = \frac{TP}{TP + FP}
+    \end{equation}
+    \item \textbf{Recall (Sensitivity):} The proportion of actual churners correctly identified:
+    \begin{equation}
+        \text{Recall} = \frac{TP}{TP + FN}
+    \end{equation}
+    \item \textbf{Specificity (True Negative Rate):} The proportion of non-churners correctly identified:
+    \begin{equation}
+        \text{Specificity} = \frac{TN}{TN + FP}
+    \end{equation}
+    \item \textbf{F1-Score:} The harmonic mean of precision and recall:
+    \begin{equation}
+        \text{F1-Score} = 2 \times \frac{\text{Precision} \times \text{Recall}}{\text{Precision} + \text{Recall}}
+    \end{equation}
+    \item \textbf{ROC-AUC:} Area under the Receiver Operating Characteristic curve, measuring class separation across all decision thresholds.
+\end{itemize}
+
+\textbf{Cost Asymmetry in Churn Management:} In telecommunications customer retention, classification errors carry asymmetric operational costs:
+\begin{itemize}
+    \item \textbf{False Negative (FN):} The model predicts a subscriber will remain, but the subscriber churns. The cost is substantial, equaling the unrecoverable lifetime gross margin or replacement acquisition cost (\$500--\$1,000+).
+    \item \textbf{False Positive (FP):} The model predicts a subscriber will churn, but the subscriber would have stayed. The cost is minor, consisting of the administrative outreach expense and promotional discount (\$20--\$50).
+\end{itemize}
+Because the cost of losing a customer far exceeds the cost of a retention outreach, models that maximize recall while maintaining acceptable precision provide greater economic utility than models that optimize accuracy alone.
+
+\section{TOOLS AND TECHNOLOGIES}
+
+The computational pipeline is implemented in Python 3.13 utilizing core data science libraries:
+\begin{itemize}
+    \item \textbf{Python 3.13:} High-level programming language providing execution runtime.
+    \item \textbf{Pandas:} Tabular data ingestion, missing value imputation, indexing, and cluster aggregation.
+    \item \textbf{NumPy:} High-performance multidimensional array operations and vector algebra.
+    \item \textbf{Scikit-Learn:} Implementations of \texttt{LabelEncoder}, \texttt{StandardScaler}, \texttt{StratifiedKFold}, classification algorithms, ensemble estimators, K-Means clustering, and evaluation metrics.
+    \item \textbf{Matplotlib:} Generation of publication figures, correlation matrices, ROC curves, and cluster scatter plots.
+\end{itemize}
+
+\clearpage
+
+% ==================== CHAPTER 5 ====================
+\chapterpage{IMPLEMENTATION}
+
+This chapter documents the technical implementation of the data cleaning, categorical encoding, cross-validation, benchmarking, and segmentation pipeline.
+
+\section{DATASET ACQUISITION AND INSPECTION}
+
+The dataset is ingested directly from \texttt{Telco\_customer\_churn.xlsx} into a Pandas DataFrame. The raw file contains 7,043 rows and 33 attributes. Preliminary inspection reveals that \texttt{CustomerID} has 7,043 distinct entries, verifying zero duplicate records. Constant columns (\texttt{Count}, \texttt{Country}, \texttt{State}) and high-cardinality geographical fields are pruned. The target attribute \texttt{Churn Value} is confirmed to contain 5,174 retained instances (73.46\%) and 1,869 churned instances (26.54\%). Table 5.1 presents the first five sample records of the initial raw dataset across key attributes prior to cleaning.
+
+\begin{table}[H]
+\centering
+\scriptsize
+\caption{Initial Telco Customer Churn Dataset (First 5 Rows before Preprocessing).}
+\label{tab:5.1}
+\vspace{0.05in}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lccccccccccc}
+\toprule
+\textbf{CustomerID} & \textbf{Gender} & \textbf{Senior} & \textbf{Partner} & \textbf{Tenure} & \textbf{Phone} & \textbf{Internet} & \textbf{Contract} & \textbf{Payment Method} & \textbf{Monthly} & \textbf{Total} & \textbf{Churn} \\
+\midrule
+3668-QPYBK & Male   & No & No  & 2  & Yes & DSL         & Month-to-month & Mailed check              & \$53.85  & \$108.15  & 1 \\
+9237-HQITU & Female & No & No  & 2  & Yes & Fiber optic & Month-to-month & Electronic check          & \$70.70  & \$151.65  & 1 \\
+9305-CDSKC & Female & No & No  & 8  & Yes & Fiber optic & Month-to-month & Electronic check          & \$99.65  & \$820.50  & 1 \\
+7892-POOKP & Female & No & Yes & 28 & Yes & Fiber optic & Month-to-month & Electronic check          & \$104.80 & \$3046.05 & 1 \\
+0280-XJGEX & Male   & No & No  & 49 & Yes & Fiber optic & Month-to-month & Bank transfer (automatic) & \$103.70 & \$5036.30 & 1 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\section{PREPROCESSING AND ENCODING PIPELINE}
+
+Preprocessing proceeds through systematic cleaning and transformation:
+\begin{enumerate}
+    \item \textbf{Removal of Leaked Features:} Columns \texttt{Churn Label}, \texttt{Churn Score}, and \texttt{Churn Reason} are dropped to prevent target leakage.
+    \item \textbf{Physical Imputation of Billing Records:} The eleven whitespace strings in \texttt{Total Charges} are converted to numeric format and imputed to \$0.00 after confirming that all corresponding records have $\texttt{Tenure Months} = 0$.
+    \item \textbf{Stratified Train-Test Split:} The 7,043 cleaned records are partitioned into a training set of 5,634 samples (80\%) and a test set of 1,409 samples (20\%) using stratified sampling on \texttt{Churn Value} with fixed random seed 42.
+    \item \textbf{Training-Fitted Label Encoding:} All 16 categorical object columns are transformed using \texttt{LabelEncoder} instances fitted strictly on $\mathbf{X}_{\text{train}}$. Test instances are transformed using the fitted training mappings, with unseen values handled safely.
+    \item \textbf{Feature Standardization:} Features are standardized using \texttt{StandardScaler} fitted strictly on $\mathbf{X}_{\text{train}}$ and applied to transform $\mathbf{X}_{\text{test}}$.
+\end{enumerate}
+
+Table 5.2 displays the first five rows of the dataset following data cleaning and Label Encoding.
+
+\begin{table}[H]
+\centering
+\scriptsize
+\caption{Preprocessed and Label Encoded Dataset (First 5 Rows after Preprocessing).}
+\label{tab:5.2}
+\vspace{0.05in}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{ccccccccccc}
+\toprule
+\textbf{Gender} & \textbf{Senior} & \textbf{Partner} & \textbf{Tenure} & \textbf{Phone} & \textbf{Internet} & \textbf{Contract} & \textbf{Payment Method} & \textbf{Monthly} & \textbf{Total} & \textbf{Churn} \\
+\midrule
+1 & 0 & 0 & 2  & 1 & 0 & 0 & 3 & 53.85  & 108.15  & 1 \\
+0 & 0 & 0 & 2  & 1 & 1 & 0 & 2 & 70.70  & 151.65  & 1 \\
+0 & 0 & 0 & 8  & 1 & 1 & 0 & 2 & 99.65  & 820.50  & 1 \\
+0 & 0 & 1 & 28 & 1 & 1 & 0 & 2 & 104.80 & 3046.05 & 1 \\
+1 & 0 & 0 & 49 & 1 & 1 & 0 & 0 & 103.70 & 5036.30 & 1 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\section{DATASET COMPARISON: BEFORE AND AFTER PREPROCESSING}
+
+A comparison of the initial raw records in Table 5.1 with the preprocessed records in Table 5.2 illustrates the concrete transformations required to prepare telecom data for machine learning:
+\begin{enumerate}
+    \item \textbf{Pruning Administrative Identifiers and Non-Predictive Attributes:} The initial dataset in Table 5.1 includes \texttt{CustomerID} (e.g., \texttt{3668-QPYBK}), along with invariant geographic attributes (\texttt{Country}, \texttt{State}, \texttt{Count}) and high-cardinality spatial coordinates (\texttt{Lat Long}, \texttt{Latitude}, \texttt{Longitude}, \texttt{Zip Code}). Because these fields represent administrative metadata rather than customer behavioral signals, they were removed to eliminate noise and prevent spurious correlations.
+    \item \textbf{Elimination of Post-Churn Data Leakage:} Columns generated retrospectively following customer churn---\texttt{Churn Label}, \texttt{Churn Score}, and \texttt{Churn Reason}---were dropped. Leaving these columns in the dataset would cause artificial data leakage, enabling classifiers to achieve near-perfect training accuracy while failing completely on prospective unlabelled customers.
+    \item \textbf{Handling Missing and Blank Values in Billing:} In the raw dataset, the \texttt{Total Charges} feature was stored as text and contained eleven blank space strings (\texttt{' '}). Inspection verified that all eleven customers had $\texttt{Tenure Months} = 0$. In prior studies, these missing values were erroneously imputed with the cohort median (\$1,397.48). In this implementation, they were converted to numeric type and imputed to \$0.00, reflecting zero accrued billing for newly enrolled subscribers.
+    \item \textbf{Categorical Encoding into Numerical Representations:} In Table 5.1, attributes such as \texttt{Gender}, \texttt{Partner}, \texttt{Internet Service}, \texttt{Contract}, and \texttt{Payment Method} are stored as textual categorical labels. As shown in Table 5.2, \texttt{LabelEncoder} mapped these labels into structured integer values (e.g., \texttt{Gender}: Female $\to$ 0, Male $\to$ 1; \texttt{Internet Service}: DSL $\to$ 0, Fiber optic $\to$ 1; \texttt{Contract}: Month-to-month $\to$ 0, One year $\to$ 1; \texttt{Payment Method}: Bank transfer $\to$ 0, Credit card $\to$ 1, Electronic check $\to$ 2, Mailed check $\to$ 3).
+    \item \textbf{Standardized Feature Matrix Ready for Modeling:} In contrast to the mixed textual and unnormalized format of Table 5.1, the preprocessed representation in Table 5.2 provides a clean, fully numeric feature matrix ready for stratified train-test splitting and feature standardization ($z$-score scaling).
+\end{enumerate}
+
+Table 5.3 summarizes representative categorical mappings produced by the Label Encoding pipeline.
+
+\begin{table}[H]
+\centering
+\small
+\caption{Sample categorical label encoding integer mappings.}
+\label{tab:5.3}
+\vspace{0.05in}
+\begin{tabular}{lll}
+\toprule
+\textbf{Feature} & \textbf{Raw Categorical Value} & \textbf{Encoded Integer} \\
+\midrule
+\texttt{Contract} & Month-to-month & 0 \\
+                  & One year & 1 \\
+                  & Two year & 2 \\
+\midrule
+\texttt{Internet Service} & DSL & 0 \\
+                          & Fiber optic & 1 \\
+                          & No & 2 \\
+\midrule
+\texttt{Payment Method} & Bank transfer (automatic) & 0 \\
+                        & Credit card (automatic) & 1 \\
+                        & Electronic check & 2 \\
+                        & Mailed check & 3 \\
+\midrule
+\texttt{Partner} & No & 0 \\
+                 & Yes & 1 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{COVARIANCE, CORRELATION, AND FEATURE IMPORTANCE}
+
+Multivariate covariance and Pearson correlation matrices are computed strictly on the training partition. Figure 5.1 illustrates the correlation matrix across key customer attributes, and Figure 5.2 visualizes individual feature correlations with customer churn.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.65\textwidth]{fig_5_1_correlation_matrix.png}
+    \caption{Correlation matrix of key subscriber features on training data.}
+    \label{fig:5.1}
+\end{figure}
+\vspace{-8pt}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.72\textwidth]{fig_5_2_churn_correlation.png}
+    \caption{Pearson correlation coefficients of subscriber features with customer churn.}
+    \label{fig:5.2}
+\end{figure}
+
+The attributes displaying the strongest negative correlation with churn are \texttt{Contract} ($\rho = -0.397$) and \texttt{Tenure Months} ($\rho = -0.346$), confirming that longer contracts and tenure correlate with lower attrition. Positive drivers of churn include \texttt{Monthly Charges} ($\rho = +0.198$) and \texttt{Payment Method} ($\rho = +0.115$).
+
+To complement linear correlation, tree-based feature importances were extracted from the trained Random Forest and Gradient Boosting models:
+\begin{itemize}
+    \item \textbf{Random Forest:} \texttt{Contract} (0.1514), \texttt{Tenure Months} (0.1359), \texttt{Total Charges} (0.1180), \texttt{Monthly Charges} (0.0977), \texttt{Tech Support} (0.0895), \texttt{Online Security} (0.0787), \texttt{Dependents} (0.0596).
+    \item \textbf{Gradient Boosting:} \texttt{Contract} (0.3531), \texttt{Tenure Months} (0.1390), \texttt{Monthly Charges} (0.1308), \texttt{Dependents} (0.0898), \texttt{Online Security} (0.0784), \texttt{Total Charges} (0.0534).
+\end{itemize}
+
+\section{HYPERPARAMETER CROSS-VALIDATION AND MODEL TRAINING}
+
+To prevent test-set data leakage during model selection, hyperparameter tuning was conducted using stratified 5-fold cross-validation on the training set:
+\begin{itemize}
+    \item \textbf{KNN Tuning:} Evaluated across $k \in \{1, 3, 5, 7, 11, 15, 21, 25, 31\}$. Cross-validation ROC-AUC rises monotonically from 0.6513 ($k=1$) to 0.8339 ($k=31$), with $k=21$ achieving an optimal operational balance between accuracy (0.7807), F1-score (0.5863), and cross-validated AUC (0.8283).
+    \item \textbf{MLP Architectures:} Six architectures were evaluated with ReLU activations, Adam optimization, and up to 500 iterations. The single-layer architecture $(10,)$ achieved the highest cross-validation ROC-AUC (0.8517), followed closely by $(20,)$ at 0.8410. Deeper networks, such as $(50, 25)$ and $(64, 32)$, exhibited lower validation AUC (0.7888 and 0.7848) and required up to four times more training time.
+\end{itemize}
+
+\section{EVALUATION AND CUSTOMER SEGMENTATION PIPELINE}
+
+The seven supervised models were trained on the standardized training partition and evaluated on the held-out test partition. Performance was quantified across Accuracy, Precision, Recall, Specificity, F1-Score, ROC-AUC, and full Confusion Matrices. 
+
+Unsupervised customer segmentation was performed by fitting K-Means clustering across $k \in [2, 8]$ on standardized training features. Cluster diagnostics (Inertia and Silhouette analysis) were evaluated, and the resulting $k=3$ clusters were profiled across behavioral and billing attributes.
+
+\newpage
+\section{COMPLETE PYTHON IMPLEMENTATION}
+
+Listing 5.1 provides the complete, self-contained Python implementation for data audit, preprocessing, cross-validation, model benchmarking across the seven classifiers, and customer segmentation.
+
+\begin{lstlisting}[language=Python, caption={Churn prediction, cross-validation, benchmarking, and segmentation script}, label={lst:5.1}]
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+from sklearn.model_selection import train_test_split, StratifiedKFold, cross_val_score
+from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.linear_model import LogisticRegression
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.svm import SVC
+from sklearn.neural_network import MLPClassifier
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.cluster import KMeans
+from sklearn.metrics import (
+    accuracy_score, precision_score, recall_score, f1_score,
+    roc_auc_score, roc_curve, confusion_matrix, classification_report,
+    silhouette_score
+)
+
+# 1. Dataset Ingestion and Preprocessing
+df_raw = pd.read_excel('Telco_customer_churn.xlsx')
+cols_to_drop = [
+    'CustomerID', 'Count', 'Country', 'State', 'City', 'Zip Code',
+    'Lat Long', 'Latitude', 'Longitude', 'Churn Label', 'Churn Score', 'Churn Reason'
+]
+df = df_raw.drop(columns=cols_to_drop)
+
+# Impute blank Total Charges (11 records with Tenure = 0) to 0.0
+blank_tc_mask = df['Total Charges'].astype(str).str.strip() == ''
+df['Total Charges'] = pd.to_numeric(df['Total Charges'].astype(str).str.strip(), errors='coerce')
+df.loc[blank_tc_mask, 'Total Charges'] = 0.0
+
+X = df.drop(columns=['Churn Value'])
+y = df['Churn Value']
+
+# 2. Stratified 80:20 Train-Test Split
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.20, random_state=42, stratify=y
+)
+
+# 3. Label Encoding 
+cat_cols = X_train.select_dtypes(include=['object']).columns.tolist()
+label_encoders = {}
+X_train_encoded = X_train.copy()
+X_test_encoded = X_test.copy()
+
+for col in cat_cols:
+    le = LabelEncoder()
+    X_train_encoded[col] = le.fit_transform(X_train[col].astype(str))
+    
+    test_classes = set(X_test[col].astype(str).unique())
+    unseen = test_classes - set(le.classes_)
+    if unseen:
+        mode_val = X_train[col].mode()[0]
+        X_test_temp = X_test[col].astype(str).replace({u: mode_val for u in unseen})
+        X_test_encoded[col] = le.transform(X_test_temp)
+    else:
+        X_test_encoded[col] = le.transform(X_test[col].astype(str))
+    label_encoders[col] = le
+
+# 4. Correlation Analysis
+train_clean_df = X_train_encoded.copy()
+train_clean_df['Churn Value'] = y_train.values
+
+key_features = ['Tenure Months', 'Monthly Charges', 'Total Charges', 'CLTV', 'Contract', 'Payment Method', 'Churn Value']
+corr_matrix = train_clean_df[key_features].corr()
+
+# Correlation Matrix Heatmap
+plt.figure(figsize=(7, 6))
+plt.imshow(corr_matrix, cmap='coolwarm', vmin=-1, vmax=1)
+plt.colorbar()
+plt.xticks(np.arange(len(key_features)), key_features, rotation=35, ha='right')
+plt.yticks(np.arange(len(key_features)), key_features)
+for i in range(len(key_features)):
+    for j in range(len(key_features)):
+        plt.text(j, i, f"{corr_matrix.iloc[i, j]:.2f}", ha="center", va="center")
+plt.title('Correlation Matrix of Key Customer Features')
+plt.tight_layout()
+plt.show()
+
+# Feature Correlation with Churn
+all_churn_corr = train_clean_df.drop(columns=['Churn Value']).apply(lambda x: x.corr(train_clean_df['Churn Value'])).sort_values()
+plt.figure(figsize=(8, 6))
+all_churn_corr.plot(kind='barh')
+plt.title('Feature Correlation with Customer Churn')
+plt.xlabel('Pearson Correlation')
+plt.axvline(0, color='black', linestyle='--')
+plt.tight_layout()
+plt.show()
+
+# 5. Feature Standardization
+scaler = StandardScaler()
+X_train_sc = scaler.fit_transform(X_train_encoded)
+X_test_sc = scaler.transform(X_test_encoded)
+
+# 6. KNN Tuning with 5-Fold Stratified Cross-Validation
+k_values = [1, 3, 5, 7, 11, 15, 21, 25, 31]
+cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+knn_results = []
+
+for k in k_values:
+    knn = KNeighborsClassifier(n_neighbors=k)
+    cv_scores = cross_val_score(knn, X_train_sc, y_train, cv=cv, scoring='roc_auc')
+    knn.fit(X_train_sc, y_train)
+    pred = knn.predict(X_test_sc)
+    prob = knn.predict_proba(X_test_sc)[:, 1]
+    knn_results.append({
+        'k': k, 'CV_ROC_AUC_Mean': cv_scores.mean(), 'CV_ROC_AUC_Std': cv_scores.std(),
+        'Test_Accuracy': accuracy_score(y_test, pred),
+        'Test_F1': f1_score(y_test, pred),
+        'Test_ROC_AUC': roc_auc_score(y_test, prob)
+    })
+knn_df = pd.DataFrame(knn_results)
+
+# KNN Tuning Plot
+plt.figure(figsize=(8, 5))
+plt.plot(knn_df['k'], knn_df['Test_Accuracy'], marker='o', label='Test Accuracy')
+plt.plot(knn_df['k'], knn_df['Test_F1'], marker='s', label='Test F1-Score')
+plt.plot(knn_df['k'], knn_df['Test_ROC_AUC'], marker='^', label='Test ROC-AUC')
+plt.plot(knn_df['k'], knn_df['CV_ROC_AUC_Mean'], marker='d', linestyle='--', label='5-Fold CV ROC-AUC')
+plt.title('KNN Performance Across k')
+plt.xlabel('Number of Neighbors (k)')
+plt.ylabel('Score')
+plt.xticks(k_values)
+plt.legend()
+plt.grid(True)
+plt.show()
+
+# 7. MLP Architecture Experiments
+mlp_architectures = [(10,), (20,), (50,), (20, 10), (50, 25), (64, 32)]
+mlp_results = []
+for arch in mlp_architectures:
+    mlp = MLPClassifier(hidden_layer_sizes=arch, activation='relu', solver='adam', max_iter=500, random_state=42)
+    cv_scores = cross_val_score(mlp, X_train_sc, y_train, cv=cv, scoring='roc_auc')
+    mlp.fit(X_train_sc, y_train)
+    pred = mlp.predict(X_test_sc)
+    prob = mlp.predict_proba(X_test_sc)[:, 1]
+    mlp_results.append({
+        'Architecture': str(arch), 'CV_ROC_AUC_Mean': cv_scores.mean(),
+        'Accuracy': accuracy_score(y_test, pred),
+        'Precision': precision_score(y_test, pred),
+        'Recall': recall_score(y_test, pred),
+        'F1-Score': f1_score(y_test, pred),
+        'ROC-AUC': roc_auc_score(y_test, prob)
+    })
+mlp_df = pd.DataFrame(mlp_results)
+
+# MLP Architecture Bar Chart
+plt.figure(figsize=(9, 5))
+x_pos = np.arange(len(mlp_df['Architecture']))
+width = 0.35
+plt.bar(x_pos - width/2, mlp_df['Accuracy'], width, label='Test Accuracy')
+plt.bar(x_pos + width/2, mlp_df['F1-Score'], width, label='Test F1-Score')
+plt.xlabel('MLP Architectures')
+plt.ylabel('Score')
+plt.title('Effects of MLP Architectures on Churn Prediction')
+plt.xticks(x_pos, mlp_df['Architecture'])
+plt.legend()
+plt.grid(True)
+plt.show()
+
+# 8. Supervised Model Benchmarking Across All 7 Classifiers
+models = {
+    'Logistic Regression': (LogisticRegression(max_iter=1000, random_state=42), True),
+    'K-Nearest Neighbors (k=21)': (KNeighborsClassifier(n_neighbors=21), True),
+    'Decision Tree (depth=5)': (DecisionTreeClassifier(max_depth=5, random_state=42), True),
+    'Support Vector Machine (RBF)': (SVC(probability=True, random_state=42), True),
+    'MLP Classifier (64, 32)': (MLPClassifier(hidden_layer_sizes=(64, 32), max_iter=500, random_state=42), True),
+    'Bagging (Random Forest)': (RandomForestClassifier(n_estimators=100, max_depth=8, random_state=42), True),
+    'Boosting (Gradient Boosting)': (GradientBoostingClassifier(n_estimators=100, learning_rate=0.1, max_depth=3, random_state=42), True),
+}
+
+benchmark_records = []
+roc_curves_data = {}
+for name, (clf, has_prob) in models.items():
+    clf.fit(X_train_sc, y_train)
+    pred = clf.predict(X_test_sc)
+    prob = clf.predict_proba(X_test_sc)[:, 1] if has_prob else clf.decision_function(X_test_sc)
+
+    acc = accuracy_score(y_test, pred)
+    prec = precision_score(y_test, pred)
+    rec = recall_score(y_test, pred)
+    f1 = f1_score(y_test, pred)
+    auc = roc_auc_score(y_test, prob)
+    cm = confusion_matrix(y_test, pred)
+    tn, fp, fn, tp = cm.ravel()
+    specificity = tn / (tn + fp)
+
+    benchmark_records.append({
+        'Model': name, 'Accuracy': acc, 'Precision': prec, 'Recall': rec,
+        'Specificity': specificity, 'F1-Score': f1, 'ROC-AUC': auc,
+        'TN': tn, 'FP': fp, 'FN': fn, 'TP': tp
+    })
+    fpr, tpr, _ = roc_curve(y_test, prob)
+    roc_curves_data[name] = (fpr, tpr, auc)
+
+benchmark_df = pd.DataFrame(benchmark_records)
+
+# ROC Curves
+plt.figure(figsize=(8, 6))
+for name, (fpr, tpr, auc) in roc_curves_data.items():
+    plt.plot(fpr, tpr, label=f"{name} (AUC = {auc:.3f})")
+plt.plot([0, 1], [0, 1], 'k--', label='Random Chance')
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('Receiver Operating Characteristic (ROC) Curves')
+plt.legend(loc='lower right')
+plt.grid(True)
+plt.show()
+
+# Model Benchmark Comparison Bars
+plt.figure(figsize=(10, 5))
+m_names = [m.split(' (')[0] for m in benchmark_df['Model']]
+x = np.arange(len(m_names))
+width = 0.25
+plt.bar(x - width, benchmark_df['Accuracy'], width, label='Accuracy')
+plt.bar(x, benchmark_df['F1-Score'], width, label='F1-Score')
+plt.bar(x + width, benchmark_df['ROC-AUC'], width, label='ROC-AUC')
+plt.xticks(x, m_names, rotation=20, ha='right')
+plt.ylabel('Score')
+plt.title('Model Benchmark Comparison on Held-Out Test Set')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+# 9. K-Means Clustering Diagnostics & Customer Profiling
+k_range = range(2, 9)
+inertias, silhouettes = [], []
+for k in k_range:
+    km = KMeans(n_clusters=k, random_state=42, n_init=10)
+    labels = km.fit_predict(X_train_sc)
+    inertias.append(km.inertia_)
+    silhouettes.append(silhouette_score(X_train_sc, labels, sample_size=1500, random_state=42))
+
+# Elbow Curve
+plt.figure(figsize=(7, 4.5))
+plt.plot(list(k_range), inertias, marker='o')
+plt.title('Elbow Method: Within-Cluster Sum of Squares (Inertia)')
+plt.xlabel('Number of Clusters (k)')
+plt.ylabel('Inertia')
+plt.grid(True)
+plt.show()
+
+# Silhouette Curve
+plt.figure(figsize=(7, 4.5))
+plt.plot(list(k_range), silhouettes, marker='s')
+plt.title('Silhouette Analysis Across Different Values of k')
+plt.xlabel('Number of Clusters (k)')
+plt.ylabel('Mean Silhouette Score')
+plt.grid(True)
+plt.show()
+
+# Customer Segmentation Scatter (k=3)
+kmeans_opt = KMeans(n_clusters=3, random_state=42, n_init=10)
+train_clusters = kmeans_opt.fit_predict(X_train_sc)
+plt.figure(figsize=(8, 5))
+scatter = plt.scatter(
+    X_train['Tenure Months'], X_train['Monthly Charges'],
+    c=train_clusters, cmap='viridis', alpha=0.6, s=25
+)
+plt.colorbar(scatter, label='Cluster')
+plt.title('Customer Segmentation via K-Means (k=3)')
+plt.xlabel('Tenure Months')
+plt.ylabel('Monthly Charges ($)')
+plt.grid(True)
+plt.show()
+\end{lstlisting}
+
+\clearpage
+
+% ==================== CHAPTER 6 ====================
+\chapterpage{RESULTS AND DISCUSSION}
+\section{RESULTS}
+
+The empirical evaluation was conducted on the IBM Telco dataset partitioned into 5,634 training instances (80\%) and 1,409 held-out testing instances (20\%) with identical churn distributions (26.54\% positive class).
+
+\textbf{Comprehensive Supervised Model Benchmark}
+
+Table 6.1 summarizes the performance of all seven supervised classification models evaluated on the held-out test partition across Accuracy, Precision, Recall, Specificity, F1-Score, ROC-AUC, and full Confusion Matrix counts (True Negatives, False Positives, False Negatives, and True Positives).
+
+\begin{table}[H]
+\centering
+\small
+\caption{Comprehensive Supervised Model Benchmark on Held-Out Test Set (7 Classifiers).}
+\label{tab:6.1}
+\vspace{0.05in}
+\begin{tabular}{lcccccc cccc}
+\toprule
+\textbf{Model} & \textbf{Acc} & \textbf{Prec} & \textbf{Rec} & \textbf{Spec} & \textbf{F1} & \textbf{AUC} & \textbf{TN} & \textbf{FP} & \textbf{FN} & \textbf{TP} \\
+\midrule
+Logistic Regression       & 0.8055 & 0.6488 & 0.5829 & 0.8860 & \textbf{0.6141} & 0.8481 & 917 & 118 & 156 & 218 \\
+KNN ($k=21$)              & 0.7807 & 0.5871 & 0.5856 & 0.8512 & 0.5863 & 0.8187 & 881 & 154 & 155 & 219 \\
+Decision Tree (depth=5)   & 0.7850 & 0.5877 & \textbf{0.6364} & 0.8386 & 0.6110 & 0.8333 & 868 & 167 & 136 & 238 \\
+SVM (RBF Kernel)          & 0.7999 & 0.6575 & 0.5134 & 0.9034 & 0.5766 & 0.8141 & 935 & 100 & 182 & 192 \\
+MLP Classifier ($64, 32$) & 0.7516 & 0.5300 & 0.5668 & 0.8184 & 0.5478 & 0.7965 & 847 & 188 & 162 & 212 \\
+Bagging (Random Forest)   & \textbf{0.8077} & \textbf{0.6782} & 0.5241 & \textbf{0.9101} & 0.5913 & 0.8505 & 942 & 93  & 178 & 196 \\
+Boosting (Gradient Boost) & 0.7999 & 0.6494 & 0.5348 & 0.8957 & 0.5865 & \textbf{0.8523} & 927 & 108 & 174 & 200 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Figure 6.1 displays the comparative Receiver Operating Characteristic (ROC) curves, and Figure 6.2 compares Accuracy, F1-Score, and ROC-AUC across the seven classifiers. Boosting (Gradient Boosting) achieved the highest overall discriminatory capability with $\text{ROC-AUC} = 0.8523$, followed by Bagging (Random Forest) at $0.8505$ and Logistic Regression at $0.8481$. Random Forest achieved the highest overall test accuracy (80.77\%) and highest specificity (0.9101), generating only 93 false alarms out of 1,035 non-churners. The Decision Tree classifier achieved the highest sensitivity/recall (63.64\%), successfully capturing 238 out of 374 churners.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.78\textwidth]{fig_6_1_roc_curves.png}
+    \caption{Receiver Operating Characteristic (ROC) benchmark curves on test set.}
+    \label{fig:6.1}
+\end{figure}
+\vspace{-8pt}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.82\textwidth]{fig_6_2_model_benchmark_bars.png}
+    \caption{Comparative model benchmark scores on held-out test set.}
+    \label{fig:6.2}
+\end{figure}
+
+\textbf{KNN Hyperparameter Tuning}
+
+Table 6.2 and Figure 6.3 present the results of K-Nearest Neighbors across $k \in [1, 31]$ using 5-fold cross-validation on the training set and held-out test evaluation. At $k=1$, the classifier overfits training noise, resulting in poor CV AUC ($0.6513$) and test accuracy ($73.46\%$). As $k$ increases, noise is filtered out, with test accuracy stabilizing at $78.07\%$ and CV AUC reaching $0.8283$ at $k=21$ and $0.8339$ at $k=31$.
+
+\begin{table}[H]
+\centering
+\small
+\caption{K-Nearest Neighbors (KNN) Performance Across Values of $k$.}
+\label{tab:6.2}
+\vspace{0.05in}
+\begin{tabular}{ccccc}
+\toprule
+\textbf{Neighbors ($k$)} & \textbf{5-Fold CV ROC-AUC} & \textbf{Test Accuracy} & \textbf{Test F1-Score} & \textbf{Test ROC-AUC} \\
+\midrule
+$k = 1$  & $0.6513 \pm 0.0116$ & 0.7346 & 0.5155 & 0.6699 \\
+$k = 3$  & $0.7536 \pm 0.0074$ & 0.7495 & 0.5337 & 0.7476 \\
+$k = 5$  & $0.7820 \pm 0.0088$ & 0.7601 & 0.5344 & 0.7723 \\
+$k = 7$  & $0.7995 \pm 0.0041$ & 0.7722 & 0.5645 & 0.7862 \\
+$k = 11$ & $0.8156 \pm 0.0070$ & 0.7779 & 0.5730 & 0.8008 \\
+$k = 15$ & $0.8240 \pm 0.0089$ & 0.7779 & 0.5730 & 0.8047 \\
+$k = 21$ & $0.8283 \pm 0.0100$ & 0.7807 & 0.5863 & 0.8187 \\
+$k = 25$ & $0.8315 \pm 0.0110$ & 0.7800 & 0.5856 & 0.8224 \\
+$k = 31$ & $\mathbf{0.8339 \pm 0.0118}$ & \textbf{0.7807} & \textbf{0.5896} & \textbf{0.8281} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.82\textwidth]{fig_6_3_knn_k_tuning.png}
+    \caption{KNN performance as a function of neighbor count $k$.}
+    \label{fig:6.3}
+\end{figure}
+
+\newpage
+\textbf{Multi-Layer Perceptron (MLP) Architecture Analysis}
+
+Table 6.3 and Figure 6.4 report MLP performance across six hidden layer configurations. Compact single-hidden-layer architectures ($(10,)$ and $(20,)$) generalize best, achieving cross-validated AUC of 0.8517 and 0.8410, and test accuracies of 78.99\% and 78.92\%. Increasing network depth to two hidden layers ($(50, 25)$ and $(64, 32)$) results in lower test accuracy (74.45\% and 75.16\%) and increases training time without improving discrimination.
+
+\begin{table}[H]
+\centering
+\small
+\caption{MLP Performance Across Hidden Layer Architectures.}
+\label{tab:6.3}
+\vspace{0.05in}
+\begin{tabular}{lcccccc}
+\toprule
+\textbf{Architecture} & \textbf{5-Fold CV AUC} & \textbf{Test Acc} & \textbf{Precision} & \textbf{Recall} & \textbf{F1-Score} & \textbf{Test AUC} \\
+\midrule
+$(10,)$    & $\mathbf{0.8517}$ & \textbf{0.7899} & \textbf{0.6189} & 0.5428 & \textbf{0.5783} & \textbf{0.8466} \\
+$(20,)$    & 0.8410 & 0.7892 & 0.6177 & 0.5401 & 0.5763 & 0.8422 \\
+$(50,)$    & 0.8275 & 0.7757 & 0.5912 & 0.5027 & 0.5434 & 0.8195 \\
+$(20, 10)$ & 0.8261 & 0.7821 & 0.5954 & 0.5588 & 0.5766 & 0.8271 \\
+$(50, 25)$ & 0.7888 & 0.7445 & 0.5217 & 0.4492 & 0.4828 & 0.7760 \\
+$(64, 32)$ & 0.7848 & 0.7516 & 0.5300 & \textbf{0.5668} & 0.5478 & 0.7965 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.78\textwidth]{fig_6_4_mlp_architecture_comparison.png}
+    \caption{MLP test performance across hidden layer architectures.}
+    \label{fig:6.4}
+\end{figure}
+
+\textbf{Unsupervised Customer Segmentation (K-Means Clustering)}
+
+Figure 6.5 and Figure 6.6 illustrate the diagnostic curves across $k \in [2, 8]$. The Elbow curve displays an inflection point at $k=3$, where the rate of within-cluster sum of squares reduction begins to level off. Although $k=2$ and $k=4$ yield slightly higher mathematical silhouette scores ($0.1533$ and $0.1495$ vs.\ $0.1333$ for $k=3$), $k=3$ is chosen as optimal: $k=2$ fails to separate customer tenures, whereas $k=4$ creates an under-populated ($<10\%$) mid-tier segment that fragments the customer base without adding actionable marketing value. Thus, $k=3$ best balances the Elbow inflection with parsimonious, distinct business personas.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.68\textwidth]{fig_6_5_kmeans_elbow.png}
+    \caption{Elbow Method: Within-Cluster Sum of Squares (Inertia) across cluster counts $k$.}
+    \label{fig:6.5}
+\end{figure}
+\vspace{-8pt}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.68\textwidth]{fig_6_6_kmeans_silhouette.png}
+    \caption{Silhouette Analysis: Mean Silhouette Coefficient across cluster counts $k$.}
+    \label{fig:6.6}
+\end{figure}
+
+The 5,634 training records were partitioned into three clusters. Table 6.4 details the behavioral profile and historical churn rate of each cluster, and Figure 6.7 visualizes the customer distribution across tenure and monthly charges.
+
+\begin{table}[H]
+\centering
+\small
+\caption{Customer Cluster Profiles and Behavioral Characteristics ($k=3$).}
+\label{tab:6.4}
+\vspace{0.05in}
+\begin{tabular}{lcccccc}
+\toprule
+\textbf{Cluster} & \textbf{Count (Share)} & \textbf{Mean Tenure} & \textbf{Monthly Chg} & \textbf{Mean CLTV} & \textbf{M-to-M \%} & \textbf{Churn Rate} \\
+\midrule
+Cluster 0 & 1,858 (33.0\%) & 56.04 mo & \$89.05 & \$4,937.68 & 22.8\% & 15.02\% \\
+Cluster 1 & 2,542 (45.1\%) & 16.44 mo & \$68.19 & \$4,041.45 & 88.7\% & \textbf{44.37\%} \\
+Cluster 2 & 1,234 (21.9\%) & 30.07 mo & \$21.89 & \$4,347.76 & 34.4\% & 7.13\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.84\textwidth]{fig_6_7_customer_segmentation.png}
+    \caption{Customer segmentation via K-Means ($k=3$) across Tenure and Monthly Charges.}
+    \label{fig:6.7}
+\end{figure}
+
+\section{DISCUSSION}
+
+\textbf{Comparative Model Benchmarking Insights}
+
+The experimental results offer distinct insights into the trade-offs among the evaluated machine learning algorithms:
+\begin{enumerate}
+    \item \textbf{Ensemble Dominance (Boosting and Bagging):} Gradient Boosting achieved the highest ROC-AUC ($0.8523$), and Random Forest achieved the highest test accuracy ($80.77\%$), highest precision ($0.6782$), and lowest false alarm count ($93$ FP). The strong performance of ensemble methods stems from their ability to capture non-linear feature interactions (such as the compounding risk of short tenure, fiber-optic service, and electronic check payments) while aggregating diverse decision paths.
+    \item \textbf{Logistic Regression as a Probabilistic Baseline:} Logistic Regression achieved $80.55\%$ accuracy, the highest balanced F1-score ($0.6141$), and $0.8481$ ROC-AUC. It provides properly bounded posterior probabilities that are directly interpretable for business risk scoring, offering a dependable and computationally efficient benchmark.
+    \item \textbf{Recall Maximization in Decision Trees:} The constrained Decision Tree classifier achieved the highest recall ($63.64\%$), capturing 238 of the 374 churners. Because customer defection results in permanent revenue loss, Decision Trees and Logistic Regression (Recall $58.29\%$) represent attractive operational options when marketing campaigns prioritize identifying all potential defectors.
+    \item \textbf{Model Complexity in Deep MLPs:} In the neural network experiments, the compact $(10,)$ architecture outperformed the $(64, 32)$ architecture in test accuracy (78.99\% vs.\ 75.16\%) and ROC-AUC (0.8466 vs.\ 0.7965). On tabular datasets with moderate sample sizes, deep architectures tend to overfit and require substantial training time without yielding performance gains over shallow networks or ensemble trees.
+\end{enumerate}
+
+\textbf{Actionable Customer Personas and Retention Strategies}
+
+The K-Means segmentation ($k=3$) identified three distinct subscriber personas:
+\begin{enumerate}
+    \item \textbf{Persona 1: High-Value Loyalists (Cluster 0, 33.0\% of base, 15.0\% churn):} Long-tenured subscribers (mean 56.0 months) with high monthly billing (\$89.05), high CLTV (\$4,938), and long-term contracts (only 22.8\% on month-to-month). \textit{Strategy:} Enroll in VIP loyalty programs, offer premium service upgrades, and maintain high service quality.
+    \item \textbf{Persona 2: High-Risk Attrition Subscribers (Cluster 1, 45.1\% of base, 44.4\% churn):} Short-tenured subscribers (mean 16.4 months) paying high monthly rates (\$68.19) almost exclusively on month-to-month contracts (88.7\%). \textit{Strategy:} Primary target for proactive retention; offer annual contract discounts, free digital security add-ons, and onboarding support to improve tenure.
+    \item \textbf{Persona 3: Budget Essentialists (Cluster 2, 21.9\% of base, 7.1\% churn):} Subscribers with moderate tenure (30.1 months) and low monthly fees (\$21.89) subscribing primarily to basic voice services. \textit{Strategy:} Maintain reliable baseline service; periodically cross-sell basic broadband or streaming bundles at modest price increments.
+\end{enumerate}
+\textit{Note:} Cluster churn rates represent descriptive historical statistics within the training cohort, not proof of causation or independent forward-looking predictions.
+
+\textbf{Illustrative Business Impact and Campaign Financial Modeling}
+
+To evaluate operational utility, we formulate a cost-benefit model applied to the 1,409 test subscribers (374 actual churners, 1,035 non-churners). We assume the following financial parameters:
+\begin{itemize}
+    \item Average customer value saved upon successful retention: $V_{\text{retain}} = \$500$.
+    \item Cost of contact and retention discount per targeted subscriber: $C_{\text{contact}} = \$50$.
+    \item Retention offer acceptance rate among contacted true churners: $\alpha = 0.50$ (50\%).
+\end{itemize}
+
+The expected net financial benefit of a retention campaign is:
+\begin{equation}
+    \text{Net Benefit} = \left[ \text{TP} \times \alpha \times V_{\text{retain}} \right] - \left[ (\text{TP} + \text{FP}) \times C_{\text{contact}} \right]
+\end{equation}
+
+Table 6.5 compares the financial return across models against an untargeted baseline that contacts all 1,409 subscribers.
+
+\begin{table}[H]
+\centering
+\small
+\caption{Illustrative Financial Comparison of Churn Retention Strategies on Test Set.}
+\label{tab:6.5}
+\vspace{0.05in}
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Strategy} & \textbf{Targeted (TP+FP)} & \textbf{Saved ($\alpha \times \text{TP}$)} & \textbf{Campaign Cost} & \textbf{Gross Value} & \textbf{Net Benefit} \\
+\midrule
+Untargeted (All)     & 1,409 & 187.0 & \$70,450 & \$93,500 & \$23,050 \\
+Decision Tree (d=5)  & 405   & 119.0 & \$20,250 & \$59,500 & \$39,250 \\
+Logistic Regression  & 336   & 109.0 & \$16,800 & \$54,500 & \$37,700 \\
+Bagging (Random Frst)& 289   & 98.0  & \$14,450 & \$49,000 & \$34,550 \\
+Boosting (Grad Boost)& 308   & 100.0 & \$15,400 & \$50,000 & \$34,600 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The decision-tree strategy achieves the highest net economic return (\$39,250) due to its high recall (capturing 238 churners), while Random Forest achieves the lowest campaign expenditure (\$14,450) due to its high precision and low false-positive rate. Both approaches substantially outperform untargeted mass outreach.
+
+\textbf{Operational Considerations and Deployment Insights}
+
+Several practical considerations should be evaluated prior to operational deployment:
+\begin{enumerate}
+    \item \textbf{Cross-Sectional vs.\ Longitudinal Data:} The IBM Telco dataset is cross-sectional and captures subscriber snapshots. In live production environments, customer churn evolves dynamically over time. Incorporating continuous call detail records and time-series indicators can further enhance predictive precision.
+    \item \textbf{Class Imbalance and Threshold Selection:} Because churners represent approximately 26.5\% of the subscriber population, the default 0.5 probability decision threshold can be calibrated based on campaign budget constraints and the operational ratio between contact costs and customer value.
+    \item \textbf{Causal Validation via A/B Testing:} While machine learning models identify subscribers with high statistical propensity to churn, interventions should be tested using controlled A/B experiments to verify actual campaign uplift before widespread rollout.
+\end{enumerate}
+
+\clearpage
+
+% ==================== CHAPTER 7 ====================
+\chapterpage{CONCLUSION AND FUTURE WORK}
+
+This case study developed and evaluated a machine learning system for churn prediction and customer segmentation using the IBM Telco Customer Churn dataset. Categorical features were label-encoded and standardized for modeling.
+
+\textbf{Summary of Findings}
+
+Key findings include:
+\begin{itemize}
+    \item \textbf{Preprocessing:} Removing constant, administrative, and post-churn leakage fields produced a cleaner feature set. The eleven blank \texttt{Total Charges} values were set to \$0.00, consistent with zero tenure.
+    \item \textbf{Classification:} On 1,409 test records, Gradient Boosting achieved the highest ROC-AUC (0.8523), while Random Forest led in accuracy (80.77\%) and specificity (0.9101). Logistic Regression provided balanced results (F1-score 0.6141; ROC-AUC 0.8481), and Decision Trees achieved the highest recall (63.64\%).
+    \item \textbf{Tuning:} Cross-validation showed KNN performance stabilizing at $k \ge 21$; shallow MLPs with $(10,)$ or $(20,)$ hidden units generalized better than deeper networks.
+    \item \textbf{Segmentation:} K-Means ($k=3$) identified a high-risk group with 44.37\% churn, short tenure, month-to-month contracts, and higher monthly charges. Targeting this group can reduce campaign expenditure by over 70\% versus mass outreach.
+\end{itemize}
+
+\textbf{Future Work}
+
+Future work could:
+\begin{itemize}
+    \item \textbf{Model longitudinal behavior} with call detail records and consecutive billing cycles.
+    \item \textbf{Use cost-sensitive training} to account for the unequal costs of missed churners and false alarms.
+    \item \textbf{Improve explainability} with SHAP-based feature attribution for individual risk scores.
+    \item \textbf{Validate retention offers} through randomized A/B tests before broader deployment.
+\end{itemize}
+
+\clearpage
+
+% ==================== CHAPTER 8 ====================
+\chapterpage{SUSTAINABLE DEVELOPMENT GOALS (SDGs)}
+
+This project contributes to three United Nations Sustainable Development Goals (SDGs) by promoting data-driven operational efficiency, technological innovation, and responsible resource utilization:
+
+\begin{itemize}
+    \item \textbf{SDG 8 -- Decent Work and Economic Growth:}
+    \begin{itemize}
+        \item \textit{Target 8.2:} Achieve higher levels of economic productivity through diversification, technological upgrading, and innovation.
+        \item \textit{Contribution:} Customer churn incurs substantial financial attrition in telecommunications service delivery. By deploying predictive classification models and behavioral segmentation, telecommunications providers can proactively retain existing customers. This stabilizes recurring revenue, reduces wasteful re-acquisition expenditures, and enhances overall enterprise economic productivity.
+    \end{itemize}
+
+    \item \textbf{SDG 9 -- Industry, Innovation and Infrastructure:}
+    \begin{itemize}
+        \item \textit{Target 9.5 \& 9.c:} Enhance scientific research, upgrade technological capabilities of industrial sectors, and increase access to information and communications technology.
+        \item \textit{Contribution:} The application of advanced machine learning algorithms---spanning neural networks, margin-based support vector machines, and ensemble methods---modernizes telecommunications data infrastructure. By optimizing subscriber retention, service providers can operate on sustainable economic margins, enabling continued capital investment in affordable, resilient broadband infrastructure for underserved regions.
+    \end{itemize}
+
+    \item \textbf{SDG 12 -- Responsible Consumption and Production:}
+    \begin{itemize}
+        \item \textit{Target 12.6:} Encourage companies to adopt sustainable practices and integrate sustainability information into their reporting cycles.
+        \item \textit{Contribution:} Traditional mass marketing campaigns distribute untargeted promotional subsidies, printed mailings, and outreach resources indiscriminately across broad subscriber populations. Algorithmic customer segmentation transitions marketing workflows to precision retention, directing outreach solely to vulnerable subscriber segments and eliminating unnecessary operational and computational waste.
+    \end{itemize}
+\end{itemize}
+
+\end{document}

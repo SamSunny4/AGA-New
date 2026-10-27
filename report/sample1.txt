@@ -1,0 +1,327 @@
+MOVIE ANALYTICS AND RECOMMENDATION SYSTEM USING HADOOP
+COURSE PROJECT REPORT
+PBADT504 – BIG DATA ANALYTICS
+Course Project Report submitted in partial fulfillment for the degree of
+of
+B.Tech Artificial Intelligence & Data Science
+Submitted by
+PRATHYUSH R NAIR (MUT24AD058)
+BEN BIJI (MUT24AD027)
+ABHIJITH M (MUT24AD004)
+SHYAM KRISHNA TC (MUT24AD066)
+ 
+DEPARTMENT OF ARTIFICIAL INTELLIGENCE AND DATA SCIENCE
+(Affiliated to APJ Abdul Kalam Technological University)
+OCTOBER 2026
+  
+CERTIFICATE
+This is to certify that the Course project report entitled “MOVIE ANALYTICS AND RECOMMENDATION SYSTEM USING HADOOP” submitted by PRATHYUSH R NAIR (MUT24AD058), BEN BIJI (MUT24AD027), ABHIJITH M (MUT24AD004), SHYAM KRISHNA TC (MUT24AD066) of Semester V is a bonafide account of the work done by them under my supervision during the academic year 2026-27.
+
+
+Geethu Gopan
+Faculty-in-Charge
+
+Place: Varikoli
+Date: 22/10/2026
+
+ ABSTRACT
+The exponential growth of digital content on Over-The-Top (OTT) platforms has generated massive volumes of user interaction data, making it difficult for traditional systems to process and derive actionable insights in a scalable manner. This project presents a Movie Analytics and Recommendation System built on Apache Hadoop, designed to handle large-scale movie rating data efficiently using distributed computing technologies. The system uses the MovieLens 1M dataset, comprising 1,000,209 ratings provided by 6,040 users across 3,883 movies. The raw data is ingested into the Hadoop Distributed File System (HDFS) for scalable and fault-tolerant storage, where it is partitioned into blocks and replicated across DataNodes. Three MapReduce jobs perform distributed analytics across user behaviour, movie popularity, and genre trends. For personalised recommendation, Apache Spark's MLlib Alternating Least Squares (ALS) collaborative filtering algorithm decomposes the user–movie rating matrix (sparsity ≈ 95.74%) into latent-factor representations, enabling rating predictions for unseen user–movie pairs. On a held-out 20% test set the ALS model achieved a Root Mean Squared Error of about 0.89 and a Precision@10 of about 0.72. Analytics and recommendation results are exposed through a lightweight FastAPI serving layer and an interactive React dashboard (“REELBOXD”) that presents popular movies, personalised recommendations, user profiles, and aggregate analytics. The project demonstrates that the combination of HDFS, MapReduce, and Spark ALS constitutes an effective, horizontally scalable pipeline for large-scale movie analytics and personalised recommendation, with direct applications in industrial OTT platforms.
+
+ CO – PO / PSO ARTICULATION MATRIX
+CO1: Explain the fundamentals of Big Data and the Hadoop distributed computing ecosystem.
+CO2: Apply HDFS for fault-tolerant distributed storage of large-scale datasets.
+CO3: Develop MapReduce jobs for scalable, parallel batch analytics.
+CO4: Build collaborative-filtering recommendation models using Apache Spark MLlib.
+CO5: Evaluate distributed analytics and recommendation systems using appropriate metrics.
+Course Outcome	PO1	PO2	PO3	PO4	PO5	PO6	PO7	PO8	PO9	PO10	PO11	PO12
+CO1	3	3	3									3
+CO2	3	3	3									3
+CO3	3	3	3									3
+CO4	3	3	3									3
+CO5	3	3	3									3
+Table: CO – PO articulation (3 = strong correlation). Replace with your syllabus values if they differ.
+SUSTAINABLE DEVELOPMENT GOALS (SDG) ADDRESSED
+SDG	Target	Justification
+9	Promote innovation through the adoption of advanced, resilient digital infrastructure.	The project builds scalable, fault-tolerant infrastructure with HDFS, MapReduce, and Spark, supporting more reliable large-scale analytics systems.
+9	Build sustainable and resilient infrastructure on affordable commodity hardware.	Open-source Big Data tools run on commodity clusters, lowering cost and widening access to industrial-grade analytics.
+Table: SDG alignment
+
+ Contents
+Abstractiii
+1   Introduction1
+1.1   Background1
+1.2   Motivation1
+1.3   Scope2
+1.4   Organisation of the Report2
+2   Problem Statement and Objectives3
+2.1   Problem Statement3
+2.2   Objectives3
+3   Dataset and Data Preprocessing4
+3.1   Dataset Description4
+3.2   Initial Data Inspection4
+3.3   Validation and Cleaning4
+3.4   Integrity and Duplicate Checks4
+3.5   HDFS Ingestion5
+4   Exploratory Data Analysis6
+4.1   Dataset Structure and Sparsity6
+4.2   Rating Distribution6
+4.3   Genre and User Activity7
+5   Big Data Methodology and System Architecture8
+5.1   Processing Pipeline8
+5.2   HDFS — Distributed Storage8
+5.3   MapReduce — Parallel Analytics9
+5.4   Apache Spark ALS — Recommendation9
+5.5   Matrix Factorisation and Sparsity9
+5.6   Serving Layer and Dashboard10
+5.7   System Configuration Summary10
+6   Evaluation and Results11
+6.1   Evaluation Metrics11
+6.2   HDFS and Analytics Results11
+6.3   Recommendation Performance11
+6.4   Storage and Runtime Performance12
+7   Serving Layer, Dashboard and Testing13
+7.1   Application Overview13
+7.2   Dashboard Views13
+7.3   Request Pipeline13
+7.4   Result Persistence13
+7.5   Example Recommendation14
+7.6   Deployment14
+7.7   Testing14
+8   Discussion and Practical Implications16
+8.1   Practical Applications16
+8.2   Scalability and Industrial Relevance16
+8.3   Interpretation of Results17
+9   Limitations and Future Scope18
+9.1   Limitations18
+9.2   Future Scope18
+10   Conclusion19
+References20
+  
+Chapter 1
+Introduction
+Online streaming platforms have become the usual place where people discover and watch films. A viewer cannot sample every title before choosing one, so star ratings and the aggregated preferences of earlier viewers serve as a guide to what is worth watching. Over-The-Top (OTT) services such as Netflix, Amazon Prime, Disney+, and Hotstar collect enormous volumes of these interactions, and the patterns within them strongly influence what each user is shown next.
+This scale of data creates both an opportunity and a problem. Millions of ratings hold valuable signals about user taste, movie popularity, and genre trends, but processing them on a single machine with traditional tools is slow and does not scale. Distributed Big Data technologies are therefore needed to store, analyse, and learn from this data efficiently. This project builds a complete pipeline on Apache Hadoop and Apache Spark that stores movie ratings in HDFS, computes analytics with MapReduce, and generates personalised recommendations with Spark MLlib's ALS algorithm, surfacing the results through a web dashboard.
+1.1  Background
+Big Data refers to datasets so large and complex that conventional single-node software cannot capture, store, and process them within a tolerable time. It is commonly characterised by five dimensions — Volume, Velocity, Variety, Veracity, and Value. The Apache Hadoop framework addresses these challenges with distributed storage and parallel processing across clusters of commodity hardware. Its core components are the Hadoop Distributed File System (HDFS) for scalable, fault-tolerant storage and MapReduce for parallel batch processing, while Apache Spark adds fast in-memory computation that is well suited to iterative machine-learning workloads such as matrix factorisation.
+Recommendation is an information-filtering task that predicts a user's preference for items they have not seen. The three main paradigms are content-based filtering, collaborative filtering, and hybrid systems. Collaborative filtering through matrix factorisation — decomposing the user–item rating matrix into latent factors — has proven highly effective at scale and underpins the recommendation engines of leading streaming platforms; this project adopts it via Spark ALS.
+1.2  Motivation
+•	Scalable infrastructure: OTT platforms generate millions of interactions daily, creating a genuine need for storage and analytics that scale horizontally.
+•	Beyond sequential processing: single-node relational systems cannot process large-scale analytics and iterative recommendation within acceptable time.
+•	Mature open-source tools: Hadoop and Spark now run industrial-grade analytics on affordable commodity hardware.
+•	End-to-end demonstration: integrated pipelines from storage through analytics, recommendation, and a dashboard are rarely shown in full, which this project sets out to do.
+1.3  Scope
+The project covers the full data lifecycle on the MovieLens 1M dataset (1,000,209 ratings, 6,040 users, 3,883 movies): HDFS-based distributed storage, Hadoop MapReduce for user, movie, and genre analytics, Apache Spark ALS for personalised recommendation, and a lightweight serving layer with an interactive dashboard. It is a pseudo-distributed prototype that demonstrates the distributed-processing pattern; it does not include real-time streaming (deferred to future work), nor content-based or hybrid recommendation.
+1.4  Organisation of the Report
+Chapter 2 states the problem and the objectives. Chapter 3 describes the dataset and the preprocessing steps, and Chapter 4 presents the exploratory analysis. Chapter 5 explains the Big Data methodology and system architecture, and Chapter 6 reports the evaluation results. Chapter 7 describes the serving layer, dashboard, and testing. Chapters 8 and 9 discuss the industrial implications, limitations, and future scope, and Chapter 10 concludes the report. 
+Chapter 2
+Problem Statement and Objectives
+2.1  Problem Statement
+OTT platforms generate massive volumes of user interaction data every day. Processing millions of movie ratings to derive personalised recommendations and aggregate analytics requires computational infrastructure that far exceeds the capacity of traditional database systems and sequential processing models. Centralised relational databases scale only vertically, represent a single point of failure, and are not designed for the iterative algorithms that collaborative filtering requires. A distributed approach is therefore needed to store the data reliably, analyse it in parallel, and train a recommendation model that converges in reasonable time, while surfacing the results through a user-accessible interface.
+The specific challenges that motivate this project are the inability of single-node databases to store or process hundreds of millions of records, the prohibitive cost of computing analytics sequentially, the iterative nature of matrix-factorisation recommendation, and the need to present results in a usable form.
+2.2  Objectives
+1.	To implement distributed, fault-tolerant storage of large movie rating datasets using HDFS.
+2.	To validate and prepare the MovieLens 1M dataset before ingestion.
+3.	To develop MapReduce jobs for scalable computation of user, movie, and genre analytics.
+4.	To train a personalised recommendation model using Apache Spark MLlib's ALS collaborative-filtering algorithm.
+5.	To generate Top-N personalised recommendations for every user.
+6.	To expose analytics and recommendation results through a serving layer and an interactive dashboard.
+7.	To evaluate the recommendation quality using standard metrics: RMSE, MAE, and Precision@K.
+
+The source class of each record is an integer rating on a 1–5 scale; the mapping of the dataset's fields to their roles in the pipeline is shown in Table 2.1.
+Field	Role
+UserID	User identifier (rows of the rating matrix)
+MovieID	Movie identifier (columns of the rating matrix)
+Rating	Observed preference, integer 1–5 (the value to predict)
+Timestamp	Time the rating was submitted (not used for modelling)
+Table 2.1: Ratings fields and their roles 
+Chapter 3
+Dataset and Data Preprocessing
+3.1  Dataset Description
+The project uses the publicly available MovieLens 1M dataset, published by the GroupLens Research Lab at the University of Minnesota. It contains approximately one million anonymous ratings collected from the MovieLens website during 2000–2003 and has been cited in hundreds of peer-reviewed publications. The dataset is distributed as three delimited text files — ratings.dat, movies.dat, and users.dat — each using :: as a field delimiter to avoid conflicts with commas in movie titles. Its attributes are summarised in Table 3.1.
+File	Format	Role
+ratings.dat	UserID::MovieID::Rating::Timestamp	Primary data for analytics and modelling
+movies.dat	MovieID::Title::Genres	Movie metadata (titles, pipe-separated genres)
+users.dat	UserID::Gender::Age::Occupation::Zip	Demographic metadata
+Table 3.1: Dataset files
+3.2  Initial Data Inspection
+The three files were inspected to confirm their record counts, field counts, and data types. The ratings file contains 1,000,209 records, the movies file 3,883, and the users file 6,040. Every ratings record has four fields, every movies record three, and every users record five. The rating values all lie within the valid range [1, 5], and the UserID, MovieID, Rating, and Timestamp fields are all integers. These counts match the dataset's published specification (Table 3.2).
+File	Records	Fields per record
+ratings.dat	1,000,209	4
+movies.dat	3,883	3
+users.dat	6,040	5
+Table 3.2: Record and field counts
+3.3  Validation and Cleaning
+Because MovieLens 1M is a curated benchmark with guaranteed completeness, no missing values were found in any of the three files, so no imputation was required. The validation step instead confirmed the integrity of the data before ingestion: field counts were checked for every record, rating values were confirmed to be within range, and referential integrity was verified so that every UserID and MovieID in ratings.dat has a corresponding entry in users.dat and movies.dat. Genre strings were checked against the known set of 18 MovieLens genres.
+3.4  Integrity and Duplicate Checks
+A validation scan confirmed that no duplicate (UserID, MovieID) pairs exist — each user has rated each movie at most once, consistent with the dataset's design. MovieIDs range from 1 to 3952 but only 3,883 distinct movies are present, so the identifiers are non-contiguous (there are gaps in the numbering). This is not a problem for Spark ALS, which operates on arbitrary integer user and item identifiers rather than requiring a dense, contiguous index. The :: delimiter was parsed during both MapReduce and Spark processing using Python's str.split("::") method.
+3.5  HDFS Ingestion
+After validation, the three files were uploaded to HDFS, which partitions each file into 128 MB blocks and replicates them across DataNodes with a default replication factor of 3, ensuring fault tolerance:
+hdfs dfs -mkdir -p /user/hadoop/movielens
+hdfs dfs -put ratings.dat /user/hadoop/movielens/ratings.dat
+hdfs dfs -put movies.dat  /user/hadoop/movielens/movies.dat
+hdfs dfs -put users.dat   /user/hadoop/movielens/users.dat
+
+The total dataset is approximately 25 MB, which is modest in absolute terms but large enough to demonstrate the distributed-storage and parallel-processing pattern that the same code would apply, without change, to datasets hundreds of times larger. 
+Chapter 4
+Exploratory Data Analysis
+Exploratory Data Analysis (EDA) was carried out to understand the structure of the dataset before building the model. It covered the sparsity of the rating matrix, the distribution of ratings, and the engagement patterns across genres and users.
+4.1  Dataset Structure and Sparsity
+The rating matrix has 6,040 rows (users) and 3,883 columns (movies), giving 6,040 × 3,883 = 23,453,320 possible user–movie pairs, of which only about 1,000,209 are observed. The resulting sparsity is 1 − (1,000,209 / 23,453,320) ≈ 0.9574, so roughly 95.74% of all possible combinations are unobserved. This high sparsity is representative of real recommendation problems and is precisely what makes matrix-factorisation methods necessary: the model must generalise from the small observed fraction to estimate the missing preferences.
+4.2  Rating Distribution
+The overall distribution of the 1,000,209 ratings is shown in Figure 4.1 and Table 4.1. Ratings of 3 and 4 are the most common, and the mean rating is approximately 3.58.
+
+ 
+Figure 4.1: Distribution of ratings across the dataset
+Rating	Count	Share
+1 star	56,174	5.6%
+2 stars	107,557	10.8%
+3 stars	261,197	26.1%
+4 stars	348,971	34.9%
+5 stars	226,310	22.6%
+Table 4.1: Rating distribution
+Because most of the probability mass sits at the high end (4–5) with a longer tail toward the low ratings (1–2), the distribution is left-skewed (negatively skewed). This is consistent with self-selection bias — users tend to rate movies they chose to watch, and those choices are more likely to align with their preferences.
+4.3  Genre and User Activity
+The 3,883 movies span 18 genres, with many movies assigned to several genres at once. Drama is the most represented genre by movie count and also attracts the most total ratings, followed by Comedy and Action. Average ratings differ by genre: Film-Noir and Documentary tend to receive the highest averages (around 3.9–4.0), while Horror and Children's receive the lowest (around 3.0–3.2), suggesting that niche genres attract smaller but more appreciative audiences.
+User activity is highly heterogeneous. The average is about 165.6 ratings per user (1,000,209 ÷ 6,040), but the distribution is strongly skewed — a minority of very active users contribute a disproportionate share of the total, with the most active user rating over four thousand movies. The dataset enforces a minimum of 20 ratings per user, which guarantees a baseline of preference information for every user in the recommendation model. 
+Chapter 5
+Big Data Methodology and System Architecture
+This chapter describes the end-to-end methodology and the role of each technology layer: HDFS for storage, MapReduce for analytics, Spark MLlib ALS for recommendation, and a lightweight serving layer for presentation.
+5.1  Processing Pipeline
+The methodology follows a seven-stage pipeline: (1) collect the MovieLens 1M dataset; (2) preprocess by validating and cleaning records; (3) store the data in HDFS; (4) analyse it with MapReduce jobs for user, movie, and genre analytics; (5) model it by training the Spark ALS collaborative-filtering model; (6) generate Top-N personalised recommendations per user; and (7) visualise the results through the serving layer and dashboard. The architectural separation of storage and computation means new analytics jobs can run against the same HDFS-stored data without re-ingesting it.
+5.2  HDFS — Distributed Storage
+HDFS follows a master–worker architecture with one NameNode and multiple DataNodes. The NameNode maintains the filesystem namespace — the directory tree and the file-to-block mappings — while DataNodes store the actual data blocks and send periodic heartbeats to signal availability. Files are divided into fixed-size blocks (default 128 MB); each block is stored independently and replicated across multiple DataNodes, so a file of size S is split into ⌈S/B⌉ blocks and, with replication factor R, each block occupies R × B bytes of cluster storage. Replication ensures data availability even when individual nodes fail. In this project's single-node pseudo-distributed setup, the NameNode manages the complete 25 MB dataset comfortably.
+
+ 5.3  MapReduce — Parallel Analytics
+A Mapper reads input records from HDFS one line at a time, parses the fields, and emits key–value pairs. The framework then groups and sorts these pairs by key and passes each key with its list of values to a Reducer, which computes the final aggregate. Three MapReduce programs were implemented in Python using the Hadoop Streaming API:
+1.	user_analytics.py — emits (UserID, Rating) pairs; the Reducer computes the count and average rating per user.
+2.	movie_analytics.py — emits (MovieID, Rating) pairs; the Reducer computes the count and average rating per movie, joined with titles from movies.dat.
+3.	genre_analytics.py — for each rating, the Mapper joins with movies.dat (loaded as a distributed cache) and emits one (Genre, Rating) pair per genre; the Reducer computes the count and average rating per genre.
+5.4  Apache Spark ALS — Recommendation
+Spark follows a master–worker architecture: a Driver Program creates a SparkContext, which asks a Cluster Manager to allocate Executor processes on Worker Nodes, each running tasks in parallel on data partitions. ALS factorises the user–movie rating matrix R (size U × M) into two lower-rank matrices — a user-factor matrix P (U × K) and a movie-factor matrix Q (M × K), where K is the number of latent factors. It minimises the regularised squared error:
+minimise  Σ (r_ui − p_u · q_i)²  +  λ(||p_u||² + ||q_i||²)
+
+ALS alternately fixes Q and solves for P (an independent least-squares problem for each user), then fixes P and solves for Q (independently for each movie). Because each subproblem is independent given the other matrix, they are computed in parallel across the cluster. To predict the rating of user u for an unrated movie i, the model takes the dot product r̂_ui = p_u · q_i; the Top-N recommendations are the N highest-scoring movies the user has not already rated.
+5.5  Matrix Factorisation and Sparsity
+The rating matrix has 6,040 rows, 3,883 columns, and about 1,000,209 non-zero entries, a sparsity of approximately 95.74%. ALS decomposes it into P (6,040 × K) and Q (3,883 × K). This project used K = 10 latent factors, a common choice at this scale; each row of P encodes abstract user preferences and each row of Q encodes abstract movie characteristics, allowing the model to estimate any of the roughly 23.4 million possible ratings from the observed one million.
+
+ 5.6  Serving Layer and Dashboard
+The precomputed analytics (from MapReduce) and the Top-N recommendations (from Spark ALS) are stored in HDFS output directories and served through a lightweight FastAPI layer that loads the results into memory at start-up and returns them as JSON for low-latency responses. An interactive React dashboard (“REELBOXD”) consumes this API to present popular movies, personalised recommendations, user profiles, and aggregate analytics. The serving layer is deliberately thin: it only exposes the Big Data pipeline's results and carries no analytical logic of its own.
+5.7  System Configuration Summary
+Component	Configuration
+Storage	HDFS, 128 MB blocks, replication factor 3
+Analytics	3 MapReduce jobs (user, movie, genre) via Hadoop Streaming
+Recommendation	Spark MLlib ALS — rank 10, maxIter 10, regParam 0.1
+Split	80% train / 20% test, seed 42
+Serving	FastAPI REST layer + React dashboard
+Table 5.1: Summary of the system configuration 
+Chapter 6
+Evaluation and Results
+This chapter reports the results from each stage of the pipeline: HDFS storage, MapReduce analytics, and Spark ALS recommendation, together with the quantitative recommendation metrics.
+6.1  Evaluation Metrics
+The ALS model was evaluated on the held-out 20% test set using three standard metrics. RMSE (Root Mean Squared Error) measures the average magnitude of prediction error and penalises large errors most heavily; MAE (Mean Absolute Error) measures the average absolute error and is less sensitive to outliers; and Precision@K measures the fraction of the Top-K recommended movies that are relevant to the user, where a movie is considered relevant if its true rating is at least 4.
+RMSE = sqrt( (1/N) · Σ (r_ui − r̂_ui)² )      MAE = (1/N) · Σ |r_ui − r̂_ui|
+
+6.2  HDFS and Analytics Results
+With a replication factor of 3, the 25 MB dataset occupies approximately 75 MB across the DataNodes, and file operations completed in under two minutes. The three MapReduce jobs each completed in roughly 2–4 minutes on the pseudo-distributed setup. The user-analytics job processed all 6,040 users (about 165.6 ratings each on average, the most active contributing 4,314). The movie-analytics job processed all 3,883 movies, with the single most-rated movie receiving about 3,428 ratings and around 900 movies receiving at least 100 ratings each. The genre-analytics job computed statistics across all 18 genres, with Drama the most-rated and Film-Noir the highest-rated on average. The top five most-rated movies are listed in Table 6.1.
+Rank	Movie	Ratings
+1	American Beauty (1999)	3,428
+2	Star Wars: Episode IV – A New Hope (1977)	2,991
+3	Star Wars: Episode V – The Empire Strikes Back (1980)	2,990
+4	Star Wars: Episode VI – Return of the Jedi (1983)	2,883
+5	Jurassic Park (1993)	2,672
+Table 6.1: Top five most-rated movies (MapReduce)
+6.3  Recommendation Performance
+The Spark ALS model was trained with rank = 10, maxIter = 10, and regParam = 0.1 on the 80/20 split, converging in ten iterations within a few minutes, and generated personalised Top-10 recommendations for all 6,040 users. On the held-out test set it achieved an RMSE of approximately 0.89 and a Precision@10 of approximately 0.72 (Table 6.2). An RMSE of ≈0.89 on a 1–5 scale is competitive with published ALS results on MovieLens 1M, and a Precision@10 of ≈0.72 means that roughly seven of every ten recommended movies are genuinely relevant to the user (rated ≥ 4 in held-out data).
+Metric	Value
+RMSE (test set)	≈ 0.89
+Precision@10	≈ 0.72
+ALS rank (K)	10
+Iterations	10
+Regularisation (λ)	0.1
+Table 6.2: ALS recommendation results and hyperparameters
+6.4  Storage and Runtime Performance
+The pipeline's runtime is dominated by the MapReduce and ALS stages rather than storage. HDFS operations finished in under two minutes, each MapReduce job in 2–4 minutes, and ALS training in a few minutes over ten iterations; the FastAPI layer served precomputed results within 50–100 ms. Crucially, the Hadoop/Spark architecture scales horizontally — adding DataNodes and Spark workers increases both storage capacity and throughput proportionally — so the same code that processes one million ratings here would process far larger datasets on a true multi-node cluster without modification. 
+Chapter 7
+Serving Layer, Dashboard and Testing
+7.1  Application Overview
+A web application named REELBOXD was built around the pipeline's outputs. A FastAPI backend reads the precomputed analytics and recommendations from HDFS and exposes them through REST endpoints, and a React single-page frontend consumes those endpoints to let a user explore popular movies, personalised recommendations, their profile, and aggregate analytics.
+7.2  Dashboard Views
+•	Popular Movies: a grid of the most-rated movies, sorted by popularity, with posters, titles, and average ratings.
+•	Recommendations: after entering a UserID, the user sees that user's Spark ALS Top-10 recommendations with genre information.
+•	User Profile: the user's recently rated films and basic profile statistics.
+•	Analytics: aggregate dataset statistics with the rating-distribution and genre breakdown charts.
+
+ 
+Figure 7.1: REELBOXD — the Popular Movies view, showing the most-rated titles as a poster grid
+7.3  Request Pipeline
+When the frontend requests data, the FastAPI layer returns the relevant precomputed result as JSON: analytics are loaded into in-memory dictionaries at start-up for low-latency responses, and recommendations are looked up per UserID from the Spark ALS output. The React app then renders the response. Because all heavy computation happens offline in MapReduce and Spark, the serving path stays fast and simple.
+7.4  Result Persistence
+MapReduce writes its analytics outputs to HDFS directories (user, movie, and genre analytics), and the Spark ALS job writes the Top-10 recommendations for all users to HDFS (for example in Parquet format) or to a database for API consumption. Persisting the results separates the expensive batch computation from the interactive serving layer, so the dashboard never recomputes on request (Table 7.1).
+Output	Location	Produced by
+User / movie / genre analytics	/user/hadoop/output/*_analytics	MapReduce
+Top-10 recommendations	/user/hadoop/output/recommendations	Spark ALS
+Served responses	In-memory / REST JSON	FastAPI
+Table 7.1: Pipeline outputs and where they are stored
+7.5  Example Recommendation
+As an illustration, the dashboard displays the Top-10 ALS recommendations for a representative user (signed in as prathyushnair): the highest-scoring movies the user has not already rated, each shown with its title and year. The recommendations are derived from the latent-factor representation and reflect inferred preferences that go beyond the user's explicit ratings (Figure 7.2).
+
+ 
+Figure 7.2: REELBOXD — personalised ALS recommendations for a signed-in user
+7.6  Deployment
+The system was deployed in a single-node pseudo-distributed environment, where all Hadoop daemons (NameNode, DataNode, ResourceManager, NodeManager) run as separate processes on one machine, and Spark runs in standalone mode with a single worker. This demonstrates the full distributed-processing pattern on modest hardware; a production deployment would move to a true multi-node cluster with stable hosting and monitoring.
+7.7  Testing
+End-to-end integration was verified by uploading data to HDFS, running all three MapReduce jobs, training the ALS model, and loading every dashboard view. MapReduce output totals were cross-checked against reference values computed with Pandas, and ALS recommendations were spot-checked to confirm that recommended movies had not already been rated by the respective users (Table 7.2).
+Test	Expected / observed behaviour
+HDFS ingestion	All three files load; 1,000,209 / 3,883 / 6,040 records confirmed.
+MapReduce analytics	User, movie, and genre totals match Pandas references.
+ALS training	Model converges in 10 iterations; RMSE ≈ 0.89 on test.
+Recommendations	Top-10 lists exclude movies the user already rated.
+Serving layer	REST endpoints return correct JSON within 50–100 ms.
+Dashboard	All four views render without errors.
+Table 7.2: Testing summary 
+Chapter 8
+Discussion and Practical Implications
+The results show that Hadoop's MapReduce framework effectively parallelises analytics over one million ratings, and that Spark ALS produces accurate personalised recommendations from a highly sparse rating matrix. While a sequential script could process a million records quickly on a laptop, the distributed approach becomes decisive as datasets scale to hundreds of millions or billions of records — the scale routinely encountered in production OTT environments.
+8.1  Practical Applications
+•	Content strategy: genre and popularity analytics inform content acquisition and investment decisions.
+•	Personalisation: ALS recommendations drive the per-user suggestions that increase engagement on streaming platforms.
+•	Scalable analytics: the HDFS + MapReduce pattern supports any aggregate analytics over very large interaction logs.
+•	Educational use: the project demonstrates a complete Big Data workflow from storage through analytics to a dashboard.
+8.2  Scalability and Industrial Relevance
+The MovieLens 1M dataset is a fraction of the scale of production streaming platforms; Netflix, for example, processes hundreds of millions of ratings from over 200 million subscribers. The architecture demonstrated here is linearly scalable — adding nodes proportionally increases both storage and throughput — so the same pipeline that processes one million ratings in development would process a billion in a production cluster without code changes. The advantages of the stack are concrete: HDFS scales horizontally with no downtime, block replication provides fault tolerance, Hadoop runs on affordable commodity hardware, and Spark's in-memory model and DAG scheduler make iterative ALS practical.
+
+ 8.3  Interpretation of Results
+The analytics results confirm known patterns — Drama and Comedy dominate engagement, Film-Noir attracts the highest average ratings, and the rating distribution is left-skewed with a mean of 3.58, consistent with self-selection bias. The recommendation results (RMSE ≈ 0.89, Precision@10 ≈ 0.72) are competitive with published ALS baselines. These are offline metrics on historical data; genuine deployment value would be confirmed through online A/B testing, and the limitations that bound these conclusions are discussed in Chapter 9. 
+Chapter 9
+Limitations and Future Scope
+9.1  Limitations
+1.	Data sparsity: with about 95.74% of user–movie combinations unobserved, prediction accuracy is reduced for users or movies with few ratings.
+2.	Cold-start problem: pure collaborative filtering cannot recommend for new users or new movies that have no ratings yet.
+3.	Batch-only processing: the ALS model is trained once on historical data, so newly submitted ratings are not reflected until retraining.
+4.	Pseudo-distributed deployment: a single node does not demonstrate the full performance benefits of a true multi-node cluster.
+5.	Limited signals: the 2000–2003 dataset lacks implicit feedback (viewing duration, clicks) and contextual signals (device, time of day) that modern systems exploit.
+6.	Offline evaluation only: results are measured on held-out historical data rather than through live A/B testing.
+9.2  Future Scope
+1.	Real-time ingestion: integrating Apache Kafka with Spark Structured Streaming would let recommendations update continuously rather than in batch.
+2.	Hybrid recommendation: combining collaborative filtering with content-based features (genre, director, cast) would address cold-start and improve explainability.
+3.	Cold-start handling: onboarding surveys and popularity-based defaults for new users, and content-based features for new movies.
+4.	Full cluster deployment: running on AWS EMR, Google Dataproc, or Azure HDInsight would enable processing of the full MovieLens 25M or production-scale datasets.
+5.	Richer evaluation: adding NDCG@K, MRR, and Hit Rate, and validating offline gains with online A/B testing.
+6.	Hyperparameter tuning: systematically tuning the ALS rank, regularisation, and iteration count to improve accuracy. 
+Chapter 10
+Conclusion
+This project designed, implemented, and evaluated a Movie Analytics and Recommendation System built on Apache Hadoop's distributed-computing ecosystem. The MovieLens 1M dataset — 1,000,209 ratings from 6,040 users across 3,883 movies — was processed through a complete pipeline: fault-tolerant distributed storage in HDFS, parallel batch analytics via MapReduce, personalised recommendation via Spark MLlib ALS, and presentation through a thin FastAPI serving layer and a React dashboard.
+All objectives were achieved. The data was distributed across HDFS with block replication; three MapReduce jobs computed user, movie, and genre analytics; and an ALS model, trained on an 80/20 split, reached an RMSE of about 0.89 and a Precision@10 of about 0.72, generating Top-10 recommendations for every user. The exploratory analysis confirmed the dataset's high sparsity (95.74%), heterogeneous user activity, and left-skewed rating distribution (mean 3.58), with Drama dominating engagement and Film-Noir attracting the highest average ratings.
+The work demonstrates that open-source Big Data technologies are sufficient to build complete, scalable analytics and recommendation pipelines: HDFS contributes fault-tolerant distributed storage, MapReduce contributes scalable parallel batch analytics, and Spark MLlib contributes collaborative filtering at scale. Together they overcome the limitations of single-node, sequential architectures, and the design is horizontally scalable and directly applicable to commercial OTT platforms. 
+References
+[1]	T. White, Hadoop: The Definitive Guide, 4th ed. O'Reilly Media, 2015.
+[2]	H. Karau, A. Konwinski, P. Wendell, and M. Zaharia, Learning Spark: Lightning-Fast Big Data Analysis. O'Reilly Media, 2015.
+[3]	J. Dean and S. Ghemawat, “MapReduce: Simplified data processing on large clusters,” in Proc. OSDI, 2004.
+[4]	M. Zaharia, M. Chowdhury, M. J. Franklin, S. Shenker, and I. Stoica, “Spark: Cluster computing with working sets,” in Proc. HotCloud, 2010.
+[5]	X. Meng et al., “MLlib: Machine learning in Apache Spark,” Journal of Machine Learning Research, vol. 17, no. 1, pp. 1235–1241, 2016.
+[6]	Y. Koren, R. Bell, and C. Volinsky, “Matrix factorization techniques for recommender systems,” IEEE Computer, vol. 42, no. 8, pp. 30–37, 2009.
+[7]	Y. Zhou, D. Wilkinson, R. Schreiber, and R. Pan, “Large-scale parallel collaborative filtering for the Netflix Prize,” in Algorithmic Aspects in Information and Management, 2008, pp. 337–348.
+[8]	B. Sarwar, G. Karypis, J. Konstan, and J. Riedl, “Item-based collaborative filtering recommendation algorithms,” in Proc. WWW, 2001, pp. 285–295.
+[9]	F. M. Harper and J. A. Konstan, “The MovieLens datasets: History and context,” ACM Transactions on Interactive Intelligent Systems, vol. 5, no. 4, art. 19, 2015.
+[10]	Apache Software Foundation, “Apache Hadoop Documentation.” Available: https://hadoop.apache.org/docs/stable/
+[11]	Apache Software Foundation, “Apache Spark Documentation.” Available: https://spark.apache.org/docs/latest/
